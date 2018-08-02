@@ -178,14 +178,4 @@ class AuthenticationModuleSpec extends ObjectBehavior
             new UsmSecurityParameters('foo', 1, 1, 'foo')
         ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('5ed3e0f10db58eeabbbfe7bb1efd787aa9748781f8695c3a8c2263efe9aeba676d292edebc4967dd0ed2407097a3a944'));
     }
-
-    function it_should_authenticate_an_incoming_message_with_md5()
-    {
-
-    }
-
-    function it_should_authenticate_an_incoming_message_with_sha1()
-    {
-
-    }
 }
