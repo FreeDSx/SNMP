@@ -33,10 +33,10 @@ $snmp = new SnmpClient([
 ]);
 
 # Get a specific OID value as a string...
-echo $snmp->getValue(''1.3.6.1.2.1').PHP_EOL;
+echo $snmp->getValue('1.3.6.1.2.1').PHP_EOL;
 
 # Get a specific OID as an object...
-$oid = $snmp->getOid(''1.3.6.1.2.1');
+$oid = $snmp->getOid('1.3.6.1.2.1');
 var_dump($oid);
 
 echo sprintf("%s == %s", $oid->getOid(), (string) $oid->getValue()).PHP_EOL;
