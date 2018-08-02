@@ -2,7 +2,7 @@
 FreeDSx SNMP is a pure PHP SNMP library. It has no requirement on the core PHP SNMP extension. It implements SNMP
 client functionality described in [RFC 3412](https://tools.ietf.org/html/rfc3412) / [RFC 3416](https://tools.ietf.org/html/rfc3416) / [RFC 3414](https://tools.ietf.org/html/rfc3414).
 It also includes functionality described in various other RFCs, such as SHA2 authentication ([RFC 7860](https://tools.ietf.org/html/rfc7860)) and strong encryption
-mechanisms [3DES](https://tools.ietf.org/html/draft-reeder-snmpv3-usm-3desede-00) / [AES-192-256](https://tools.ietf.org/html/draft-blumenthal-aes-usm-04)).
+mechanisms ([3DES](https://tools.ietf.org/html/draft-reeder-snmpv3-usm-3desede-00) / [AES-192-256](https://tools.ietf.org/html/draft-blumenthal-aes-usm-04)).
 Some main features include:
 
 * SNMP version 1, 2, and 3 support.
