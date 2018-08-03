@@ -68,7 +68,7 @@ The community name to use when sending SNMP version 1 or 2 communications.
 
 The user to connect to when using SNMP version 3.
 
-**Default**: `public`
+**Default**: `(null)`
 
 ------------------
 #### use_auth
