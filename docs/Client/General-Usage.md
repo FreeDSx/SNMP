@@ -3,6 +3,9 @@ General SNMP Client Usage
 
 * [SNMP v1 and v2](#snmp-v1-and-v2)
 * [SNMP v3](#snmp-v3)
+  * [NoAuthNoPriv](#NoAuthNoPriv)
+  * [AuthNoPriv](#AuthNoPriv)
+  * [AuthPriv](#AuthPriv)
 * [Requests and Requests](#requests-and-responses)
 
 The SnmpClient class is your main point for sending SNMP requests and receiving responses from the host. This details
@@ -39,7 +42,10 @@ try {
 When connecting via SNMP v3 you need to specify a host name, a user, and whether or not authentication / privacy is
 needed, along with the mechanisms needed for both.
 
-An example with a user that has no authentication / privacy requirements:
+
+### NoAuthNoPriv
+
+An example with a user that has no authentication / privacy requirements (NoAuthNoPriv):
 
 ```php
 use FreeDSx\Snmp\SnmpClient;
@@ -55,7 +61,9 @@ $snmp = new SnmpClient([
 ]);
 ```
 
-An example with a user only requiring authentication:
+### AuthNoPriv
+
+An example with a user only requiring authentication (AuthNoPriv):
 
 ```php
 use FreeDSx\Snmp\SnmpClient;
@@ -77,7 +85,9 @@ $snmp = new SnmpClient([
 ]);
 ```
 
-An example with a user requiring both authentication and privacy:
+### AuthPriv
+
+An example with a user requiring both authentication and privacy (AuthPriv):
 
 ```php
 use FreeDSx\Snmp\SnmpClient;

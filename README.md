@@ -56,3 +56,7 @@ foreach($oids as $oid) {
 }
 
 ```
+
+For a complete configuration reference please see the [configuration doc](/docs/Client/Configuration.md). There are also
+SNMP v3 examples for [NoAuthNoPriv](/docs/Client/General-Usage.md#NoAuthNoPriv), [AuthNoPriv](/docs/Client/General-Usage.md#AuthNoPriv), and [AuthPriv](/docs/Client/General-Usage.md#AuthPriv)
+in the [general usage doc](/docs/Client/General-Usage.md).
