@@ -13,6 +13,13 @@ Some main features include:
 
 The OpenSSL extension is required for privacy / encryption support.
 
+# Documentation
+
+* [SNMP Client](/docs/Client)
+  * [Configuration](/docs/Client/Configuration.md)
+  * [General Usage](/docs/Client/General-Usage.md)
+  * [Request Types](/docs/Client/Request-Types.md)
+
 # Getting Started
 
 Install via composer:
