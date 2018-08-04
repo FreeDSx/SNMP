@@ -7,13 +7,13 @@ SNMP Client Configuration
     * [version](#version)
     * [community](#community)
     * [user](#user)
-    * [use_auth](#use-auth)
-    * [auth_pwd](#auth-pwd)
-    * [auth_mech](#auth-mech)
-    * [use_priv](#use-priv)
-    * [priv_mech](#priv-mech)
-    * [priv_pwd](#priv-pwd)
-    * [context_engine_id](#context-engine-id)
+    * [use_auth](#use_auth)
+    * [auth_pwd](#auth_pwd)
+    * [auth_mech](#auth_mech)
+    * [use_priv](#use_priv)
+    * [priv_mech](#priv_mech)
+    * [priv_pwd](#priv_pwd)
+    * [context_engine_id](#context_engine_id)
     * [context_name](#context_name)
     * [timeout_connect](#timeout_connect)
     * [timeout_read](#timeout_read)
@@ -125,9 +125,10 @@ The privacy mechanism to use for the specified user when using SNMP version 3. A
 * aes192blu
 * aes256blu
 
-By default the `aes192` and `aes256` mechanisms by default use the "Reeder" key localization strategy. This strategy
-will work for Cisco devices. However, if it doesn't work you may want to try the `aes192blu` or `aes256blu` mechanisms,
-which uses the "Blumenthal" key localization strategy, which other devices may implement.
+By default the `aes192` and `aes256` mechanisms use the "Reeder" key localization strategy. This strategy
+will work for Cisco devices. If it doesn't work you may want to try the `aes192blu` or `aes256blu` mechanisms,
+which uses the "Blumenthal" key localization strategy. Unfortunately the AES192 / AES256 / 3DES mechanisms were never
+officially standardized and multiple implementations exist.
 
 **Default**: `(null)`
 
