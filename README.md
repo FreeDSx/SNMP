@@ -8,7 +8,7 @@ Some main features include:
 * SNMP version 1, 2, and 3 support.
 * Supports all authentication mechanisms (md5, sha1, sha224, sha256, sha384, sha512).
 * Supports all privacy encryption mechanisms (des, 3des, aes128, aes192, aes256).
-* Supports all client request types (get, get next, bulk, set, inform, trapV1, trapV2).
+* Supports all client request types (Get, GetNext, GetBulk, Set, Inform, TrapV1, TrapV2).
 * Supports sending SNMPv1 and SNMPv2 traps (including inform requests).
 
 The OpenSSL extension is required for privacy / encryption support.

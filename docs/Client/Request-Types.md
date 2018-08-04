@@ -120,6 +120,7 @@ Set an OID to a specific value. You can use the various `Oid::from*()` factory m
 
 ```php
 use FreeDSx\Snmp\Exception\SnmpRequestException;
+use FreeDSx\Snmp\Oid;
 
 try {
     # Set the contact OID string...
