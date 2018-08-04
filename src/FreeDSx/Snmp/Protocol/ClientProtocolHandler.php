@@ -116,10 +116,16 @@ class ClientProtocolHandler
         $message = $this->getMessageRequest($request, $options);
 
         if ($message instanceof MessageRequestV3) {
-            return $this->sendV3Message($message, $options);
+            $response = $this->sendV3Message($message, $options);
         } else {
-            return $this->sendRequestGetResponse($message);
+            $response = $this->sendRequestGetResponse($message);
         }
+
+        if ($response && $response->getResponse()->getErrorStatus() !== 0) {
+            throw new SnmpRequestException($response);
+        }
+
+        return $response;
     }
 
     /**
@@ -143,14 +149,9 @@ class ClientProtocolHandler
         }
 
         try {
-            $response = $this->queue()->getMessage();
+            return $this->queue()->getMessage();
         } catch (\FreeDSx\Socket\Exception\ConnectionException $e) {
             throw new ConnectionException('No message received from host.', $e->getCode(), $e);
-        }
-
-        /** @var MessageResponseInterface $response */
-        if ($response->getResponse()->getErrorStatus() !== 0) {
-            throw new SnmpRequestException($response);
         }
 
         return $response;
