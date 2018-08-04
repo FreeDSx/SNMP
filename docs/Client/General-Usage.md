@@ -3,9 +3,9 @@ General SNMP Client Usage
 
 * [SNMP v1 and v2](#snmp-v1-and-v2)
 * [SNMP v3](#snmp-v3)
-  * [NoAuthNoPriv](#NoAuthNoPriv)
-  * [AuthNoPriv](#AuthNoPriv)
-  * [AuthPriv](#AuthPriv)
+  * [NoAuthNoPriv](#noauthnopriv)
+  * [AuthNoPriv](#authnopriv)
+  * [AuthPriv](#authpriv)
 * [Requests and Requests](#requests-and-responses)
 
 The SnmpClient class is your main point for sending SNMP requests and receiving responses from the host. This details
