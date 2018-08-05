@@ -113,18 +113,14 @@ class ClientProtocolHandler
     public function handle(RequestInterface $request, array $options) : ?MessageResponseInterface
     {
         $options = array_merge($this->options, $options);
-        $id = $this->generateId();
-
-        $this->setPduId($request, $id);
         $message = $this->getMessageRequest($request, $options);
 
         if ($message instanceof MessageRequestV3) {
             $response = $this->sendV3Message($message, $options);
         } else {
+            $id = $this->generateId();
+            $this->setPduId($request, $id);
             $response = $this->sendRequestGetResponse($message);
-        }
-
-        if ($response) {
             $this->validateResponse($response, $id);
         }
 
@@ -162,6 +158,7 @@ class ClientProtocolHandler
      * @param array $options
      * @return MessageResponseInterface|null
      * @throws ConnectionException
+     * @throws SnmpRequestException
      * @throws \FreeDSx\Asn1\Exception\EncoderException
      * @throws \FreeDSx\Snmp\Exception\ProtocolException
      */
@@ -172,14 +169,21 @@ class ClientProtocolHandler
 
         $discovery = $securityModule->getDiscoveryRequest($message, $options);
         if ($discovery) {
+            $id = $this->generateId();
+            $this->setPduId($discovery->getRequest(), $id);
             $response = $this->sendRequestGetResponse($discovery);
+            $this->validateResponse($response, $id);
             $securityModule->handleDiscoveryResponse($message, $response, $options);
         }
-        $message = $securityModule->handleOutgoingMessage($message, $options);
 
+        $id = $this->generateId();
+        $this->setPduId($message->getRequest(), $id);
+        $message = $securityModule->handleOutgoingMessage($message, $options);
         $response = $this->sendRequestGetResponse($message);
+
         if ($response) {
             $response = $securityModule->handleIncomingMessage($response, $options);
+            $this->validateResponse($response, $id);
         }
 
         return $response;
@@ -257,14 +261,16 @@ class ClientProtocolHandler
     }
 
     /**
-     * @param MessageResponseInterface $message
+     * @param null|MessageResponseInterface $message
      * @param int $expectedId
      * @throws SnmpRequestException
      */
-    protected function validateResponse(MessageResponseInterface $message, int $expectedId) : void
+    protected function validateResponse(?MessageResponseInterface $message, int $expectedId) : void
     {
+        if (!$message) {
+            return;
+        }
         $response = $message->getResponse();
-
         if ($response->getId() !== $expectedId) {
             throw new SnmpRequestException($message, sprintf(
                 'Unexpected message ID received. Expected %s but got %s.',

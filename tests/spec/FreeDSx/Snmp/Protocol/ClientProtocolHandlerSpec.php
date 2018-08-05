@@ -19,6 +19,7 @@ use FreeDSx\Snmp\Message\Response\MessageResponseV2;
 use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
+use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Oid;
 use FreeDSx\Snmp\OidList;
@@ -252,6 +253,48 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         $this->shouldThrow(new SnmpRequestException($response, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 1]]);
+    }
+
+    function it_should_throw_an_SnmpRequestException_if_the_request_id_is_not_expected_during_snmp_v3($encoder, $queue, $socket, $securityModule)
+    {
+        $response = new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new Response(2)));
+        $request = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()))
+        );
+
+        $encoder->encode(Argument::any())->shouldBeCalled()->willReturn('foo');
+        $socket->write('foo')->shouldBeCalled();
+        $queue->getMessage()->shouldBeCalled()->willReturn($response);
+
+        /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(null);
+
+        $this->shouldThrow(new SnmpRequestException($response, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
+    }
+
+    function it_should_throw_an_SnmpRequest_exception_if_the_request_id_is_not_expected_during_discovery_of_snmp_v3($encoder, $socket, $queue, $securityModule)
+    {
+        $response = new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new Response(1)));
+        $discoveryResponse = new MessageResponseV3(new MessageHeader(2), new ScopedPduResponse(new Response(2)));
+        $request = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()))
+        );
+
+        $encoder->encode(Argument::any())->shouldBeCalled()->willReturn('foo');
+        $socket->write('foo')->shouldBeCalled();
+        $queue->getMessage()->willReturn($discoveryResponse, $response);
+
+        /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
+        $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
+        $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldNotBeCalled();
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldNotBeCalled();
+
+        $this->shouldThrow(new SnmpRequestException($discoveryResponse, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
     }
 
     function it_should_throw_an_SnmpConnectionException_if_the_request_has_a_connection_issue_with_the_socket($encoder, $socket)
