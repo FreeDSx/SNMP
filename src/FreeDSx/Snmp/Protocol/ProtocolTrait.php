@@ -37,15 +37,32 @@ trait ProtocolTrait
      */
     protected $queue;
 
+    /**
+     * The max value for a request id.
+     *
+     * @var int
+     */
     protected static $maxId = 2147483647;
 
     /**
+     * The minimum value for a request id.
+     *
+     * @var int
+     */
+    protected static $minId = -214783648;
+
+    /**
+     * @param int|null $min
+     * @param int|null $max
      * @return int
      * @throws \Exception
      */
-    protected function generateId() : int
+    protected function generateId(?int $min = null, ?int $max = null) : int
     {
-        return random_int(1, self::$maxId);
+        $min = $this->options['id_min'] ?? $min ?? self::$minId;
+        $max = $this->options['id_max'] ?? $max ?? self::$maxId;
+
+        return random_int($min, $max);
     }
 
     /**

@@ -60,6 +60,8 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         'priv_pwd' => null,
         'user' => null,
         'auth_pwd' => null,
+        'id_min' => 1,
+        'id_max' => 1,
     ];
 
     function let(Socket $socket, SnmpEncoder $encoder, Asn1MessageQueue $queue, SecurityModelModuleFactory $securityModelFactory, SecurityModelModuleInterface $securityModule)
@@ -228,7 +230,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $this->handle(Requests::inform(1, '1.2.3'), ['version' => 2])->shouldBeLike($response);
     }
 
-    function it_should_throw_an_SnmpRequestException_if_the_error_status_is_not_zero($encoder, $socket, $queue)
+    function it_should_throw_an_SnmpRequestException_if_the_error_status_is_not_zero($encoder, $queue)
     {
         $response = new MessageResponseV1('foo', new Response(1, 2, 1, new OidList(
             new Oid('1.2.3')
@@ -238,6 +240,18 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         $this->shouldThrow(new SnmpRequestException($response))->during('handle', [Requests::get('1.2.3'), ['version' => 1]]);
+    }
+
+    function it_should_throw_an_SnmpRequestException_if_the_request_id_is_not_expected($encoder, $queue)
+    {
+        $response = new MessageResponseV1('foo', new Response(2, 2, 1, new OidList(
+            new Oid('1.2.3')
+        )));
+
+        $encoder->encode(Argument::any())->willReturn('foo');
+        $queue->getMessage()->shouldBeCalled()->willReturn($response);
+
+        $this->shouldThrow(new SnmpRequestException($response, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 1]]);
     }
 
     function it_should_throw_an_SnmpConnectionException_if_the_request_has_a_connection_issue_with_the_socket($encoder, $socket)

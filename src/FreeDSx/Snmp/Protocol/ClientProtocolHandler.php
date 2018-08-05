@@ -37,8 +37,6 @@ class ClientProtocolHandler
 {
     use ProtocolTrait;
 
-    protected const MAX_ID = 2147483647;
-
     /**
      * @var array
      */
@@ -66,6 +64,8 @@ class ClientProtocolHandler
         'priv_mech' => null,
         'priv_pwd' => null,
         'auth_pwd' => null,
+        'id_min' => null,
+        'id_max' => null,
     ];
 
     /**
@@ -113,6 +113,9 @@ class ClientProtocolHandler
     public function handle(RequestInterface $request, array $options) : ?MessageResponseInterface
     {
         $options = array_merge($this->options, $options);
+        $id = $this->generateId();
+
+        $this->setPduId($request, $id);
         $message = $this->getMessageRequest($request, $options);
 
         if ($message instanceof MessageRequestV3) {
@@ -121,8 +124,8 @@ class ClientProtocolHandler
             $response = $this->sendRequestGetResponse($message);
         }
 
-        if ($response && $response->getResponse()->getErrorStatus() !== 0) {
-            throw new SnmpRequestException($response);
+        if ($response) {
+            $this->validateResponse($response, $id);
         }
 
         return $response;
@@ -133,7 +136,6 @@ class ClientProtocolHandler
      * @return MessageResponseInterface|null
      * @throws ConnectionException
      * @throws \FreeDSx\Asn1\Exception\EncoderException
-     * @throws SnmpRequestException
      */
     protected function sendRequestGetResponse(MessageRequestInterface $message) : ?MessageResponseInterface
     {
@@ -160,7 +162,6 @@ class ClientProtocolHandler
      * @param array $options
      * @return MessageResponseInterface|null
      * @throws ConnectionException
-     * @throws SnmpRequestException
      * @throws \FreeDSx\Asn1\Exception\EncoderException
      * @throws \FreeDSx\Snmp\Exception\ProtocolException
      */
@@ -192,7 +193,6 @@ class ClientProtocolHandler
      */
     protected function getMessageRequest(RequestInterface $request, array $options) : MessageRequestInterface
     {
-        $this->setPduId($request, random_int(1, self::MAX_ID));
         if ($options['version'] === 1) {
             return new MessageRequestV1($options['community'], $request);
         } elseif ($options['version'] === 2) {
@@ -234,7 +234,7 @@ class ClientProtocolHandler
      */
     protected function generateMessageHeader(array $options) : MessageHeader
     {
-        $header = new MessageHeader(random_int(1, self::MAX_ID));
+        $header = new MessageHeader($this->generateId(0));
 
         if ($options['use_auth'] || $options['use_priv']) {
             if (!isset($this->securityModel[$options['security_model']])) {
@@ -254,5 +254,26 @@ class ClientProtocolHandler
         $header->addFlag(MessageHeader::FLAG_REPORTABLE);
 
         return $header;
+    }
+
+    /**
+     * @param MessageResponseInterface $message
+     * @param int $expectedId
+     * @throws SnmpRequestException
+     */
+    protected function validateResponse(MessageResponseInterface $message, int $expectedId) : void
+    {
+        $response = $message->getResponse();
+
+        if ($response->getId() !== $expectedId) {
+            throw new SnmpRequestException($message, sprintf(
+                'Unexpected message ID received. Expected %s but got %s.',
+                $expectedId,
+                $response->getId()
+            ));
+        }
+        if ($response->getErrorStatus() !== 0) {
+            throw new SnmpRequestException($message);
+        }
     }
 }
