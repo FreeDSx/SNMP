@@ -153,8 +153,6 @@ class ClientProtocolHandler
         } catch (\FreeDSx\Socket\Exception\ConnectionException $e) {
             throw new ConnectionException('No message received from host.', $e->getCode(), $e);
         }
-
-        return $response;
     }
 
     /**
