@@ -106,14 +106,11 @@ class SnmpClient
      * @param string|Oid ...$oids
      * @return OidList
      * @throws ConnectionException
+     * @throws SnmpRequestException
      */
     public function get(...$oids) : OidList
     {
-        try {
-            return $this->send(Requests::get(...$oids))->getResponse()->getOids();
-        } catch (SnmpRequestException $e) {
-            return null;
-        }
+        return $this->send(Requests::get(...$oids))->getResponse()->getOids();
     }
 
     /**
@@ -122,12 +119,11 @@ class SnmpClient
      * @param string|Oid $oid
      * @return Oid|null
      * @throws ConnectionException
+     * @throws SnmpRequestException
      */
     public function getOid($oid) : ?Oid
     {
-        $oidList = $this->get($oid);
-
-        return $oidList ? $oidList->first() : null;
+        return $this->get($oid)->first();
     }
 
     /**
@@ -136,6 +132,7 @@ class SnmpClient
      * @param string|Oid $oid
      * @return null|string
      * @throws ConnectionException
+     * @throws SnmpRequestException
      */
     public function getValue($oid) : ?string
     {
