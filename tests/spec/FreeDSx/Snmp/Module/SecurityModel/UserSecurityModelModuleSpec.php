@@ -10,10 +10,12 @@
 
 namespace spec\FreeDSx\Snmp\Module\SecurityModel;
 
+use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 use FreeDSx\Snmp\Module\Privacy\PrivacyModuleInterface;
+use FreeDSx\Snmp\Module\SecurityModel\TimeSync;
 use FreeDSx\Snmp\Oid;
 use FreeDSx\Snmp\Protocol\Factory\AuthenticationModuleFactory;
 use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;
@@ -49,6 +51,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
     function let(AuthenticationModuleFactory $authFactory, PrivacyModuleFactory $privacyFactory, AuthenticationModuleInterface $authModule, PrivacyModuleInterface $privacyModule)
     {
         $this->options = [
+            'host' => 'foo',
             'priv_pwd' => 'foobar123',
             'auth_mech' => 'sha1',
             'priv_mech' => 'aes128',
@@ -62,9 +65,10 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $authFactory->get(Argument::any())->willReturn($authModule);
         $this->request = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            null,
+            new ScopedPduRequest(new GetRequest(new OidList())),
             hex2bin('67889ff865a14762d876cb5ddb640ff582681461bec6'),
             new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+
         );
         $this->response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
@@ -75,7 +79,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $authModule->authenticateOutgoingMsg(Argument::any(), Argument::any())->willReturn($this->request);
         $authModule->authenticateIncomingMsg(Argument::any(), Argument::any())->willReturn($this->request);
 
-        $this->beConstructedWith($privacyFactory, $authFactory);
+        $this->beConstructedWith($privacyFactory, $authFactory, ['foo' => new TimeSync(1, 2)], ['foo' => 'foo']);
     }
 
     function it_is_initializable()
@@ -161,14 +165,50 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->getUsername()->shouldBeEqualTo('foo');
     }
 
-    function it_should_get_a_discovery_request_if_needed()
+    function it_should_not_require_discovery_when_the_engine_and_time_is_known_and_valid()
+    {
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
+    }
+
+    function it_should_need_a_discovery_if_the_host_is_not_known($authFactory, $privacyFactory)
+    {
+        $this->beConstructedWith($privacyFactory, $authFactory, [], []);
+
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+    }
+
+    function it_should_need_a_discovery_if_the_engine_time_was_not_cached($authFactory, $privacyFactory)
+    {
+        $this->beConstructedWith($privacyFactory, $authFactory, [], ['foo' => 'foo']);
+
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+    }
+
+    function it_should_need_discovery_if_the_last_sync_time_was_over_150_seconds($privacyFactory, $authFactory)
+    {
+        $this->beConstructedWith($privacyFactory, $authFactory, ['foo' => new TimeSync(10, 10, new \DateTime('01-01-2018 16:00:00'))], ['foo' => 'foo']);
+
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+    }
+
+    function it_should_need_throw_a_rediscovery_exception_if_an_incoming_message_has_a_notInTimeWindow_report_response()
+    {
+        $this->shouldThrow(RediscoveryNeededException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.2.0', 1)))),
+            null,
+            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+        ), $this->options]);
+    }
+
+    function it_should_get_a_discovery_request()
     {
         $this->getDiscoveryRequest($this->request, $this->options)->shouldBeAnInstanceOf(MessageRequestV3::class);
         $this->getDiscoveryRequest($this->request, $this->options)->getScopedPdu()->shouldBeLike(new ScopedPduRequest(new GetRequest(new OidList()), ''));
         $this->getDiscoveryRequest($this->request, $this->options)->getSecurityParameters()->shouldBeLike(new UsmSecurityParameters('', 0, 0, 'foo'));
     }
 
-    function it_should_handle_a_discovery_response()
+    function it_should_handle_a_discovery_response($privacyModule, $authModule)
     {
         $this->request->setScopedPdu(new ScopedPduRequest(new GetRequest(new OidList())));
         $response = new MessageResponseV3(
@@ -177,8 +217,10 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             null,
             new UsmSecurityParameters('foobar', 15, 20, 'foo')
         );
+        $privacyModule->encryptData($this->request, $authModule, 'foobar123')->willReturn($this->request);
 
-        $this->handleDiscoveryResponse($this->request, $response, $this->options)->getSecurityParameters()->shouldBeLike(
+        $this->handleDiscoveryResponse($this->request, $response, $this->options);
+        $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->shouldBeLike(
             new UsmSecurityParameters('foobar', 15, 20, 'foo')
         );
     }

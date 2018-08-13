@@ -22,6 +22,8 @@ use FreeDSx\Socket\Socket;
  */
 trait ProtocolTrait
 {
+    use IdGeneratorTrait;
+
     /**
      * @var null|Socket
      */
@@ -36,34 +38,6 @@ trait ProtocolTrait
      * @var null|Asn1MessageQueue
      */
     protected $queue;
-
-    /**
-     * The max value for a request id.
-     *
-     * @var int
-     */
-    protected static $maxId = 2147483647;
-
-    /**
-     * The minimum value for a request id.
-     *
-     * @var int
-     */
-    protected static $minId = -214783648;
-
-    /**
-     * @param int|null $min
-     * @param int|null $max
-     * @return int
-     * @throws \Exception
-     */
-    protected function generateId(?int $min = null, ?int $max = null) : int
-    {
-        $min = $this->options['id_min'] ?? $min ?? self::$minId;
-        $max = $this->options['id_max'] ?? $max ?? self::$maxId;
-
-        return random_int($min, $max);
-    }
 
     /**
      * @return Socket

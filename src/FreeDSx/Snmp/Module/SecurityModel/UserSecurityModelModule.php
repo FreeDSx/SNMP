@@ -10,6 +10,8 @@
 
 namespace FreeDSx\Snmp\Module\SecurityModel;
 
+use FreeDSx\Snmp\Exception\RediscoveryNeededException;
+use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -22,6 +24,7 @@ use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Protocol\Factory\AuthenticationModuleFactory;
 use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;
+use FreeDSx\Snmp\Protocol\IdGeneratorTrait;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
 use FreeDSx\Snmp\Request\GetRequest;
 use FreeDSx\Snmp\Response\ReportResponse;
@@ -35,9 +38,13 @@ use FreeDSx\Snmp\Response\ReportResponse;
  */
 class UserSecurityModelModule implements SecurityModelModuleInterface
 {
-    protected const MAX_ID = 2147483647;
+    use IdGeneratorTrait;
+
+    protected const TIME_WINDOW = 150;
 
     protected const USM_UNKNOWN_ENGINE_ID = '1.3.6.1.6.3.15.1.1.4.0';
+
+    protected const USM_NOT_IN_TIME_WINDOW = '1.3.6.1.6.3.15.1.1.2.0';
 
     /**
      * @var PrivacyModuleFactory
@@ -50,13 +57,27 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected $authFactory;
 
     /**
+     * @var TimeSync[]
+     */
+    protected $engineTime = [];
+
+    /**
+     * @var string[]
+     */
+    protected $knownEngines = [];
+
+    /**
      * @param PrivacyModuleFactory|null $privacy
      * @param AuthenticationModuleFactory|null $auth
+     * @param array $engineTimes
+     * @param array $knownEngines
      */
-    public function __construct(?PrivacyModuleFactory $privacy = null, ?AuthenticationModuleFactory $auth = null)
+    public function __construct(?PrivacyModuleFactory $privacy = null, ?AuthenticationModuleFactory $auth = null, array $engineTimes = [], array $knownEngines = [])
     {
         $this->privacyFactory = $privacy ?: new PrivacyModuleFactory();
         $this->authFactory = $auth ?: new AuthenticationModuleFactory();
+        $this->engineTime = $engineTimes;
+        $this->knownEngines = $knownEngines;
     }
 
     /**
@@ -88,6 +109,10 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             $encryptedProperty->setValue($message, null);
         }
 
+        if ($message instanceof MessageResponseInterface) {
+            $this->validateIncomingResponse($message);
+        }
+
         return $message;
     }
 
@@ -96,14 +121,35 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     public function handleOutgoingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3
     {
-        $header = $message->getMessageHeader();
-
-        $securityParams = $message->getSecurityParameters();
-        if (!$securityParams) {
-            $securityParams = new UsmSecurityParameters((string)$options['context_engine_id']);
-            $message->setSecurityParameters($securityParams);
+        $host = $options['host'] ?? '';
+        $engineId = $options['context_engine_id'] ?? $this->getEngineIdForHost($host);
+        if ((string) $engineId === '') {
+            throw new RuntimeException(sprintf(
+                'The engine ID for %s is not known.',
+                $host
+            ));
         }
-        $header->setSecurityModel($securityParams->getSecurityModel());
+        if (!$this->isEngineTimeCached($engineId)) {
+            throw new RuntimeException(sprintf(
+                'The cached engine time was not found for %s.',
+                $host
+            ));
+        }
+
+        $header = $message->getMessageHeader();
+        $user = $options['user'] ?? '';
+        $cachedTime = $this->getEngineTime($engineId);
+        $usm = new UsmSecurityParameters(
+            $engineId,
+            $cachedTime->getEngineBoot(),
+            $cachedTime->getEngineTime(),
+            $user
+        );
+
+        $message->setSecurityParameters($usm);
+        $message->setEncryptedPdu(null);
+        $message->getScopedPdu()->setContextEngineId($engineId);
+        $header->setSecurityModel($message->getSecurityParameters()->getSecurityModel());
 
         if ($header->hasPrivacy()) {
             $password = $options['priv_pwd'] ?? '';
@@ -114,7 +160,6 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             );
         }
 
-        $securityParams->setUsername($options['user'] ?? '');
         if ($header->hasAuthentication()) {
             $password = $options['auth_pwd'] ?? '';
             $this->authFactory->get($options['auth_mech'])->authenticateOutgoingMsg($message, $password);
@@ -124,20 +169,56 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
+     * @param AbstractMessageV3 $messageV3
+     * @param array $options
+     * @return bool
+     */
+    public function isDiscoveryNeeded(AbstractMessageV3 $messageV3, array $options) : bool
+    {
+        $usm = $messageV3->getSecurityParameters();
+        $host = $options['host'] ?? '';
+
+        $engineId = $options['context_engine_id'] ?? '';
+        if ($usm instanceof UsmSecurityParameters && $usm->getEngineId() !== '') {
+            $engineId = $usm->getEngineId();
+        }
+        if ($engineId === '' && array_key_exists($host, $this->knownEngines)) {
+            $engineId = $this->knownEngines[$host];
+        }
+
+        # Not a known engineId, either for this host or otherwise. No engineId specifically used. Discovery needed...
+        if ($engineId === '') {
+            return true;
+        }
+
+        # Time was never cached for the engine, so discovery is required...
+        if (!$this->isEngineTimeCached($engineId)) {
+            return true;
+        }
+        $time = $this->engineTime[$engineId];
+
+        # If the time window is 150 seconds or more out, then force a resynchronization
+        if (((new \DateTime())->getTimestamp() - $time->getWhenSynced()->getTimestamp()) >= self::TIME_WINDOW) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options): ?MessageRequestInterface
+    public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options): MessageRequestInterface
     {
         $user = $options['user'] ?? '';
         $engineId = $options['context_engine_id'] ?? '';
-        $request = new MessageRequestV3(
-            new MessageHeader(random_int(1, self::MAX_ID), MessageHeader::FLAG_REPORTABLE, $messageV3->getMessageHeader()->getSecurityModel()),
+
+        return new MessageRequestV3(
+            new MessageHeader($this->generateId(1), MessageHeader::FLAG_REPORTABLE, $messageV3->getMessageHeader()->getSecurityModel()),
             new ScopedPduRequest(new GetRequest(new OidList()), $engineId),
             null,
             new UsmSecurityParameters($engineId, 0, 0, $user)
         );
-
-        return $request;
     }
 
     /**
@@ -147,6 +228,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     {
         $usm = $discoveryResponse->getSecurityParameters();
         $response = $discoveryResponse->getResponse();
+        $host = $options['host'] ?? '';
         if (!($usm instanceof UsmSecurityParameters && (string) $usm->getEngineId() !== '')) {
             throw new SnmpRequestException($discoveryResponse, 'Failed to discover the engine id for USM.');
         }
@@ -159,15 +241,8 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if (!$response->getOids()->has(self::USM_UNKNOWN_ENGINE_ID)) {
             throw new SnmpRequestException($discoveryResponse, 'Expected an usmStatsUnknownEngineIDs OID, but none was received.');
         }
-
-        /** @var UsmSecurityParameters $securityParams */
-        $message->setSecurityParameters(new UsmSecurityParameters(
-            $usm->getEngineId(),
-            $usm->getEngineBoots(),
-            $usm->getEngineTime(),
-            $options['user'] ?? ''
-        ));
-        $message->getScopedPdu()->setContextEngineId($usm->getEngineId());
+        $this->knownEngines[$host] = $usm->getEngineId();
+        $this->engineTime[$usm->getEngineId()] = new TimeSync($usm->getEngineBoots(), $usm->getEngineTime());
 
         return $message;
     }
@@ -178,5 +253,50 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     public static function supports() : int
     {
         return 3;
+    }
+
+    /**
+     * @param MessageResponseInterface $response
+     * @throws RediscoveryNeededException
+     */
+    protected function validateIncomingResponse(MessageResponseInterface $response) : void
+    {
+        if (!$response->getResponse() instanceof ReportResponse) {
+            return;
+        }
+
+        if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
+            throw new RediscoveryNeededException($response, sprintf(
+                'Encountered usmStatsNotInTimeWindow. Reported engine time is %s.',
+                $response->getSecurityParameters()->getEngineTime()
+            ));
+        }
+    }
+
+    /**
+     * @param string $host
+     * @return null|string
+     */
+    protected function getEngineIdForHost(string $host)
+    {
+        return $this->knownEngines[$host] ?? null;
+    }
+
+    /**
+     * @param string $engineId
+     * @return bool
+     */
+    protected function isEngineTimeCached(string $engineId) : bool
+    {
+        return array_key_exists($engineId, $this->engineTime);
+    }
+
+    /**
+     * @param string $engineId
+     * @return TimeSync
+     */
+    protected function getEngineTime(string $engineId) : TimeSync
+    {
+        return $this->engineTime[$engineId];
     }
 }

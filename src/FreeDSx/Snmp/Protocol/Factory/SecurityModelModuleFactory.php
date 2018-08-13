@@ -26,6 +26,11 @@ class SecurityModelModuleFactory
      */
     protected $map = [];
 
+    /**
+     * @var SecurityModelModuleInterface[]
+     */
+    protected $loaded = [];
+
     public function __construct()
     {
         $module = UserSecurityModelModule::class;
@@ -46,7 +51,10 @@ class SecurityModelModuleFactory
                implode(', ', array_keys($this->map))
             ));
         }
+        if (!isset($this->loaded[$securityModel])) {
+            $this->loaded[$securityModel] = new $this->map[$securityModel]();
+        }
 
-        return new $this->map[$securityModel]();
+        return $this->loaded[$securityModel];
     }
 }

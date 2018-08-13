@@ -11,6 +11,7 @@
 namespace spec\FreeDSx\Snmp\Protocol;
 
 use FreeDSx\Snmp\Exception\ConnectionException;
+use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
@@ -19,7 +20,6 @@ use FreeDSx\Snmp\Message\Response\MessageResponseV2;
 use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
-use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Oid;
 use FreeDSx\Snmp\OidList;
@@ -113,6 +113,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn(new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new Response(1))));
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
@@ -134,9 +135,9 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
-        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(null);
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3, 'use_auth' => true, 'auth_pwd' => 'foobar123', 'auth_mech' => 'md5']);
     }
@@ -154,9 +155,9 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
-        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(null);
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3, 'use_priv' => true, 'use_auth' => true, 'auth_pwd' => 'foobar123', 'auth_mech' => 'md5', 'priv_pwd' => 'foobar123', 'priv_mech' => 'des']);
     }
@@ -174,6 +175,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
@@ -195,9 +197,9 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
-        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(null);
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3, 'use_auth' => false, 'auth_mech' => 'md5']);
     }
@@ -268,9 +270,9 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
-        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(null);
 
         $this->shouldThrow(new SnmpRequestException($response, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
     }
@@ -289,12 +291,67 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->willReturn($discoveryResponse, $response);
 
         /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldNotBeCalled();
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldNotBeCalled();
 
         $this->shouldThrow(new SnmpRequestException($discoveryResponse, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
+    }
+
+    function it_should_perform_rediscovery_if_the_security_module_throws_a_rediscovery_exception($encoder, $socket, $queue, $securityModule)
+    {
+        $response = new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new Response(1)));
+        $request = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()))
+        );
+
+        $encoder->encode(Argument::that(function ($type) {
+            return $type->getChild(0)->getValue() === 3;
+        }))->shouldBeCalled()->willReturn('foo');
+        $socket->write('foo')->shouldBeCalled();
+        $queue->getMessage()->willReturn(
+            new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.2.0', 1))))),
+            new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new Response(1)))
+        );
+
+        /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
+        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
+        $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
+        $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
+        $securityModule->handleIncomingMessage(Argument::that(function ($message) {
+            return $message->getResponse() instanceof ReportResponse;
+        }), Argument::any())->shouldBeCalled(1)->willThrow(RediscoveryNeededException::class);
+        $securityModule->handleIncomingMessage(Argument::that(function ($message) {
+            return $message->getResponse() instanceof Response;
+        }), Argument::any())->shouldBeCalled(1)->willReturn($response);
+
+        $this->handle(Requests::get('1.2.3'), ['version' => 3])->shouldBeAnInstanceOf(MessageResponseV3::class);
+    }
+
+    function it_should_throw_an_SnmpRequestException_if_rediscovery_is_attempted_repeatedly($encoder, $socket, $queue, $securityModule)
+    {
+        $request = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()))
+        );
+        $response = new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.2.0', 1)))));
+        $encoder->encode(Argument::that(function ($type) {
+            return $type->getChild(0)->getValue() === 3;
+        }))->shouldBeCalled()->willReturn('foo');
+        $socket->write('foo')->shouldBeCalled();
+        $queue->getMessage()->willReturn($response);
+        /** @var SecurityModelModuleInterface $securityModule */
+        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->willReturn(false);
+        $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->willReturn($request);
+        $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
+        $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->willReturn($request);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->willThrow(new RediscoveryNeededException($response, 'foo'));
+
+        $this->shouldThrow(SnmpRequestException::class)->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
     }
 
     function it_should_throw_an_SnmpConnectionException_if_the_request_has_a_connection_issue_with_the_socket($encoder, $socket)

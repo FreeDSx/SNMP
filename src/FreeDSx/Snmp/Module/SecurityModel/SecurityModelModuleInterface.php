@@ -21,13 +21,56 @@ use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
  */
 interface SecurityModelModuleInterface
 {
+    /**
+     * Handle any logic needed for processing an incoming message.
+     *
+     * @param AbstractMessageV3 $message
+     * @param array $options
+     * @return AbstractMessageV3
+     */
     public function handleIncomingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3;
 
+    /**
+     * Handle any logic needed for processing an outgoing message.
+     *
+     * @param AbstractMessageV3 $message
+     * @param array $options
+     * @return AbstractMessageV3
+     */
     public function handleOutgoingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3;
 
-    public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options) : ?MessageRequestInterface;
+    /**
+     * Get the discovery request to send. The response is handled separately.
+     *
+     * @param AbstractMessageV3 $messageV3
+     * @param array $options
+     * @return MessageRequestInterface|null
+     */
+    public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options) : MessageRequestInterface;
 
+    /**
+     * Given the current message and options, determine if a discovery is needed.
+     *
+     * @param AbstractMessageV3 $messageV3
+     * @param array $options
+     * @return bool
+     */
+    public function isDiscoveryNeeded(AbstractMessageV3 $messageV3, array $options) : bool;
+
+    /**
+     * When the discovery response is returned it will be passed here for any specific module processing.
+     *
+     * @param AbstractMessageV3 $message
+     * @param MessageResponseInterface $discoveryResponse
+     * @param array $options
+     * @return AbstractMessageV3
+     */
     public function handleDiscoveryResponse(AbstractMessageV3 $message, MessageResponseInterface $discoveryResponse, array $options) : AbstractMessageV3;
 
+    /**
+     * The security model that the module supports.
+     *
+     * @return int
+     */
     public static function supports() : int;
 }

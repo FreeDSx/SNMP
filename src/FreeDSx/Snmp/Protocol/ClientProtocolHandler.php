@@ -12,8 +12,10 @@ namespace FreeDSx\Snmp\Protocol;
 
 use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Exception\InvalidArgumentException;
+use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
+use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
@@ -56,8 +58,8 @@ class ClientProtocolHandler
         'timeout_read' => 10,
         'version' => 2,
         'security_model' => 'usm',
-        'context_engine_id' => '',
-        'context_name' => '',
+        'context_engine_id' => null,
+        'context_name' => null,
         'use_auth' => false,
         'use_priv' => false,
         'auth_mech' => null,
@@ -79,11 +81,6 @@ class ClientProtocolHandler
      * @var SecurityModelModuleFactory
      */
     protected $securityModelFactory;
-
-    /**
-     * @var int
-     */
-    protected $id = 0;
 
     /**
      * @param array $options
@@ -156,37 +153,59 @@ class ClientProtocolHandler
     /**
      * @param MessageRequestV3 $message
      * @param array $options
+     * @param bool $forcedDiscovery
      * @return MessageResponseInterface|null
      * @throws ConnectionException
      * @throws SnmpRequestException
      * @throws \FreeDSx\Asn1\Exception\EncoderException
      * @throws \FreeDSx\Snmp\Exception\ProtocolException
      */
-    protected function sendV3Message(MessageRequestV3 $message, array $options) : ?MessageResponseInterface
+    protected function sendV3Message(MessageRequestV3 $message, array $options, bool $forcedDiscovery = false) : ?MessageResponseInterface
     {
         $header = $message->getMessageHeader();
         $securityModule = $this->securityModelFactory->get($header->getSecurityModel());
 
-        $discovery = $securityModule->getDiscoveryRequest($message, $options);
-        if ($discovery) {
+        if ($forcedDiscovery || $securityModule->isDiscoveryNeeded($message, $options)) {
+            $this->performDiscovery($message, $securityModule, $options);
+        }
+
+        try {
             $id = $this->generateId();
-            $this->setPduId($discovery->getRequest(), $id);
-            $response = $this->sendRequestGetResponse($discovery);
-            $this->validateResponse($response, $id);
-            $securityModule->handleDiscoveryResponse($message, $response, $options);
-        }
+            $this->setPduId($message->getRequest(), $id);
+            $message = $securityModule->handleOutgoingMessage($message, $options);
+            $response = $this->sendRequestGetResponse($message);
 
+            if ($response) {
+                $response = $securityModule->handleIncomingMessage($response, $options);
+                $this->validateResponse($response, $id);
+            }
+
+            return $response;
+        } catch (RediscoveryNeededException $e) {
+            if (!$forcedDiscovery) {
+                return $this->sendV3Message($message, $options, true);
+            } else {
+                throw new SnmpRequestException($e->getSnmpMessage(), $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @param MessageRequestV3 $message
+     * @param $securityModule
+     * @param array $options
+     * @throws ConnectionException
+     * @throws SnmpRequestException
+     * @throws \FreeDSx\Asn1\Exception\EncoderException
+     */
+    protected function performDiscovery(MessageRequestV3 $message, SecurityModelModuleInterface $securityModule, array $options) : void
+    {
+        $discovery = $securityModule->getDiscoveryRequest($message, $options);
         $id = $this->generateId();
-        $this->setPduId($message->getRequest(), $id);
-        $message = $securityModule->handleOutgoingMessage($message, $options);
-        $response = $this->sendRequestGetResponse($message);
-
-        if ($response) {
-            $response = $securityModule->handleIncomingMessage($response, $options);
-            $this->validateResponse($response, $id);
-        }
-
-        return $response;
+        $this->setPduId($discovery->getRequest(), $id);
+        $response = $this->sendRequestGetResponse($discovery);
+        $this->validateResponse($response, $id);
+        $securityModule->handleDiscoveryResponse($message, $response, $options);
     }
 
     /**
@@ -204,7 +223,7 @@ class ClientProtocolHandler
         } elseif ($options['version'] === 3) {
             return new MessageRequestV3(
                 $this->generateMessageHeader($options),
-                new ScopedPduRequest($request, $options['context_engine_id'], $options['context_name'])
+                new ScopedPduRequest($request, (string) $options['context_engine_id'], (string) $options['context_name'])
             );
         } else {
             throw new RuntimeException(sprintf('SNMP version %s is not supported', $options['version']));
