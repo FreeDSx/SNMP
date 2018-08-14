@@ -201,6 +201,46 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), $this->options]);
     }
 
+    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsUnsupportedSecLevels_report_response()
+    {
+        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.1.0', 1)))),
+            null,
+            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+        ), $this->options]);
+    }
+
+    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsUnknownUserNames_report_response()
+    {
+        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.3.0', 1)))),
+            null,
+            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+        ), $this->options]);
+    }
+
+    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsWrongDigests_report_response()
+    {
+        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.5.0', 1)))),
+            null,
+            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+        ), $this->options]);
+    }
+
+    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsDecryptionErrors_report_response()
+    {
+        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.6.0', 1)))),
+            null,
+            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+        ), $this->options]);
+    }
+
     function it_should_get_a_discovery_request()
     {
         $this->getDiscoveryRequest($this->request, $this->options)->shouldBeAnInstanceOf(MessageRequestV3::class);

@@ -46,6 +46,13 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
     protected const USM_NOT_IN_TIME_WINDOW = '1.3.6.1.6.3.15.1.1.2.0';
 
+    protected const ERROR_MAP_USM = [
+        '1.3.6.1.6.3.15.1.1.1.0' => 'The requested security level was unknown or unavailable (usmStatsUnsupportedSecLevels).',
+        '1.3.6.1.6.3.15.1.1.3.0' => 'The username was not recognized (usmStatsUnknownUserNames).',
+        '1.3.6.1.6.3.15.1.1.5.0' => 'The message did not contain the correct digest (usmStatsWrongDigests).',
+        '1.3.6.1.6.3.15.1.1.6.0' => 'The message could not be decrypted (usmStatsDecryptionErrors).',
+    ];
+
     /**
      * @var PrivacyModuleFactory
      */
@@ -258,6 +265,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     /**
      * @param MessageResponseInterface $response
      * @throws RediscoveryNeededException
+     * @throws SnmpRequestException
      */
     protected function validateIncomingResponse(MessageResponseInterface $response) : void
     {
@@ -265,6 +273,17 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             return;
         }
 
+        if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
+            throw new RediscoveryNeededException($response, sprintf(
+                'Encountered usmStatsNotInTimeWindow. Reported engine time is %s.',
+                $response->getSecurityParameters()->getEngineTime()
+            ));
+        }
+        foreach ($response->getResponse()->getOids() as $oid) {
+            if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
+                throw new SnmpRequestException($response, self::ERROR_MAP_USM[$oid->getOid()]);
+            }
+        }
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
             throw new RediscoveryNeededException($response, sprintf(
                 'Encountered usmStatsNotInTimeWindow. Reported engine time is %s.',
