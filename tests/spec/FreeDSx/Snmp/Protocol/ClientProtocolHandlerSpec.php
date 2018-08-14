@@ -224,7 +224,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
 
     function it_should_try_to_get_a_response_when_sending_an_inform_trap($encoder, $socket, $queue)
     {
-        $response = new MessageResponseV2('public', new ReportResponse(1));
+        $response = new MessageResponseV2('public', new Response(1));
 
         $encoder->encode(Argument::any())->shouldBeCalled()->willReturn('foo');
         $socket->write('foo')->shouldBeCalled();
@@ -352,6 +352,18 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->willThrow(new RediscoveryNeededException($response, 'foo'));
 
         $this->shouldThrow(SnmpRequestException::class)->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
+    }
+
+    function it_should_throw_an_SnmpRequestException_if_an_unhandled_Report_PDU_is_received($encoder, $socket, $queue)
+    {
+        $response = new MessageResponseV2('foo', new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.2.3', 1))));
+        $encoder->encode(Argument::that(function ($type) {
+            return $type->getChild(0)->getValue() === 1;
+        }))->shouldBeCalled()->willReturn('foo');
+        $socket->write('foo')->shouldBeCalled();
+        $queue->getMessage()->shouldBeCalled()->willReturn($response);
+
+        $this->shouldThrow(new SnmpRequestException($response, 'Received a report PDU with the OID(s): 1.2.3'))->during('handle', [Requests::get('1.2.3'), ['version' => 2]]);
     }
 
     function it_should_throw_an_SnmpConnectionException_if_the_request_has_a_connection_issue_with_the_socket($encoder, $socket)

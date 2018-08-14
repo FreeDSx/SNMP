@@ -27,6 +27,7 @@ use FreeDSx\Snmp\Message\ScopedPduRequest;
 use FreeDSx\Snmp\Request\RequestInterface;
 use FreeDSx\Snmp\Request\TrapV1Request;
 use FreeDSx\Snmp\Request\TrapV2Request;
+use FreeDSx\Snmp\Response\ReportResponse;
 use FreeDSx\Socket\Queue\Asn1MessageQueue;
 use FreeDSx\Socket\Socket;
 
@@ -204,7 +205,7 @@ class ClientProtocolHandler
         $id = $this->generateId();
         $this->setPduId($discovery->getRequest(), $id);
         $response = $this->sendRequestGetResponse($discovery);
-        $this->validateResponse($response, $id);
+        $this->validateResponse($response, $id, false);
         $securityModule->handleDiscoveryResponse($message, $response, $options);
     }
 
@@ -282,9 +283,10 @@ class ClientProtocolHandler
     /**
      * @param null|MessageResponseInterface $message
      * @param int $expectedId
+     * @param  bool $throwOnReport
      * @throws SnmpRequestException
      */
-    protected function validateResponse(?MessageResponseInterface $message, int $expectedId) : void
+    protected function validateResponse(?MessageResponseInterface $message, int $expectedId, bool $throwOnReport = true) : void
     {
         if (!$message) {
             return;
@@ -299,6 +301,16 @@ class ClientProtocolHandler
         }
         if ($response->getErrorStatus() !== 0) {
             throw new SnmpRequestException($message);
+        }
+        if ($throwOnReport && $response instanceof ReportResponse) {
+            $oids = [];
+            foreach ($response->getOids() as $oid) {
+                $oids[] = $oid->getOid();
+            }
+            throw new SnmpRequestException($message, sprintf(
+               'Received a report PDU with the OID(s): %s',
+               implode(', ', $oids)
+            ));
         }
     }
 }
