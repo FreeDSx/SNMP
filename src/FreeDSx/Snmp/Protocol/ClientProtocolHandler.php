@@ -292,6 +292,16 @@ class ClientProtocolHandler
             return;
         }
         $response = $message->getResponse();
+        if ($throwOnReport && $response instanceof ReportResponse) {
+            $oids = [];
+            foreach ($response->getOids() as $oid) {
+                $oids[] = $oid->getOid();
+            }
+            throw new SnmpRequestException($message, sprintf(
+                'Received a report PDU with the OID(s): %s',
+                implode(', ', $oids)
+            ));
+        }
         if ($response->getId() !== $expectedId) {
             throw new SnmpRequestException($message, sprintf(
                 'Unexpected message ID received. Expected %s but got %s.',
@@ -301,16 +311,6 @@ class ClientProtocolHandler
         }
         if ($response->getErrorStatus() !== 0) {
             throw new SnmpRequestException($message);
-        }
-        if ($throwOnReport && $response instanceof ReportResponse) {
-            $oids = [];
-            foreach ($response->getOids() as $oid) {
-                $oids[] = $oid->getOid();
-            }
-            throw new SnmpRequestException($message, sprintf(
-               'Received a report PDU with the OID(s): %s',
-               implode(', ', $oids)
-            ));
         }
     }
 }
