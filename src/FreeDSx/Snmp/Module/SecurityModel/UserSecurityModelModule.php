@@ -126,7 +126,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         }
 
         if ($message instanceof MessageResponseInterface) {
-            $this->validateIncomingResponse($message);
+            $this->validateIncomingResponse($message, $options);
         }
 
         return $message;
@@ -275,23 +275,31 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      * @throws RediscoveryNeededException
      * @throws SnmpRequestException
      */
-    protected function validateIncomingResponse(MessageResponseInterface $response) : void
+    protected function validateIncomingResponse(MessageResponseInterface $response, array $options) : void
     {
         if (!$response->getResponse() instanceof ReportResponse) {
             return;
         }
+        /** @var UsmSecurityParameters $secParams */
+        $secParams = $response->getSecurityParameters();
 
+        if ($secParams->getEngineId() !== $this->knownEngines[$options['host']]) {
+            throw new SnmpRequestException(
+                $response,
+                'The expected engine ID does not match the known engine ID for this host.'
+            );
+        }
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
             throw new RediscoveryNeededException($response, sprintf(
                 'Encountered usmStatsNotInTimeWindow. Reported engine time is %s.',
-                $response->getSecurityParameters()->getEngineTime()
+                $secParams->getEngineTime()
             ));
         }
         foreach ($response->getResponse()->getOids() as $oid) {
             if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
                 # This will force a re-sync for the next request if we have already cached time info..
-                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && isset($this->engineTime[$response->getSecurityParameters()->getEngineId()])) {
-                    unset($this->engineTime[$response->getSecurityParameters()->getEngineId()]);
+                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && isset($this->engineTime[$secParams->getEngineId()])) {
+                    unset($this->engineTime[$secParams->getEngineId()]);
                 }
                 throw new SnmpRequestException($response, self::ERROR_MAP_USM[$oid->getOid()]);
             }
@@ -299,7 +307,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
             throw new RediscoveryNeededException($response, sprintf(
                 'Encountered usmStatsNotInTimeWindow. Reported engine time is %s.',
-                $response->getSecurityParameters()->getEngineTime()
+                $secParams->getEngineTime()
             ));
         }
     }

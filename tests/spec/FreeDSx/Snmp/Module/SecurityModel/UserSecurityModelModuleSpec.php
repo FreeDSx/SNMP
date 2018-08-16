@@ -241,6 +241,17 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), $this->options]);
     }
 
+    function it_should_throw_an_SnmpRequestException_if_the_expected_engine_id_does_not_match_the_actual_engine_id()
+    {
+        $response = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList())),
+            null,
+            new UsmSecurityParameters('bar', 1, 300, '', '', hex2bin(''))
+        );
+        $this->shouldThrow(new SnmpRequestException($response, 'The expected engine ID does not match the known engine ID for this host.'))->during('handleIncomingMessage', [$response, $this->options]);
+    }
+
     function it_should_get_a_discovery_request()
     {
         $this->getDiscoveryRequest($this->request, $this->options)->shouldBeAnInstanceOf(MessageRequestV3::class);
