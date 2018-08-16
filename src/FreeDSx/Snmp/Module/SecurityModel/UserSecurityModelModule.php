@@ -217,14 +217,13 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options): MessageRequestInterface
     {
-        $user = $options['user'] ?? '';
         $engineId = $options['context_engine_id'] ?? '';
 
         return new MessageRequestV3(
             new MessageHeader($this->generateId(1), MessageHeader::FLAG_REPORTABLE, $messageV3->getMessageHeader()->getSecurityModel()),
             new ScopedPduRequest(new GetRequest(new OidList()), $engineId),
             null,
-            new UsmSecurityParameters($engineId, 0, 0, $user)
+            new UsmSecurityParameters($engineId, 0, 0)
         );
     }
 

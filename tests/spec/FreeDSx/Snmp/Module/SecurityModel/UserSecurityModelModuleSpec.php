@@ -245,7 +245,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
     {
         $this->getDiscoveryRequest($this->request, $this->options)->shouldBeAnInstanceOf(MessageRequestV3::class);
         $this->getDiscoveryRequest($this->request, $this->options)->getScopedPdu()->shouldBeLike(new ScopedPduRequest(new GetRequest(new OidList()), ''));
-        $this->getDiscoveryRequest($this->request, $this->options)->getSecurityParameters()->shouldBeLike(new UsmSecurityParameters('', 0, 0, 'foo'));
+        $this->getDiscoveryRequest($this->request, $this->options)->getSecurityParameters()->shouldBeLike(new UsmSecurityParameters('', 0, 0));
     }
 
     function it_should_handle_a_discovery_response($privacyModule, $authModule)
