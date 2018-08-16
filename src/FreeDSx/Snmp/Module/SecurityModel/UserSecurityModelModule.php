@@ -46,11 +46,20 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
     protected const USM_NOT_IN_TIME_WINDOW = '1.3.6.1.6.3.15.1.1.2.0';
 
+    protected const USM_WRONG_DIGEST = '1.3.6.1.6.3.15.1.1.5.0';
+
+    protected const USM_DECRYPT_ERROR = '1.3.6.1.6.3.15.1.1.6.0';
+
+    protected const ERROR_MAP_CLEAR_TIME = [
+        self::USM_WRONG_DIGEST,
+        self::USM_DECRYPT_ERROR,
+    ];
+
     protected const ERROR_MAP_USM = [
         '1.3.6.1.6.3.15.1.1.1.0' => 'The requested security level was unknown or unavailable (usmStatsUnsupportedSecLevels).',
         '1.3.6.1.6.3.15.1.1.3.0' => 'The username was not recognized (usmStatsUnknownUserNames).',
-        '1.3.6.1.6.3.15.1.1.5.0' => 'The message did not contain the correct digest (usmStatsWrongDigests).',
-        '1.3.6.1.6.3.15.1.1.6.0' => 'The message could not be decrypted (usmStatsDecryptionErrors).',
+        self::USM_WRONG_DIGEST => 'The message did not contain the correct digest (usmStatsWrongDigests).',
+        self::USM_DECRYPT_ERROR => 'The message could not be decrypted (usmStatsDecryptionErrors).',
     ];
 
     /**
@@ -280,6 +289,10 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         }
         foreach ($response->getResponse()->getOids() as $oid) {
             if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
+                # This will force a re-sync for the next request if we have already cached time info..
+                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && isset($this->engineTime[$response->getSecurityParameters()->getEngineId()])) {
+                    unset($this->engineTime[$response->getSecurityParameters()->getEngineId()]);
+                }
                 throw new SnmpRequestException($response, self::ERROR_MAP_USM[$oid->getOid()]);
             }
         }
