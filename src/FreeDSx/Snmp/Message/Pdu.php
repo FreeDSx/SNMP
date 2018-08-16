@@ -137,7 +137,7 @@ class Pdu implements ProtocolElementInterface
      */
     public function toAsn1() : AbstractType
     {
-        return Asn1::context(static::TAG, Asn1::sequence(
+        return Asn1::context(static::getPduTag(), Asn1::sequence(
             Asn1::integer($this->id),
             Asn1::integer($this->errorStatus),
             Asn1::integer($this->errorIndex),
@@ -151,6 +151,14 @@ class Pdu implements ProtocolElementInterface
     public static function fromAsn1(AbstractType $type)
     {
         return new static(...self::getBaseElements($type));
+    }
+
+    /**
+     * @return int
+     */
+    public function getPduTag(): int
+    {
+        return static::TAG;
     }
 
     /**

@@ -54,6 +54,11 @@ class GetRequestSpec extends ObjectBehavior
         $this->getOids()->shouldBeLike(new OidList());
     }
 
+    function it_should_get_the_pdu_tag()
+    {
+        $this->getPduTag()->shouldBeEqualTo(0);
+    }
+
     function it_should_have_an_ASN1_representation()
     {
         $this->toAsn1()->shouldBeLike(

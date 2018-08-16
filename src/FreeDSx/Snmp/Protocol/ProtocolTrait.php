@@ -40,6 +40,63 @@ trait ProtocolTrait
     protected $queue;
 
     /**
+     * Maps allowed response PDUs for the SNMP version.
+     *
+     * @var array
+     */
+    protected $allowedResponses = [
+        0 => [
+            2,
+        ],
+        1 => [
+            2,
+            8.
+        ],
+        3 => [
+            2,
+            8,
+        ],
+    ];
+
+    /**
+     * Maps allowed request PDUs for
+     * @var array
+     */
+    protected $allowedRequests = [
+        0 => [
+            0,
+            1,
+            3,
+            4,
+        ],
+        1 => [
+            0,
+            1,
+            3,
+            5,
+            6,
+            7,
+        ],
+        3 => [
+            0,
+            1,
+            3,
+            5,
+            6,
+            7,
+        ],
+    ];
+
+    /**
+     * @var array
+     */
+    protected $versionMap = [
+        0 => 1,
+        1 => 2,
+        3 => 3,
+    ];
+
+    /**
      * @return Socket
      * @throws ConnectionException
      */

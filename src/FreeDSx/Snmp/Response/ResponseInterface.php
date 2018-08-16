@@ -19,4 +19,8 @@ use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
  */
 interface ResponseInterface extends ProtocolElementInterface
 {
+    /**
+     * @return int
+     */
+    public function getPduTag() : int;
 }

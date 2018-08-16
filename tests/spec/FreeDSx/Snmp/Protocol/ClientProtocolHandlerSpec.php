@@ -11,6 +11,7 @@
 namespace spec\FreeDSx\Snmp\Protocol;
 
 use FreeDSx\Snmp\Exception\ConnectionException;
+use FreeDSx\Snmp\Exception\InvalidArgumentException;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -364,6 +365,30 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         $this->shouldThrow(new SnmpRequestException($response, 'Received a report PDU with the OID(s): 1.2.3'))->during('handle', [Requests::get('1.2.3'), ['version' => 2]]);
+    }
+
+    function it_should_throw_an_SnmpRequestException_if_a_report_response_is_received_with_snmp_v1($encoder, $socket, $queue)
+    {
+        $encoder->encode(Argument::any())->shouldBeCalled()->willReturn('foo');
+        $socket->write('foo')->shouldBeCalled();
+        $queue->getMessage()->shouldBeCalled()->willReturn(new MessageResponseV1('foo', new ReportResponse(1)));
+
+        $this->shouldThrow(SnmpRequestException::class)->during('handle', [Requests::get('1.2.3'), ['version' => 1]]);
+    }
+
+    function it_should_throw_an_InvalidArgumentException_if_a_trap_v2_is_sent_with_snmp_v1()
+    {
+        $this->shouldThrow(InvalidArgumentException::class)->during('handle', [Requests::trap(1, '1.2'), ['version' => 1]]);
+    }
+
+    function it_should_throw_an_InvalidArgumentException_if_an_inform_is_sent_with_snmp_v1()
+    {
+        $this->shouldThrow(InvalidArgumentException::class)->during('handle', [Requests::inform(1, '1.2'), ['version' => 1]]);
+    }
+
+    function it_should_throw_an_InvalidArgumentException_if_a_getbulk_is_sent_with_snmp_v1()
+    {
+        $this->shouldThrow(InvalidArgumentException::class)->during('handle', [Requests::getBulk(1, 2, '1.2'), ['version' => 1]]);
     }
 
     function it_should_throw_an_SnmpConnectionException_if_the_request_has_a_connection_issue_with_the_socket($encoder, $socket)

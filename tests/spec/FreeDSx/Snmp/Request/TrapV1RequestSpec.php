@@ -105,6 +105,11 @@ class TrapV1RequestSpec extends ObjectBehavior
         $this->getSysUpTime()->shouldBeLike(OidValues::timeticks(2));
     }
 
+    function it_should_get_the_pdu_tag()
+    {
+        $this->getPduTag()->shouldBeEqualTo(4);
+    }
+
     function it_should_have_an_ASN1_representation()
     {
         $this->toAsn1()->shouldBeLike(Asn1::context(4, Asn1::sequence(

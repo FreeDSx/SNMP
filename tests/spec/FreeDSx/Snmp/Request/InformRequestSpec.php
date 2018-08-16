@@ -66,6 +66,11 @@ class InformRequestSpec extends ObjectBehavior
         $this->getTrapOid()->shouldBeLike(OidValues::oid('1.2.3'));
     }
 
+    function it_should_get_the_pdu_tag()
+    {
+        $this->getPduTag()->shouldBeEqualTo(6);
+    }
+
     function it_should_have_an_ASN1_representation()
     {
         $this->toAsn1()->shouldBeLike(

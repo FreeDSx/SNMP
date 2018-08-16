@@ -113,6 +113,14 @@ class ClientProtocolHandler
         $options = array_merge($this->options, $options);
         $message = $this->getMessageRequest($request, $options);
 
+        if (!in_array($request->getPduTag(), $this->allowedRequests[$message->getVersion()])) {
+            throw new InvalidArgumentException(sprintf(
+                'The request type "%s" is not allowed in SNMP version %s.',
+                get_class($request),
+                $this->versionMap[$message->getVersion()]
+            ));
+        }
+
         if ($message instanceof MessageRequestV3) {
             $response = $this->sendV3Message($message, $options);
         } else {
@@ -292,6 +300,13 @@ class ClientProtocolHandler
             return;
         }
         $response = $message->getResponse();
+        if (!in_array($response->getPduTag(), $this->allowedResponses[$message->getVersion()])) {
+            throw new SnmpRequestException($message, sprintf(
+                'The PDU type received (%s) is not allowed in SNMP version %s.',
+                get_class($response),
+                $this->versionMap[$message->getVersion()]
+            ));
+        }
         if ($throwOnReport && $response instanceof ReportResponse) {
             $oids = [];
             foreach ($response->getOids() as $oid) {

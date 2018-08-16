@@ -63,6 +63,11 @@ class ReportResponseSpec extends ObjectBehavior
         $this->getErrorIndex()->shouldBeEqualTo(1);
     }
 
+    function it_should_get_the_pdu_tag()
+    {
+        $this->getPduTag()->shouldBeEqualTo(8);
+    }
+
     function it_should_have_an_ASN1_representation()
     {
         $this->toAsn1()->shouldBeLike(Asn1::context(8, Asn1::sequence(

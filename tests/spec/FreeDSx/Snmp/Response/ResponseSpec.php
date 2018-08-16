@@ -63,6 +63,11 @@ class ResponseSpec extends ObjectBehavior
         $this->getErrorIndex()->shouldBeEqualTo(1);
     }
 
+    function it_should_get_the_pdu_tag()
+    {
+        $this->getPduTag()->shouldBeEqualTo(2);
+    }
+
     function it_should_have_an_ASN1_representation()
     {
         $this->toAsn1()->shouldBeLike(Asn1::context(2, Asn1::sequence(

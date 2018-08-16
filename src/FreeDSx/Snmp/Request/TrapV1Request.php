@@ -244,6 +244,14 @@ class TrapV1Request implements RequestInterface
     }
 
     /**
+     * @return int
+     */
+    public function getPduTag(): int
+    {
+        return self::TAG;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toAsn1() : AbstractType
