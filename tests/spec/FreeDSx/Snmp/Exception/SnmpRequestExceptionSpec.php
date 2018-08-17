@@ -60,4 +60,13 @@ class SnmpRequestExceptionSpec extends ObjectBehavior
 
         $this->getMessage()->shouldBeEqualTo('foo');
     }
+
+    function it_should_allow_the_snmp_message_to_be_nullable()
+    {
+        $this->beConstructedWith(null, 'foo');
+
+        $this->getMessage()->shouldBeEqualTo('foo');
+        $this->getSnmpMessage()->shouldBeNull();
+        $this->getResponse()->shouldBeNull();
+    }
 }

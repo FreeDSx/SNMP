@@ -14,6 +14,7 @@ use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Exception\InvalidArgumentException;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
+use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
@@ -168,17 +169,19 @@ class ClientProtocolHandler
      * @throws SnmpRequestException
      * @throws \FreeDSx\Asn1\Exception\EncoderException
      * @throws \FreeDSx\Snmp\Exception\ProtocolException
+     * @throws SecurityModelException
      */
     protected function sendV3Message(MessageRequestV3 $message, array $options, bool $forcedDiscovery = false) : ?MessageResponseInterface
     {
+        $response = null;
         $header = $message->getMessageHeader();
         $securityModule = $this->securityModelFactory->get($header->getSecurityModel());
 
-        if ($forcedDiscovery || $securityModule->isDiscoveryNeeded($message, $options)) {
-            $this->performDiscovery($message, $securityModule, $options);
-        }
-
         try {
+            if ($forcedDiscovery || $securityModule->isDiscoveryNeeded($message, $options)) {
+                $this->performDiscovery($message, $securityModule, $options);
+            }
+
             $id = $this->generateId();
             $this->setPduId($message->getRequest(), $id);
             $message = $securityModule->handleOutgoingMessage($message, $options);
@@ -193,9 +196,10 @@ class ClientProtocolHandler
         } catch (RediscoveryNeededException $e) {
             if (!$forcedDiscovery) {
                 return $this->sendV3Message($message, $options, true);
-            } else {
-                throw new SnmpRequestException($e->getSnmpMessage(), $e->getMessage());
             }
+            throw new SnmpRequestException($response, $e->getMessage(), $e);
+        } catch (SecurityModelException $e) {
+            throw new SnmpRequestException($response, $e->getMessage(), $e);
         }
     }
 

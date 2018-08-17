@@ -10,6 +10,8 @@
 
 namespace FreeDSx\Snmp\Module\SecurityModel;
 
+use FreeDSx\Snmp\Exception\RediscoveryNeededException;
+use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
@@ -27,6 +29,8 @@ interface SecurityModelModuleInterface
      * @param AbstractMessageV3 $message
      * @param array $options
      * @return AbstractMessageV3
+     * @throws RediscoveryNeededException
+     * @throws SecurityModelException
      */
     public function handleIncomingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3;
 
@@ -36,6 +40,8 @@ interface SecurityModelModuleInterface
      * @param AbstractMessageV3 $message
      * @param array $options
      * @return AbstractMessageV3
+     * @throws RediscoveryNeededException
+     * @throws SecurityModelException
      */
     public function handleOutgoingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3;
 

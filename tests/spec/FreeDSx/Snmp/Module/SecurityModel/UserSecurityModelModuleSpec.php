@@ -11,8 +11,8 @@
 namespace spec\FreeDSx\Snmp\Module\SecurityModel;
 
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
+use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
-use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 use FreeDSx\Snmp\Module\Privacy\PrivacyModuleInterface;
@@ -217,9 +217,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]);
     }
 
-    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsUnsupportedSecLevels_report_response()
+    function it_should_need_throw_a_SecurityModelException_if_an_incoming_message_has_a_usmStatsUnsupportedSecLevels_report_response()
     {
-        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+        $this->shouldThrow(SecurityModelException::class)->during('handleIncomingMessage', [new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.1.0', 1)))),
             null,
@@ -227,9 +227,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), $this->options]);
     }
 
-    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsUnknownUserNames_report_response()
+    function it_should_need_throw_a_SecurityModelException_if_an_incoming_message_has_a_usmStatsUnknownUserNames_report_response()
     {
-        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+        $this->shouldThrow(SecurityModelException::class)->during('handleIncomingMessage', [new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.3.0', 1)))),
             null,
@@ -237,9 +237,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), $this->options]);
     }
 
-    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsWrongDigests_report_response()
+    function it_should_need_throw_a_SecurityModelException_if_an_incoming_message_has_a_usmStatsWrongDigests_report_response()
     {
-        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+        $this->shouldThrow(SecurityModelException::class)->during('handleIncomingMessage', [new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.5.0', 1)))),
             null,
@@ -247,9 +247,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), $this->options]);
     }
 
-    function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsDecryptionErrors_report_response()
+    function it_should_need_throw_a_SecurityModelException_if_an_incoming_message_has_a_usmStatsDecryptionErrors_report_response()
     {
-        $this->shouldThrow(SnmpRequestException::class)->during('handleIncomingMessage', [new MessageResponseV3(
+        $this->shouldThrow(SecurityModelException::class)->during('handleIncomingMessage', [new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.6.0', 1)))),
             null,
@@ -257,7 +257,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), $this->options]);
     }
 
-    function it_should_throw_an_SnmpRequestException_if_the_expected_engine_id_does_not_match_the_actual_engine_id()
+    function it_should_throw_an_SecurityModelException_if_the_expected_engine_id_does_not_match_the_actual_engine_id()
     {
         $response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
@@ -265,7 +265,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             null,
             new UsmSecurityParameters('bar', 1, 300, '', '', hex2bin(''))
         );
-        $this->shouldThrow(new SnmpRequestException($response, 'The expected engine ID does not match the known engine ID for this host.'))->during(
+        $this->shouldThrow(new SecurityModelException('The expected engine ID does not match the known engine ID for this host.'))->during(
             'handleIncomingMessage',
             [$response, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]
         );
@@ -305,7 +305,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new UsmSecurityParameters('', 15, 20, 'foo')
         );
 
-        $this->shouldThrow(SnmpRequestException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
+        $this->shouldThrow(SecurityModelException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
     }
 
     function it_should_throw_an_exception_if_the_discovery_response_is_not_a_report_response()
@@ -318,10 +318,10 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new UsmSecurityParameters('foobar', 15, 20, 'foo')
         );
 
-        $this->shouldThrow(SnmpRequestException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
+        $this->shouldThrow(SecurityModelException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
     }
 
-    function it_should_throw_an_SnmpRequestException_if_the_incoming_message_fails_to_authenticate($authModule)
+    function it_should_throw_an_SecurityModelException_if_the_incoming_message_fails_to_authenticate($authModule)
     {
         /** @var AuthenticationModuleInterface $authModule */
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->willThrow(new SnmpAuthenticationException('The digest is invalid.'));
@@ -332,7 +332,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
         );
 
-        $this->shouldThrow(new SnmpRequestException($response, 'The digest is invalid.'))->during(
+        $this->shouldThrow(new SecurityModelException('The digest is invalid.'))->during(
             'handleIncomingMessage',
             [$response, array_merge($this->options, ['use_priv' => false,])]
         );

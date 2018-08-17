@@ -12,8 +12,8 @@ namespace FreeDSx\Snmp\Module\SecurityModel;
 
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
+use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
-use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
@@ -107,13 +107,13 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $pduFactory = $message instanceof MessageRequestInterface ? ScopedPduRequest::class : ScopedPduResponse::class;
 
         if (!$securityParams) {
-            throw new SnmpRequestException($message,'The received SNMP message is missing the security parameters.');
+            throw new SecurityModelException('The received SNMP message is missing the security parameters.');
         }
         if ($options['use_auth'] && !$header->hasAuthentication()) {
-            throw new SnmpRequestException($message, 'Authentication was requested, but the received header has none specified.');
+            throw new SecurityModelException('Authentication was requested, but the received header has none specified.');
         }
         if ($options['use_priv'] && !$header->hasPrivacy()) {
-            throw new SnmpRequestException($message,'Privacy was requested, but the received header has none specified.');
+            throw new SecurityModelException('Privacy was requested, but the received header has none specified.');
         }
 
         if ($options['use_auth']) {
@@ -123,7 +123,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                     $options['auth_pwd']
                 );
             } catch (SnmpAuthenticationException $e) {
-                throw new SnmpRequestException($message, $e->getMessage());
+                throw new SecurityModelException($e->getMessage());
             }
         }
         if ($options['use_priv']) {
@@ -266,16 +266,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $response = $discoveryResponse->getResponse();
         $host = $options['host'] ?? '';
         if (!($usm instanceof UsmSecurityParameters && (string) $usm->getEngineId() !== '')) {
-            throw new SnmpRequestException($discoveryResponse, 'Failed to discover the engine id for USM.');
+            throw new SecurityModelException('Failed to discover the engine id for USM.');
         }
         if (!$response instanceof ReportResponse) {
-            throw new SnmpRequestException($discoveryResponse, sprintf(
+            throw new SecurityModelException(sprintf(
                 'Failed to discover the engine id for USM. Expected a report response, got %s',
                 get_class($response)
             ));
         }
         if (!$response->getOids()->has(self::USM_UNKNOWN_ENGINE_ID)) {
-            throw new SnmpRequestException($discoveryResponse, 'Expected an usmStatsUnknownEngineIDs OID, but none was received.');
+            throw new SecurityModelException('Expected an usmStatsUnknownEngineIDs OID, but none was received.');
         }
         $this->knownEngines[$host] = $usm->getEngineId();
         $this->engineTime[$usm->getEngineId()] = new TimeSync($usm->getEngineBoots(), $usm->getEngineTime());
@@ -294,7 +294,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     /**
      * @param MessageResponseInterface $response
      * @throws RediscoveryNeededException
-     * @throws SnmpRequestException
+     * @throws SecurityModelException
      */
     protected function validateIncomingResponse(MessageResponseInterface $response, array $options) : void
     {
@@ -305,10 +305,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $secParams = $response->getSecurityParameters();
 
         if ($secParams->getEngineId() !== $this->knownEngines[$options['host']]) {
-            throw new SnmpRequestException(
-                $response,
-                'The expected engine ID does not match the known engine ID for this host.'
-            );
+            throw new SecurityModelException('The expected engine ID does not match the known engine ID for this host.');
         }
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
             throw new RediscoveryNeededException($response, sprintf(
@@ -320,9 +317,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
                 # This will force a re-sync for the next request if we have already cached time info..
                 if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && isset($this->engineTime[$secParams->getEngineId()])) {
-                    unset($this->engineTime[$secParams->getEngineId()]);
+                    $this->clearCachedEngine($secParams->getEngineId());
                 }
-                throw new SnmpRequestException($response, self::ERROR_MAP_USM[$oid->getOid()]);
+                throw new SecurityModelException(self::ERROR_MAP_USM[$oid->getOid()]);
             }
         }
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
@@ -358,5 +355,18 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected function getEngineTime(string $engineId) : TimeSync
     {
         return $this->engineTime[$engineId];
+    }
+
+    /**
+     * @param $engineId
+     */
+    protected function clearCachedEngine($engineId) : void
+    {
+        if (($host = array_search($engineId, $this->knownEngines)) !== false) {
+            unset($this->knownEngines[$host]);
+        }
+        if (isset($this->engineTime[$engineId])) {
+            unset($this->engineTime[$engineId]);
+        }
     }
 }

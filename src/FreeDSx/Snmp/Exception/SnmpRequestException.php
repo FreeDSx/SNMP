@@ -45,7 +45,7 @@ class SnmpRequestException extends \Exception
     ];
 
     /**
-     * @var MessageResponseInterface
+     * @var null|MessageResponseInterface
      */
     protected $snmpMessage;
 
@@ -54,26 +54,32 @@ class SnmpRequestException extends \Exception
      * @param null|string $message
      * @param \Throwable|null $previous
      */
-    public function __construct(MessageResponseInterface $response, ?string $message = null, \Throwable $previous = null)
+    public function __construct(?MessageResponseInterface $response, ?string $message = null, \Throwable $previous = null)
     {
         $this->snmpMessage = $response;
+        $errorCode = $response ? $response->getResponse()->getErrorStatus() : 0;
 
-        $message = $message ?? $this->generateMessage($response);
-        parent::__construct($message, $response->getResponse()->getErrorStatus(), $previous);
+        if ($message === null && $response) {
+            $message = $this->generateMessage($response);
+        } else {
+            $message = (string) $message;
+        }
+
+        parent::__construct($message, $errorCode, $previous);
     }
 
     /**
      * @return Pdu|Response|ReportResponse
      */
-    public function getResponse() : Pdu
+    public function getResponse() : ?Pdu
     {
-        return $this->snmpMessage->getResponse();
+        return $this->snmpMessage ? $this->snmpMessage->getResponse() : null;
     }
 
     /**
      * @return MessageResponseInterface
      */
-    public function getSnmpMessage() : MessageResponseInterface
+    public function getSnmpMessage() : ?MessageResponseInterface
     {
         return $this->snmpMessage;
     }
