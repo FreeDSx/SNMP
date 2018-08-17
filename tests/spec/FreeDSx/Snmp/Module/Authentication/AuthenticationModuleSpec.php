@@ -10,6 +10,7 @@
 
 namespace spec\FreeDSx\Snmp\Module\Authentication;
 
+use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
@@ -177,5 +178,111 @@ class AuthenticationModuleSpec extends ObjectBehavior
             null,
             new UsmSecurityParameters('foo', 1, 1, 'foo')
         ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('5ed3e0f10db58eeabbbfe7bb1efd787aa9748781f8695c3a8c2263efe9aeba676d292edebc4967dd0ed2407097a3a944'));
+    }
+
+    function it_should_authenticate_an_incoming_message_with_md5()
+    {
+        $this->beConstructedWith('md5');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('ac04424fc8acff6b9310a03c'))
+        );
+        $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
+    }
+
+    function it_should_authenticate_an_incoming_message_with_sha1()
+    {
+        $this->beConstructedWith('sha1');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('99eb7f99437037b6743d61c1'))
+        );
+        $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
+    }
+
+    function it_should_authenticate_an_incoming_message_with_sha224()
+    {
+        $this->beConstructedWith('sha224');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('8b79b60bfd4322cf72e60be02e435df2'))
+        );
+        $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
+    }
+
+    function it_should_authenticate_an_incoming_message_with_sha256()
+    {
+        $this->beConstructedWith('sha256');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('13144ad34756ddc29e88cd7a105a5cb360256803ce0f67bb'))
+        );
+        $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
+    }
+
+    function it_should_authenticate_an_incoming_message_with_sha384()
+    {
+        $this->beConstructedWith('sha384');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('94c99f3fb92b42fc77d8d0e104cd4d5708fbe249661a6695ad351dc7744316fb'))
+        );
+        $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
+    }
+
+    function it_should_authenticate_an_incoming_message_with_sha512()
+    {
+        $this->beConstructedWith('sha512');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('5ed3e0f10db58eeabbbfe7bb1efd787aa9748781f8695c3a8c2263efe9aeba676d292edebc4967dd0ed2407097a3a944'))
+        );
+        $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
+    }
+
+    function it_should_throw_an_authentication_exception_if_the_received_digest_is_the_wrong_length()
+    {
+        $this->beConstructedWith('md5');
+
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', "\x01")
+        );
+        $this->shouldThrow(new SnmpAuthenticationException('Expected a digest of 12 bytes, but it is 1.'))->during('authenticateIncomingMsg', [$message, 'maplesyrup']);
+
+        $message2 = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('01010101010101010101010101'))
+        );
+        $this->shouldThrow(new SnmpAuthenticationException('Expected a digest of 12 bytes, but it is 13.'))->during('authenticateIncomingMsg', [$message2, 'maplesyrup']);
+    }
+
+    function it_should_throw_an_authentication_exception_if_the_received_digest_is_incorrect()
+    {
+        $this->beConstructedWith('md5');
+        $message = new MessageRequestV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('ac04424fc8acff6b9310a03c'))
+        );
+
+        $this->shouldThrow(new SnmpAuthenticationException('The received message contains the wrong digest.'))->during('authenticateIncomingMsg', [$message, 'foobar123']);
     }
 }

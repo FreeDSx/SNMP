@@ -10,6 +10,7 @@
 
 namespace FreeDSx\Snmp\Module\Authentication;
 
+use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 
 /**
@@ -25,9 +26,11 @@ interface AuthenticationModuleInterface
      * Authenticate an incoming message according to an algorithm.
      *
      * @param AbstractMessageV3 $message
+     * @param string $password
+     * @throws SnmpAuthenticationException
      * @return mixed
      */
-    public function authenticateIncomingMsg(AbstractMessageV3 $message);
+    public function authenticateIncomingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3;
 
 
     /**
@@ -35,6 +38,7 @@ interface AuthenticationModuleInterface
      *
      * @param AbstractMessageV3 $message
      * @param string $password
+     * @throws SnmpAuthenticationException
      * @return mixed
      */
     public function authenticateOutgoingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3;

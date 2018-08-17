@@ -11,6 +11,7 @@
 namespace spec\FreeDSx\Snmp\Module\SecurityModel;
 
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
+use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
@@ -56,6 +57,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             'auth_mech' => 'sha1',
             'priv_mech' => 'aes128',
             'use_auth' => true,
+            'use_priv' => true,
             'user' => 'foo',
             'context_engine_id' => null,
             'auth_pwd' => 'foobar123',
@@ -97,10 +99,22 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->supports()->shouldBeEqualTo(3);
     }
 
+    function it_should_authenticate_an_incoming_message_request_if_authentication_is_specified($authModule, $privacyModule)
+    {
+        /** @var AuthenticationModuleInterface $authModule */
+        $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->request);
+        /** @var PrivacyModuleInterface $privacyModule */
+        $privacyModule->decryptData(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
+
+        $this->handleIncomingMessage($this->request, array_merge($this->options, ['use_priv' => false,]))->shouldBeEqualTo($this->request);
+    }
+
     function it_should_decrypt_an_incoming_message_request_if_it_has_privacy($privacyModule, $authModule)
     {
+        /** @var AuthenticationModuleInterface $authModule */
+        $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->request);
         /** @var PrivacyModuleInterface $privacyModule */
-        $privacyModule->decryptData($this->request, $authModule, 'foobar123')->shouldBeCalled()->willReturn(
+        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
             hex2bin('30140403666f6f0400a00b0201000201000201003000')
         );
 
@@ -111,6 +125,8 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
 
     function it_should_decrypt_an_incoming_message_response_if_it_has_privacy($privacyModule, $authModule)
     {
+        /** @var AuthenticationModuleInterface $authModule */
+        $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->response);
         /** @var PrivacyModuleInterface $privacyModule */
         $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
             hex2bin('30140403666f6f0400a20b0201000201000201003000')
@@ -128,7 +144,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new ScopedPduResponse(new Response(0, 0, 0, new OidList())),
             null,
             new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
-        ), $this->options)->getScopedPdu()->shouldBeLike(new ScopedPduResponse(new Response(0, 0, 0, new OidList())));
+        ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,]))->getScopedPdu()->shouldBeLike(new ScopedPduResponse(new Response(0, 0, 0, new OidList())));
     }
 
     function it_should_encrypt_an_outgoing_message_if_it_has_privacy($privacyModule, $authModule)
@@ -191,14 +207,14 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
 
-    function it_should_need_throw_a_rediscovery_exception_if_an_incoming_message_has_a_notInTimeWindow_report_response()
+    function it_should_throw_a_rediscovery_exception_if_an_incoming_message_has_a_notInTimeWindow_report_response()
     {
         $this->shouldThrow(RediscoveryNeededException::class)->during('handleIncomingMessage', [new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.2.0', 1)))),
             null,
             new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
-        ), $this->options]);
+        ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]);
     }
 
     function it_should_need_throw_a_SnmpRequestException_if_an_incoming_message_has_a_usmStatsUnsupportedSecLevels_report_response()
@@ -249,7 +265,10 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             null,
             new UsmSecurityParameters('bar', 1, 300, '', '', hex2bin(''))
         );
-        $this->shouldThrow(new SnmpRequestException($response, 'The expected engine ID does not match the known engine ID for this host.'))->during('handleIncomingMessage', [$response, $this->options]);
+        $this->shouldThrow(new SnmpRequestException($response, 'The expected engine ID does not match the known engine ID for this host.'))->during(
+            'handleIncomingMessage',
+            [$response, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]
+        );
     }
 
     function it_should_get_a_discovery_request()
@@ -300,5 +319,22 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         );
 
         $this->shouldThrow(SnmpRequestException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
+    }
+
+    function it_should_throw_an_SnmpRequestException_if_the_incoming_message_fails_to_authenticate($authModule)
+    {
+        /** @var AuthenticationModuleInterface $authModule */
+        $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->willThrow(new SnmpAuthenticationException('The digest is invalid.'));
+        $response = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduResponse(new Response(1), 'foo'),
+            null,
+            new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+        );
+
+        $this->shouldThrow(new SnmpRequestException($response, 'The digest is invalid.'))->during(
+            'handleIncomingMessage',
+            [$response, array_merge($this->options, ['use_priv' => false,])]
+        );
     }
 }

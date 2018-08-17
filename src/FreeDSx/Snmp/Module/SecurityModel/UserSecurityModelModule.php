@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Module\SecurityModel;
 
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
+use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -105,7 +106,27 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $header = $message->getMessageHeader();
         $pduFactory = $message instanceof MessageRequestInterface ? ScopedPduRequest::class : ScopedPduResponse::class;
 
-        if ($securityParams && $header->hasPrivacy()) {
+        if (!$securityParams) {
+            throw new SnmpRequestException($message,'The received SNMP message is missing the security parameters.');
+        }
+        if ($options['use_auth'] && !$header->hasAuthentication()) {
+            throw new SnmpRequestException($message, 'Authentication was requested, but the received header has none specified.');
+        }
+        if ($options['use_priv'] && !$header->hasPrivacy()) {
+            throw new SnmpRequestException($message,'Privacy was requested, but the received header has none specified.');
+        }
+
+        if ($options['use_auth']) {
+            try {
+                $message = $this->authFactory->get($options['auth_mech'])->authenticateIncomingMsg(
+                    $message,
+                    $options['auth_pwd']
+                );
+            } catch (SnmpAuthenticationException $e) {
+                throw new SnmpRequestException($message, $e->getMessage());
+            }
+        }
+        if ($options['use_priv']) {
             $decryptedPdu = $this->privacyFactory->get($options['priv_mech'])->decryptData(
                 $message,
                 $this->authFactory->get($options['auth_mech']),

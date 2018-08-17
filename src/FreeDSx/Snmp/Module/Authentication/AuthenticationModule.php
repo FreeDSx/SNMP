@@ -10,8 +10,7 @@
 
 namespace FreeDSx\Snmp\Module\Authentication;
 
-use FreeDSx\Snmp\Exception\SnmpEncryptionException;
-use FreeDSx\Snmp\Exception\SnmpRequestException;
+use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
@@ -72,9 +71,27 @@ class AuthenticationModule implements AuthenticationModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function authenticateIncomingMsg(AbstractMessageV3 $message)
+    public function authenticateIncomingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3
     {
-        // TODO: Implement authenticateIncomingMsg() method.
+        /** @var UsmSecurityParameters $usm */
+        $usm = $message->getSecurityParameters();
+        $digest = $usm->getAuthParams();
+        if (strlen($digest) !== self::N[$this->algorithm]) {
+            throw new SnmpAuthenticationException(sprintf(
+                'Expected a digest of %s bytes, but it is %s.',
+                self::N[$this->algorithm],
+                strlen($digest)
+            ));
+        }
+
+        # As in an outgoing message, replace the digest with zero octets.
+        $usm->setAuthParams(str_repeat("\x00", self::N[$this->algorithm]));
+        $hmac = $this->generateHMAC($message, $password, $usm->getEngineId());
+        if ($hmac !== $digest) {
+            throw new SnmpAuthenticationException('The received message contains the wrong digest.');
+        }
+
+        return $message;
     }
 
     /**
@@ -84,7 +101,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
     {
         # RFC 3414, Section 11.2. Passwords must be at least 8 characters in length
         if (strlen($password) < 8) {
-            throw new SnmpRequestException('The authentication password must be at least 8 characters long.');
+            throw new SnmpAuthenticationException('The authentication password must be at least 8 characters long.');
         }
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -94,26 +111,10 @@ class AuthenticationModule implements AuthenticationModuleInterface
         #     of an OCTET STRING containing N zero octets; it is serialized
         #     according to the rules in [RFC3417].
         $usm->setAuthParams(str_repeat("\x00", self::N[$this->algorithm]));
-
-        # RFC 7860, Section 4.2.1. Step 2:
-        #     Using the secret authKey of M octets, the HMAC is calculated over
-        #     the wholeMsg according to RFC 6234 with hash function H.
-        $key = $this->generateKey($password, $usm->getEngineId());
-        $hmac = hash_hmac(
-            $this->algorithm,
-            (new SnmpEncoder())->encode($message->toAsn1()),
-            substr($key, 0, self::M[$this->algorithm]),
-            true
-        );
-        $this->throwOnHashError($hmac);
-
-        # RFC 7860, Section 4.2.1. Step 3 and 4:
-        #     3.  The N first octets of the above HMAC are taken as the computed
-        #         MAC value.
-        #
-        #     4.  The msgAuthenticationParameters field is replaced with the MAC
-        #         obtained in the previous step.
-        $usm->setAuthParams(substr($hmac, 0, self::N[$this->algorithm]));
+        # RFC 7860, Section 4.2.1. Step 4:
+        #     The msgAuthenticationParameters field is replaced with the MAC
+        #     obtained in the previous step.
+        $usm->setAuthParams($this->generateHMAC($message, $password, $usm->getEngineId()));
 
         return $message;
     }
@@ -131,7 +132,6 @@ class AuthenticationModule implements AuthenticationModuleInterface
      *
      * @param string $password
      * @param string $engineId
-     * @param string $algorithm
      * @return string
      */
     public function generateKey(string $password, string $engineId)
@@ -177,15 +177,43 @@ class AuthenticationModule implements AuthenticationModuleInterface
 
     /**
      * @param $result
-     * @throws SnmpEncryptionException
+     * @throws SnmpAuthenticationException
      */
     protected function throwOnHashError($result) : void
     {
         if ($result === false) {
-            throw new SnmpEncryptionException(sprintf(
+            throw new SnmpAuthenticationException(sprintf(
                 'Unable to hash value using using algorithm %s.',
                 $this->algorithm
             ));
         }
+    }
+
+    /**
+     * @param AbstractMessageV3 $message
+     * @param string $password
+     * @param string $engineId
+     * @return string
+     * @throws SnmpAuthenticationException
+     * @throws \FreeDSx\Asn1\Exception\EncoderException
+     */
+    protected function generateHMAC(AbstractMessageV3 $message, string $password, $engineId)
+    {
+        # RFC 7860, Section 4.2.1. Step 2:
+        #     Using the secret authKey of M octets, the HMAC is calculated over
+        #     the wholeMsg according to RFC 6234 with hash function H.
+        $key = $this->generateKey($password, $engineId);
+        $hmac = hash_hmac(
+            $this->algorithm,
+            (new SnmpEncoder())->encode($message->toAsn1()),
+            substr($key, 0, self::M[$this->algorithm]),
+            true
+        );
+        $this->throwOnHashError($hmac);
+
+        # RFC 7860, Section 4.2.1. Step 3:
+        #     The N first octets of the above HMAC are taken as the computed
+        #     MAC value.
+        return substr($hmac, 0, self::N[$this->algorithm]);
     }
 }
