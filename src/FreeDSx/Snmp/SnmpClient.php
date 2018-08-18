@@ -207,6 +207,18 @@ class SnmpClient
     }
 
     /**
+     * Perform a walk using the SnmpWalk class helper.
+     *
+     * @param null|string $startAt
+     * @param null|string $endAt
+     * @return SnmpWalk
+     */
+    public function walk($startAt = null, $endAt = null) : SnmpWalk
+    {
+        return new SnmpWalk($this, $startAt, $endAt);
+    }
+
+    /**
      * Send a generic SNMP request and get the SNMP response back. Note that some requests do not generate a response.
      * In this case it will return null.
      *

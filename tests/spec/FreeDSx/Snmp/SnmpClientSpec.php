@@ -27,6 +27,7 @@ use FreeDSx\Snmp\Request\TrapV1Request;
 use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\Response;
 use FreeDSx\Snmp\SnmpClient;
+use FreeDSx\Snmp\SnmpWalk;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -166,5 +167,15 @@ class SnmpClientSpec extends ObjectBehavior
             ->shouldBeCalled()->willReturn($this->response);
 
         $this->getValue('1.2.3')->shouldBeEqualTo('1');
+    }
+
+    function it_should_get_an_SnmpWalk_helper_when_calling_walk()
+    {
+        $this->walk()->shouldReturnAnInstanceOf(SnmpWalk::class);
+    }
+
+    function it_should_get_an_SnmpWalk_helper_with_a_specific_start_and_end_oid_when_calling_walk()
+    {
+        $this->walk('1.2.3', '1.2.4')->shouldReturnAnInstanceOf(SnmpWalk::class);
     }
 }
