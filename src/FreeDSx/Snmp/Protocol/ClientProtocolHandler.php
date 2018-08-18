@@ -235,7 +235,7 @@ class ClientProtocolHandler
             return new MessageRequestV2($options['community'], $request);
         } elseif ($options['version'] === 3) {
             return new MessageRequestV3(
-                $this->generateMessageHeader($options),
+                $this->generateMessageHeader($request, $options),
                 new ScopedPduRequest($request, (string) $options['context_engine_id'], (string) $options['context_name'])
             );
         } else {
@@ -264,11 +264,12 @@ class ClientProtocolHandler
     }
 
     /**
+     * @param RequestInterface $request
      * @param array $options
      * @return MessageHeader
      * @throws \Exception
      */
-    protected function generateMessageHeader(array $options) : MessageHeader
+    protected function generateMessageHeader(RequestInterface $request, array $options) : MessageHeader
     {
         $header = new MessageHeader($this->generateId(0));
 
@@ -287,7 +288,10 @@ class ClientProtocolHandler
         if ($options['use_priv']) {
             $header->addFlag(MessageHeader::FLAG_PRIV);
         }
-        $header->addFlag(MessageHeader::FLAG_REPORTABLE);
+        # Unconfirmed PDUs do not have the reportable flag set
+        if (!$request instanceof TrapV2Request) {
+            $header->addFlag(MessageHeader::FLAG_REPORTABLE);
+        }
 
         return $header;
     }
