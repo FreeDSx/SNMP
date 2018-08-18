@@ -19,6 +19,7 @@ The OpenSSL extension is required for privacy / encryption support.
   * [Configuration](/docs/Client/Configuration.md)
   * [General Usage](/docs/Client/General-Usage.md)
   * [Request Types](/docs/Client/Request-Types.md)
+  * [SNMP Walk](/docs/Client/SNMP-Walk.md)
 
 # Getting Started
 
@@ -55,6 +56,22 @@ foreach($oids as $oid) {
     echo sprintf("%s == %s", $oid->getOid(), (string) $oid->getValue()).PHP_EOL;
 }
 
+# Using the SnmpClient, get the helper class for an SNMP walk...
+$walk = $snmp->walk();
+
+# Keep the walk going until there are no more OIDs left
+while($walk->hasOids()) {
+    try {
+        # Get the next OID in the walk
+        $oid = $walk->next();
+        echo sprintf("%s = %s", $oid->getOid(), $oid->getValue()).PHP_EOL;
+    } catch (\Exception $e) {
+        # If we had an issue, display it here (network timeout, etc)
+        echo "Unable to retrieve OID. ".$e->getMessage().PHP_EOL;
+    }
+}
+
+echo sprintf("Walked a total of %s OIDs.", $walk->count()).PHP_EOL; 
 ```
 
 For a complete configuration reference please see the [configuration doc](/docs/Client/Configuration.md). There are also

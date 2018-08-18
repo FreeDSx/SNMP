@@ -1,0 +1,141 @@
+SNMP Walk
+================
+
+The SNMP client can perform an SNMP walk by using the helper class when calling the `walk()` method. The helper class
+has several methods to help control various aspects of the walk.
+
+* [Basic Use](#basic-use)
+* [API](#api)
+  * [next](#next)
+  * [skipTo](#skipto)
+  * [restart](#restart)
+  * [startAt](#startat)
+  * [endAt](#endat)
+  * [count](#count)
+  * [isComplete](#iscomplete)
+  * [hasOids](#hasoids)
+
+## Basic Use
+
+You can perform a basic walk using the following example. By default the walk will start at OID `1.3.6.1.2.1`. and will
+go until the end of the MIB view. You can control this behavior by passing a `$startAt` and `$endAt` parameter to walk
+(respectively).
+
+```php
+# Using the SnmpClient, get the helper class for the walk...
+$walk = $snmp->walk();
+
+# Keep the walk going until there are no more OIDs left
+while($walk->hasOids()) {
+    try {
+        # Get the next OID in the walk
+        $oid = $walk->next();
+        echo sprintf("%s = %s", $oid->getOid(), $oid->getValue()).PHP_EOL;
+    } catch (\Exception $e) {
+        # If we had an issue, display it here (network timeout, etc)
+        echo "Unable to retrieve OID. ".$e->getMessage().PHP_EOL;
+    }
+}
+
+echo sprintf("Walked a total of %s OIDs.", $walk->count()).PHP_EOL; 
+```
+
+## API
+
+### next
+
+Get the next OID in the walk.
+
+```php
+$oid = $walk->next();
+echo sprintf("%s = %s", $oid->getOid(), $oid->getValue()).PHP_EOL;
+```
+
+### skipTo
+
+Skip to the OID specified. The following call to `next()` will be called for this OID.
+
+```php
+# Get the next OID as normal..
+$oid = $walk->next();
+var_dump($oid);
+
+# This will make the next be OID 1.3.6.1.2.1.1.9.1.2.7 (ie. the "next" in the sequence)
+$oid = $walk->skipTo('1.3.6.1.2.1.1.9.1.2.6')
+var_dump($oid);
+```
+
+### restart
+
+Regardless of where you are in the walk, start back at the default OID (also resets the count).
+
+```php
+# Restart the walk, starting it over again...
+$walk->restart();
+
+# This will be the starting OID and a count of 1
+$oid = $walk->next();
+var_dump($oid);
+var_dump($walk->count());
+```
+
+### startAt
+
+Start the walk at a specific OID instead of the default (`1.3.6.1.2.1`). This can also be done when constructing the
+walk.
+
+```php
+# Using the constructor from the SNMP client (the first parameter is for where to start)..
+$walk = $snmp->walk('1.3.6.1.2.1.1.8');
+
+# Using the method after construction from the SnmpClient..
+$walk = $snmp->walk()->startAt('1.3.6.1.2.1.1.8');
+```
+
+### endAt
+
+End the walk at a specific OID instead, whether or not it is the end of the MIB view. This can also be done when
+constructing the walk.
+
+```php
+# Using the method after construction from the SnmpClient..
+$walk = $snmp->walk()->endAt('1.3.6.1.2.1.1.8');
+
+# Using the constructor from the SNMP client (the second parameter is for where to end)..
+$walk = $snmp->walk(null, '1.3.6.1.2.1.1.8');
+```
+
+### count
+
+Get the number of OIDs processed by the walk. This is reset when the `restart()` method is called.
+
+```php
+# Walk a couple OIDs...
+$walk->next();
+$walk->next();
+$walk->next();
+
+# Check the count..
+var_dump($walk->count());
+```
+
+### isComplete
+
+Returns a boolean for whether or not the walk is complete. This will be true if we are at the ending OID that was specified
+explicitly or an OID was reached that has an end of MIB view status.
+
+```php
+while (!$walk->isComplete()) {
+    $oid = $walk->next();
+}
+```
+
+### hasOids
+
+The inverse of `isComplete()`. It will return true if there are still OIDs to be returned in the walk.
+
+```php
+while ($walk->hasOids()) {
+    $oid = $walk->next();
+}
+```
