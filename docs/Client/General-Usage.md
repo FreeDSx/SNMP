@@ -6,7 +6,7 @@ General SNMP Client Usage
   * [NoAuthNoPriv](#noauthnopriv)
   * [AuthNoPriv](#authnopriv)
   * [AuthPriv](#authpriv)
-* [Requests and Requests](#requests-and-responses)
+* [Requests and Responses](#requests-and-responses)
 
 The SnmpClient class is your main point for sending SNMP requests and receiving responses from the host. This details
 some general information on using the class to send SNMP v1/v2/v3 requests and get responses back.
@@ -174,9 +174,9 @@ Message object that generated the exception from the exception object via the `g
 try {
     $message = $snmp->send(Requests::get('1.3.6.1.2.1')).PHP_EOL;
 } catch (SnmpRequestException $e) {
-   # Get the full SNMP Message object
+   # Get the full SNMP Message object (may be null depending on the context of the error)
    var_dump($e->getSnmpMessage());
-   # Get the response object only
+   # Get the response object only (may be null depending on the context of the error)
    var_dump($e->getResponse());
    exit;
 }
