@@ -46,6 +46,11 @@ class EngineIdSpec extends ObjectBehavior
         $this->toHex()->shouldBeEqualTo('8000cd54010a2b01eb');
     }
 
+    function it_should_have_a_string_representation_as_hex()
+    {
+        $this->__toString()->shouldBeEqualTo('8000cd54010a2b01eb');
+    }
+
     function it_should_get_the_binary_representation_for_ipv4()
     {
         $this->toBinary()->shouldBeEqualTo(hex2bin('8000cd54010a2b01eb'));
