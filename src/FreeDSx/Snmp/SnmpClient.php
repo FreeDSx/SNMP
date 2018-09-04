@@ -44,7 +44,7 @@ class SnmpClient
         'timeout_read' => 10,
         'version' => 2,
         'security_model' => 'usm',
-        'context_engine_id' => null,
+        'engine_id' => null,
         'context_name' => null,
         'use_auth' => false,
         'use_priv' => false,

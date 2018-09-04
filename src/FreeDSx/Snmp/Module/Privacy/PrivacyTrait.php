@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Module\Privacy;
 
 use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
@@ -179,11 +180,11 @@ trait PrivacyTrait
      *
      * @param AuthenticationModuleInterface $authMod
      * @param string $cryptKey
-     * @param string $engineId
+     * @param EngineId $engineId
      * @param int $keySize
      * @return string
      */
-    protected function localizeReeder(AuthenticationModuleInterface $authMod, $cryptKey, string $engineId, int $keySize)
+    protected function localizeReeder(AuthenticationModuleInterface $authMod, $cryptKey, EngineId $engineId, int $keySize)
     {
         # Section 2.1
         # -----------

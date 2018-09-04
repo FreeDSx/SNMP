@@ -23,10 +23,10 @@ class ScopedPduResponse extends ScopedPdu
 {
     /**
      * @param ResponseInterface $response
-     * @param string $contextEngineId
+     * @param null|EngineId $contextEngineId
      * @param string $contextName
      */
-    public function __construct(ResponseInterface $response, string $contextEngineId = '', string $contextName = '')
+    public function __construct(ResponseInterface $response, ?EngineId $contextEngineId = null, string $contextName = '')
     {
         parent::__construct($response, $contextEngineId, $contextName);
     }

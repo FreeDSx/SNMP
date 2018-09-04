@@ -16,6 +16,7 @@ use FreeDSx\Asn1\Type\IntegerType;
 use FreeDSx\Asn1\Type\OctetStringType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
 
 /**
@@ -39,7 +40,7 @@ use FreeDSx\Snmp\Protocol\SnmpEncoder;
 class UsmSecurityParameters implements SecurityParametersInterface
 {
     /**
-     * @var string
+     * @var null|EngineId
      */
     protected $engineId;
 
@@ -69,14 +70,14 @@ class UsmSecurityParameters implements SecurityParametersInterface
     protected $privacyParams;
 
     /**
-     * @param string $engineId
+     * @param null|EngineId $engineId
      * @param int $engineBoots
      * @param int $engineTime
      * @param string $username
      * @param string $authParams
      * @param string $privacyParams
      */
-    public function __construct(string $engineId = '', int $engineBoots = 0, int $engineTime = 0, string $username = '', ?string $authParams = null, ?string $privacyParams = null)
+    public function __construct(?EngineId $engineId = null, int $engineBoots = 0, int $engineTime = 0, string $username = '', ?string $authParams = null, ?string $privacyParams = null)
     {
         $this->engineId = $engineId;
         $this->engineBoots = $engineBoots;
@@ -125,18 +126,18 @@ class UsmSecurityParameters implements SecurityParametersInterface
     }
 
     /**
-     * @return string
+     * @return null|EngineId
      */
-    public function getEngineId() : string
+    public function getEngineId() : ?EngineId
     {
         return $this->engineId;
     }
 
     /**
-     * @param string $engineId
+     * @param null|EngineId $engineId
      * @return UsmSecurityParameters
      */
-    public function setEngineId(string $engineId)
+    public function setEngineId(?EngineId $engineId)
     {
         $this->engineId = $engineId;
 
@@ -213,8 +214,10 @@ class UsmSecurityParameters implements SecurityParametersInterface
      */
     public function toAsn1(): AbstractType
     {
+        $engineId = ($this->engineId === null) ? '' : $this->engineId->toBinary();
+
         return Asn1::sequence(
-            Asn1::octetString($this->engineId),
+            Asn1::octetString($engineId),
             Asn1::integer($this->engineBoots),
             Asn1::integer($this->engineTime),
             Asn1::octetString($this->username),
@@ -256,10 +259,13 @@ class UsmSecurityParameters implements SecurityParametersInterface
                 ));
             }
         }
-
-        return new self(...array_map(function ($type) {
+        $args = array_map(function ($type) {
             /** @var AbstractType $type */
             return $type->getValue();
-        }, $args));
+        }, $args);
+        $args[0] = ($args[0] === '') ? null : EngineId::fromBinary($args[0]);
+
+
+        return new self(...$args);
     }
 }

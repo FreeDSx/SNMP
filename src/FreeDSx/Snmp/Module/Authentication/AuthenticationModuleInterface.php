@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Module\Authentication;
 
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
+use FreeDSx\Snmp\Message\EngineId;
 
 /**
  * RFC 3414, Section 1.6.1.
@@ -45,10 +46,10 @@ interface AuthenticationModuleInterface
 
     /**
      * @param string $password
-     * @param string $engineId
+     * @param EngineId $engineId
      * @return string
      */
-    public function generateKey(string $password, string $engineId);
+    public function generateKey(string $password, EngineId $engineId);
 
     /**
      * @param $value

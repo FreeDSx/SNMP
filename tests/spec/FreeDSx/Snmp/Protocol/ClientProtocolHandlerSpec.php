@@ -52,7 +52,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         'timeout_connect' => 5,
         'timeout_read' => 10,
         'version' => 2,
-        'context_engine_id' => '',
+        'engine_id' => '',
         'context_name' => '',
         'security_model' => 'usm',
         'use_auth' => false,

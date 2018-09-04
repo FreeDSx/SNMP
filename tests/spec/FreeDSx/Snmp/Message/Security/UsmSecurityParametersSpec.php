@@ -11,6 +11,7 @@
 namespace spec\FreeDSx\Snmp\Message\Security;
 
 use FreeDSx\Asn1\Asn1;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\Security\SecurityParametersInterface;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
@@ -20,7 +21,7 @@ class UsmSecurityParametersSpec extends ObjectBehavior
 {
     function let()
     {
-        $this->beConstructedWith('foo', 1, 2, 'bar', 'auth', 'priv');
+        $this->beConstructedWith(EngineId::fromText('foo'), 1, 2, 'bar', 'auth', 'priv');
     }
 
     function it_is_initializable()
@@ -40,7 +41,7 @@ class UsmSecurityParametersSpec extends ObjectBehavior
 
     function it_should_get_the_engine_id()
     {
-        $this->getEngineId()->shouldBeEqualTo('foo');
+        $this->getEngineId()->shouldBeLike(EngineId::fromText('foo'));
     }
 
     function it_should_get_the_engine_boots()
@@ -72,7 +73,7 @@ class UsmSecurityParametersSpec extends ObjectBehavior
     {
         $this->toAsn1()->shouldBeLike(
             Asn1::sequence(
-                Asn1::octetString('foo'),
+                Asn1::octetString(EngineId::fromText('foo')->toBinary()),
                 Asn1::integer(1),
                 Asn1::integer(2),
                 Asn1::octetString('bar'),
@@ -85,14 +86,14 @@ class UsmSecurityParametersSpec extends ObjectBehavior
     function it_should_be_constructed_from_an_ASN1_representation()
     {
         $this::fromAsn1(Asn1::octetString((new SnmpEncoder())->encode(Asn1::sequence(
-            Asn1::octetString('foo'),
+            Asn1::octetString(EngineId::fromText('foo')->toBinary()),
             Asn1::integer(1),
             Asn1::integer(2),
             Asn1::octetString('bar'),
             Asn1::octetString('auth'),
             Asn1::octetString('priv')
         ))))->shouldBeLike(
-            new UsmSecurityParameters('foo', 1, 2, 'bar', 'auth', 'priv')
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 2, 'bar', 'auth', 'priv')
         );
     }
 }

@@ -12,6 +12,7 @@ namespace spec\FreeDSx\Snmp\Message;
 
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\IncompleteType;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\ScopedPdu;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
@@ -65,7 +66,7 @@ class ScopedPduResponseSpec extends ObjectBehavior
 
     function it_should_get_the_context_engine_id()
     {
-        $this->getContextEngineId()->shouldBeEqualTo('');
+        $this->getContextEngineId()->shouldBeNull();
     }
 
     function it_should_have_an_ASN1_representation($response)
@@ -98,9 +99,9 @@ class ScopedPduResponseSpec extends ObjectBehavior
         $pdu = Asn1::context(2, $pdu)->setIsConstructed(true);
 
         $this::fromAsn1(Asn1::sequence(
-            Asn1::octetString('foo'),
+            Asn1::octetString(EngineId::fromText('foo')->toBinary()),
             Asn1::octetString('bar'),
             $pdu
-        ))->shouldBeLike(new ScopedPduResponse(new Response(0), 'foo', 'bar'));
+        ))->shouldBeLike(new ScopedPduResponse(new Response(0), EngineId::fromText('foo'), 'bar'));
     }
 }

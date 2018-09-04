@@ -16,6 +16,7 @@ use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -60,7 +61,7 @@ class ClientProtocolHandler
         'timeout_read' => 10,
         'version' => 2,
         'security_model' => 'usm',
-        'context_engine_id' => null,
+        'engine_id' => null,
         'context_name' => null,
         'use_auth' => false,
         'use_priv' => false,
@@ -78,11 +79,6 @@ class ClientProtocolHandler
     protected $securityModel = [
         'usm' => 3,
     ];
-
-    /**
-     * @var SecurityModelModuleFactory
-     */
-    protected $securityModelFactory;
 
     /**
      * @param array $options
@@ -234,9 +230,10 @@ class ClientProtocolHandler
         } elseif ($options['version'] === 2) {
             return new MessageRequestV2($options['community'], $request);
         } elseif ($options['version'] === 3) {
+            $engineId = ($options['engine_id'] instanceof EngineId) ? $options['engine_id'] : null;
             return new MessageRequestV3(
                 $this->generateMessageHeader($request, $options),
-                new ScopedPduRequest($request, (string) $options['context_engine_id'], (string) $options['context_name'])
+                new ScopedPduRequest($request, $engineId, (string) $options['context_name'])
             );
         } else {
             throw new RuntimeException(sprintf('SNMP version %s is not supported', $options['version']));

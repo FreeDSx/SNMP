@@ -31,7 +31,7 @@ use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
 abstract class ScopedPdu implements ProtocolElementInterface
 {
     /**
-     * @var string
+     * @var null|EngineId
      */
     protected $contextEngineId;
 
@@ -47,10 +47,10 @@ abstract class ScopedPdu implements ProtocolElementInterface
 
     /**
      * @param Pdu $pdu
-     * @param string $contextEngineId
+     * @param null|EngineId $contextEngineId
      * @param string $contextName
      */
-    public function __construct(Pdu $pdu, $contextEngineId = '', $contextName = '')
+    public function __construct(Pdu $pdu, ?EngineId $contextEngineId = null, $contextName = '')
     {
         $this->pdu = $pdu;
         $this->contextEngineId = $contextEngineId;
@@ -68,7 +68,7 @@ abstract class ScopedPdu implements ProtocolElementInterface
     /**
      * @return string
      */
-    public function getContextEngineId() : string
+    public function getContextEngineId() : ?EngineId
     {
         return $this->contextEngineId;
     }
@@ -78,8 +78,10 @@ abstract class ScopedPdu implements ProtocolElementInterface
      */
     public function toAsn1() : AbstractType
     {
+        $engineId = ($this->contextEngineId === null) ? '' : $this->contextEngineId->toBinary();
+
         return Asn1::sequence(
-            Asn1::octetString($this->contextEngineId),
+            Asn1::octetString($engineId),
             Asn1::octetString($this->contextName),
             $this->pdu->toAsn1()
         );
@@ -111,7 +113,8 @@ abstract class ScopedPdu implements ProtocolElementInterface
                 get_class($contextName)
             ));
         }
+        $engineId = ($engineId->getValue() === '') ? null : EngineId::fromBinary($engineId->getValue());
 
-        return [$engineId->getValue(), $contextName->getValue(), $pdu];
+        return [$engineId, $contextName->getValue(), $pdu];
     }
 }

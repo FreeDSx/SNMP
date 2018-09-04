@@ -22,11 +22,11 @@ use FreeDSx\Snmp\Request\RequestInterface;
 class ScopedPduRequest extends ScopedPdu
 {
     /**
-     * @param string $contextEngineId
+     * @param null|EngineId $contextEngineId
      * @param string $contextName
      * @param RequestInterface $request
      */
-    public function __construct(RequestInterface $request, string $contextEngineId = '', string $contextName = '')
+    public function __construct(RequestInterface $request, ?EngineId $contextEngineId = null, string $contextName = '')
     {
         parent::__construct($request, $contextEngineId, $contextName);
     }
@@ -43,10 +43,10 @@ class ScopedPduRequest extends ScopedPdu
     }
 
     /**
-     * @param string $contextEngineId
+     * @param null|EngineId $contextEngineId
      * @return $this
      */
-    public function setContextEngineId(string $contextEngineId)
+    public function setContextEngineId(?EngineId $contextEngineId)
     {
         $this->contextEngineId = $contextEngineId;
 

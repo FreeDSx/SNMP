@@ -11,6 +11,7 @@
 namespace spec\FreeDSx\Snmp\Module\Authentication;
 
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
@@ -98,7 +99,7 @@ class AuthenticationModuleSpec extends ObjectBehavior
     function it_should_generate_a_key_using_md5()
     {
         $this->beConstructedWith('md5');
-        $this->generateKey('maplesyrup', hex2bin('000000000000000000000002'))->shouldBeEqualTo(
+        $this->generateKey('maplesyrup', EngineId::fromBinary(hex2bin('000000000000000000000002')))->shouldBeEqualTo(
             hex2bin('526f5eed9fcce26f8964c2930787d82b')
         );
     }
@@ -109,7 +110,7 @@ class AuthenticationModuleSpec extends ObjectBehavior
     function it_should_generate_a_key_using_sha1()
     {
         $this->beConstructedWith('sha1');
-        $this->generateKey('maplesyrup', hex2bin('000000000000000000000002'))->shouldBeEqualTo(
+        $this->generateKey('maplesyrup', EngineId::fromBinary(hex2bin('000000000000000000000002')))->shouldBeEqualTo(
             hex2bin('6695febc9288e36282235fc7151f128497b38f3f')
         );
     }
@@ -119,10 +120,10 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('md5');
         $this->authenticateOutgoingMsg(new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo')
-        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('ac04424fc8acff6b9310a03c'));
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo')
+        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin("63ca6b44dce27a3b41835573"));
     }
 
     function it_should_authenticate_an_outgoing_message_with_sha1()
@@ -130,10 +131,10 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha1');
         $this->authenticateOutgoingMsg(new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo')
-        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('99eb7f99437037b6743d61c1'));
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo')
+        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('05ada614688125b4a9034c6a'));
     }
 
     function it_should_authenticate_an_outgoing_message_with_sha224()
@@ -141,10 +142,10 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha224');
         $this->authenticateOutgoingMsg(new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo')
-        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('8b79b60bfd4322cf72e60be02e435df2'));
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo')
+        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('c60e94ce3cd114c01744de08bf2610a2'));
     }
 
     function it_should_authenticate_an_outgoing_message_with_sha256()
@@ -152,10 +153,10 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha256');
         $this->authenticateOutgoingMsg(new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo')
-        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('13144ad34756ddc29e88cd7a105a5cb360256803ce0f67bb'));
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo')
+        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('1abfd2cb6bc2acad91f25572bbee1ca80719da481cc6dd66'));
     }
 
     function it_should_authenticate_an_outgoing_message_with_sha384()
@@ -163,10 +164,10 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha384');
         $this->authenticateOutgoingMsg(new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo')
-        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('94c99f3fb92b42fc77d8d0e104cd4d5708fbe249661a6695ad351dc7744316fb'));
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo')
+        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('3bd5d0778d96ecf4179eb98ec3afff423dad2c2ea4dfd8efd2b970bd24b184f4'));
     }
 
     function it_should_authenticate_an_outgoing_message_with_sha512()
@@ -174,10 +175,10 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha512');
         $this->authenticateOutgoingMsg(new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo')
-        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('5ed3e0f10db58eeabbbfe7bb1efd787aa9748781f8695c3a8c2263efe9aeba676d292edebc4967dd0ed2407097a3a944'));
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo')
+        ), 'maplesyrup')->getSecurityParameters()->getAuthParams()->shouldBeEqualTo(hex2bin('2c1c10a4e405f1b63749c7c6adb5025cd7f0ab9a26a3001c34ca8e5c3e895f1c98a07b12308dcb9d9c389b7395ed098f'));
     }
 
     function it_should_authenticate_an_incoming_message_with_md5()
@@ -185,9 +186,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('md5');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('ac04424fc8acff6b9310a03c'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin("63ca6b44dce27a3b41835573"))
         );
         $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
     }
@@ -197,9 +198,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha1');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('99eb7f99437037b6743d61c1'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('05ada614688125b4a9034c6a'))
         );
         $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
     }
@@ -209,9 +210,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha224');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('8b79b60bfd4322cf72e60be02e435df2'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('c60e94ce3cd114c01744de08bf2610a2'))
         );
         $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
     }
@@ -221,9 +222,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha256');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('13144ad34756ddc29e88cd7a105a5cb360256803ce0f67bb'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('1abfd2cb6bc2acad91f25572bbee1ca80719da481cc6dd66'))
         );
         $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
     }
@@ -233,9 +234,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha384');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('94c99f3fb92b42fc77d8d0e104cd4d5708fbe249661a6695ad351dc7744316fb'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('3bd5d0778d96ecf4179eb98ec3afff423dad2c2ea4dfd8efd2b970bd24b184f4'))
         );
         $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
     }
@@ -245,9 +246,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('sha512');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('5ed3e0f10db58eeabbbfe7bb1efd787aa9748781f8695c3a8c2263efe9aeba676d292edebc4967dd0ed2407097a3a944'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('2c1c10a4e405f1b63749c7c6adb5025cd7f0ab9a26a3001c34ca8e5c3e895f1c98a07b12308dcb9d9c389b7395ed098f'))
         );
         $this->authenticateIncomingMsg($message, 'maplesyrup')->shouldBeEqualTo($message);
     }
@@ -258,17 +259,17 @@ class AuthenticationModuleSpec extends ObjectBehavior
 
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', "\x01")
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', "\x01")
         );
         $this->shouldThrow(new SnmpAuthenticationException('Expected a digest of 12 bytes, but it is 1.'))->during('authenticateIncomingMsg', [$message, 'maplesyrup']);
 
         $message2 = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('01010101010101010101010101'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('01010101010101010101010101'))
         );
         $this->shouldThrow(new SnmpAuthenticationException('Expected a digest of 12 bytes, but it is 13.'))->during('authenticateIncomingMsg', [$message2, 'maplesyrup']);
     }
@@ -278,9 +279,9 @@ class AuthenticationModuleSpec extends ObjectBehavior
         $this->beConstructedWith('md5');
         $message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo'),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', hex2bin('ac04424fc8acff6b9310a03c'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', hex2bin('ac04424fc8acff6b9310a03c'))
         );
 
         $this->shouldThrow(new SnmpAuthenticationException('The received message contains the wrong digest.'))->during('authenticateIncomingMsg', [$message, 'foobar123']);

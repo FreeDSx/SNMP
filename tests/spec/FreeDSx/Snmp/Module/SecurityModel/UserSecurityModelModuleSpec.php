@@ -14,6 +14,7 @@ use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 use FreeDSx\Snmp\Module\Privacy\PrivacyModuleInterface;
 use FreeDSx\Snmp\Module\SecurityModel\TimeSync;
@@ -59,7 +60,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             'use_auth' => true,
             'use_priv' => true,
             'user' => 'foo',
-            'context_engine_id' => null,
+            'engine_id' => null,
             'auth_pwd' => 'foobar123',
         ];
 
@@ -69,19 +70,19 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
             new ScopedPduRequest(new GetRequest(new OidList())),
             hex2bin('67889ff865a14762d876cb5ddb640ff582681461bec6'),
-            new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
 
         );
         $this->response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
             null,
             hex2bin('67889ff865a14762d874cb5ddb640ff5ca02febb5e2f'),
-            new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
         );
         $authModule->authenticateOutgoingMsg(Argument::any(), Argument::any())->willReturn($this->request);
         $authModule->authenticateIncomingMsg(Argument::any(), Argument::any())->willReturn($this->request);
 
-        $this->beConstructedWith($privacyFactory, $authFactory, ['foo' => new TimeSync(1, 2)], ['foo' => 'foo']);
+        $this->beConstructedWith($privacyFactory, $authFactory, [EngineId::fromText('foo')->toBinary() => new TimeSync(1, 2)], ['foo' => EngineId::fromText('foo')]);
     }
 
     function it_is_initializable()
@@ -115,11 +116,11 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->request);
         /** @var PrivacyModuleInterface $privacyModule */
         $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
-            hex2bin('30140403666f6f0400a00b0201000201000201003000')
+            hex2bin('301904088000cd5404666f6f0400a00b0201000201000201003000')
         );
 
         $this->handleIncomingMessage($this->request, $this->options)->getScopedPdu()->shouldBeLike(
-            new ScopedPduRequest(new GetRequest(new OidList()), 'foo')
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo'))
         );
     }
 
@@ -129,11 +130,11 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->response);
         /** @var PrivacyModuleInterface $privacyModule */
         $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
-            hex2bin('30140403666f6f0400a20b0201000201000201003000')
+            hex2bin('301904088000cd5404666f6f0400a20b0201000201000201003000')
         );
 
         $this->handleIncomingMessage($this->response, $this->options)->getScopedPdu()->shouldBeLike(
-            new ScopedPduResponse(new Response(0, 0, 0, new OidList()), 'foo')
+            new ScopedPduResponse(new Response(0, 0, 0, new OidList()), EngineId::fromText('foo'))
         );
     }
 
@@ -143,7 +144,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new Response(0, 0, 0, new OidList())),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
         ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,]))->getScopedPdu()->shouldBeLike(new ScopedPduResponse(new Response(0, 0, 0, new OidList())));
     }
 
@@ -202,7 +203,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
 
     function it_should_need_discovery_if_the_last_sync_time_was_over_150_seconds($privacyFactory, $authFactory)
     {
-        $this->beConstructedWith($privacyFactory, $authFactory, ['foo' => new TimeSync(10, 10, new \DateTime('01-01-2018 16:00:00'))], ['foo' => 'foo']);
+        $this->beConstructedWith($privacyFactory, $authFactory, [EngineId::fromText('foo')->toBinary() => new TimeSync(10, 10, new \DateTime('01-01-2018 16:00:00'))], ['foo' => EngineId::fromText('foo')]);
 
         $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
@@ -213,7 +214,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.2.0', 1)))),
             null,
-            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
         ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]);
     }
 
@@ -223,7 +224,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.1.0', 1)))),
             null,
-            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
         ), $this->options]);
     }
 
@@ -233,7 +234,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.3.0', 1)))),
             null,
-            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
         ), $this->options]);
     }
 
@@ -243,7 +244,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.5.0', 1)))),
             null,
-            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
         ), $this->options]);
     }
 
@@ -253,7 +254,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.6.0', 1)))),
             null,
-            new UsmSecurityParameters('foo', 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, '', 'foobar123', hex2bin('0000000000000384'))
         ), $this->options]);
     }
 
@@ -263,7 +264,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList())),
             null,
-            new UsmSecurityParameters('bar', 1, 300, '', '', hex2bin(''))
+            new UsmSecurityParameters(EngineId::fromText('bar'), 1, 300, '', '', '')
         );
         $this->shouldThrow(new SecurityModelException('The expected engine ID does not match the known engine ID for this host.'))->during(
             'handleIncomingMessage',
@@ -274,8 +275,8 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
     function it_should_get_a_discovery_request()
     {
         $this->getDiscoveryRequest($this->request, $this->options)->shouldBeAnInstanceOf(MessageRequestV3::class);
-        $this->getDiscoveryRequest($this->request, $this->options)->getScopedPdu()->shouldBeLike(new ScopedPduRequest(new GetRequest(new OidList()), ''));
-        $this->getDiscoveryRequest($this->request, $this->options)->getSecurityParameters()->shouldBeLike(new UsmSecurityParameters('', 0, 0));
+        $this->getDiscoveryRequest($this->request, $this->options)->getScopedPdu()->shouldBeLike(new ScopedPduRequest(new GetRequest(new OidList()), null));
+        $this->getDiscoveryRequest($this->request, $this->options)->getSecurityParameters()->shouldBeLike(new UsmSecurityParameters(null, 0, 0));
     }
 
     function it_should_handle_a_discovery_response($privacyModule, $authModule)
@@ -283,15 +284,19 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->request->setScopedPdu(new ScopedPduRequest(new GetRequest(new OidList())));
         $response = new MessageResponseV3(
             new MessageHeader(0, MessageHeader::FLAG_REPORTABLE, 3),
-            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.4.0', 1))), 'foobar'),
+            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList(Oid::fromCounter('1.3.6.1.6.3.15.1.1.4.0', 1))), EngineId::fromText('foobar')),
             null,
-            new UsmSecurityParameters('foobar', 15, 20, 'foo')
+            new UsmSecurityParameters(EngineId::fromText('foobar'), 15, 20, 'foo')
         );
         $privacyModule->encryptData($this->request, $authModule, 'foobar123')->willReturn($this->request);
 
+        # Performs an optimization, needed for comparison...
+        $engine = EngineId::fromText('foobar');
+        $engine->toBinary();
+
         $this->handleDiscoveryResponse($this->request, $response, $this->options);
         $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->shouldBeLike(
-            new UsmSecurityParameters('foobar', 15, 20, 'foo')
+            new UsmSecurityParameters($engine, 15, 20, 'foo')
         );
     }
 
@@ -300,9 +305,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->request->setScopedPdu(new ScopedPduRequest(new GetRequest(new OidList())));
         $response = new MessageResponseV3(
             new MessageHeader(0, MessageHeader::FLAG_REPORTABLE, 3),
-            new ScopedPduResponse(new ReportResponse(1), ''),
+            new ScopedPduResponse(new ReportResponse(1), null),
             null,
-            new UsmSecurityParameters('', 15, 20, 'foo')
+            new UsmSecurityParameters(null, 15, 20, 'foo')
         );
 
         $this->shouldThrow(SecurityModelException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
@@ -313,9 +318,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->request->setScopedPdu(new ScopedPduRequest(new GetRequest(new OidList())));
         $response = new MessageResponseV3(
             new MessageHeader(0, MessageHeader::FLAG_REPORTABLE, 3),
-            new ScopedPduResponse(new Response(1), 'foobar'),
+            new ScopedPduResponse(new Response(1), EngineId::fromText('foobar')),
             null,
-            new UsmSecurityParameters('foobar', 15, 20, 'foo')
+            new UsmSecurityParameters(EngineId::fromText('foobar'), 15, 20, 'foo')
         );
 
         $this->shouldThrow(SecurityModelException::class)->during('handleDiscoveryResponse', [$this->request, $response, $this->options]);
@@ -327,9 +332,9 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->willThrow(new SnmpAuthenticationException('The digest is invalid.'));
         $response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduResponse(new Response(1), 'foo'),
+            new ScopedPduResponse(new Response(1), EngineId::fromText('foo')),
             null,
-            new UsmSecurityParameters('foo', 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
         );
 
         $this->shouldThrow(new SecurityModelException('The digest is invalid.'))->during(

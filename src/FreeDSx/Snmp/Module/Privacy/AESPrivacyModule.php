@@ -124,7 +124,7 @@ class AESPrivacyModule implements PrivacyModuleInterface
         if ($keyTooShort && substr($this->algorithm, -3) === 'blu') {
             $cryptKey = $this->localizeBlumenthal($authMod, $cryptKey, $keySize);
         } elseif ($keyTooShort) {
-            $cryptKey = $this->localizeReeder($authMod, $cryptKey, $keySize, $keySize);
+            $cryptKey = $this->localizeReeder($authMod, $cryptKey, $usm->getEngineId(), $keySize);
         }
 
         # RFC 3826, Section 3.1.2.1 / RFC draft-blumenthal-aes-usm-04, Section 3.1.2.1

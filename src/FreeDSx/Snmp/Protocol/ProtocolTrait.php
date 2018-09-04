@@ -12,11 +12,15 @@ namespace FreeDSx\Snmp\Protocol;
 
 use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Message\Response\MessageResponse;
+use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
+use FreeDSx\Snmp\Request\RequestInterface;
+use FreeDSx\Snmp\Request\TrapV1Request;
+use FreeDSx\Snmp\Response\ResponseInterface;
 use FreeDSx\Socket\Queue\Asn1MessageQueue;
 use FreeDSx\Socket\Socket;
 
 /**
- * Handles some common protocol handler functionality.
+ * Some common protocol handler functionality.
  *
  * @author Chad Sikorra <Chad.Sikorra@gmail.com>
  */
@@ -38,6 +42,11 @@ trait ProtocolTrait
      * @var null|Asn1MessageQueue
      */
     protected $queue;
+
+    /**
+     * @var SecurityModelModuleFactory
+     */
+    protected $securityModelFactory;
 
     /**
      * Maps allowed response PDUs for the SNMP version.
@@ -97,23 +106,58 @@ trait ProtocolTrait
     ];
 
     /**
+     * Needed to set the ID in the PDU. Unfortunately the protocol designers put the ID for the overall message inside
+     * of the PDU (essentially the request / response objects). This made it awkward to work with when separating the
+     * logic of the ID generation /message creation. Maybe a better way to handle this in general?
+     *
+     * @param RequestInterface|ResponseInterface $pdu
+     * @param int $id
+     */
+    protected function setPduId($pdu, int $id)
+    {
+        if (!($pdu instanceof RequestInterface || $pdu instanceof ResponseInterface)) {
+            return;
+        }
+        # The Trap v1 PDU has no request ID associated with it.
+        if ($pdu instanceof  TrapV1Request) {
+            return;
+        }
+        $requestObject = new \ReflectionObject($pdu);
+        $idProperty = $requestObject->getProperty('id');
+        $idProperty->setAccessible(true);
+        $idProperty->setValue($pdu, $id);
+    }
+
+    /**
+     * @param int $version
+     * @param int $request
+     * @return bool
+     */
+    protected function isRequestAllowed(int $version, int $request) : bool
+    {
+        return in_array($request, $this->allowedRequests[$version]);
+    }
+
+    /**
+     * @param array $options
      * @return Socket
      * @throws ConnectionException
      */
-    protected function socket() : Socket
+    protected function socket(array $options = []) : Socket
     {
         if (!$this->socket) {
+            $options = array_merge($this->options, $options);
             try {
-                $this->socket = Socket::create($this->options['host'], [
-                    'transport' => $this->options['transport'],
-                    'port' => $this->options['port'],
-                    'buffer_size' => ($this->options['transport'] === 'udp') ? 65507 : 8192,
-                    'timeout_connect' => $this->options['timeout_connect'],
-                    'timeout_read' => $this->options['timeout_read'],
-                    'ssl_validate_cert' => $this->options['ssl_validate_cert'],
-                    'ssl_allow_self_signed' => $this->options['ssl_allow_self_signed'],
-                    'ssl_ca_cert' => $this->options['ssl_ca_cert'],
-                    'ssl_peer_name' => $this->options['ssl_peer_name'],
+                $this->socket = Socket::create($options['host'], [
+                    'transport' => $options['transport'],
+                    'port' => $options['port'],
+                    'buffer_size' => ($options['transport'] === 'udp') ? 65507 : 8192,
+                    'timeout_connect' => $options['timeout_connect'],
+                    'timeout_read' => $options['timeout_read'],
+                    'ssl_validate_cert' => $options['ssl_validate_cert'],
+                    'ssl_allow_self_signed' => $options['ssl_allow_self_signed'],
+                    'ssl_ca_cert' => $options['ssl_ca_cert'],
+                    'ssl_peer_name' => $options['ssl_peer_name'],
                 ]);
             } catch (\FreeDSx\Socket\Exception\ConnectionException $e) {
                 throw new ConnectionException($e->getMessage(), $e->getCode(), $e);

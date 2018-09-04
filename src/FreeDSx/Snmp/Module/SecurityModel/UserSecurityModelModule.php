@@ -15,6 +15,7 @@ use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
@@ -79,7 +80,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected $engineTime = [];
 
     /**
-     * @var string[]
+     * @var EngineId[]
      */
     protected $knownEngines = [];
 
@@ -159,8 +160,8 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     public function handleOutgoingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3
     {
         $host = $options['host'] ?? '';
-        $engineId = $options['context_engine_id'] ?? $this->getEngineIdForHost($host);
-        if ((string) $engineId === '') {
+        $engineId = $this->getEngineIdFromOptions($options) ?? $this->getEngineIdForHost($host);
+        if ($engineId === null) {
             throw new RuntimeException(sprintf(
                 'The engine ID for %s is not known.',
                 $host
@@ -215,16 +216,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $usm = $messageV3->getSecurityParameters();
         $host = $options['host'] ?? '';
 
-        $engineId = $options['context_engine_id'] ?? '';
-        if ($usm instanceof UsmSecurityParameters && $usm->getEngineId() !== '') {
+        $engineId = $this->getEngineIdFromOptions($options);
+        if ($usm instanceof UsmSecurityParameters && $usm->getEngineId()) {
             $engineId = $usm->getEngineId();
         }
-        if ($engineId === '' && array_key_exists($host, $this->knownEngines)) {
+        if ($engineId === null && array_key_exists($host, $this->knownEngines)) {
             $engineId = $this->knownEngines[$host];
         }
 
         # Not a known engineId, either for this host or otherwise. No engineId specifically used. Discovery needed...
-        if ($engineId === '') {
+        if ($engineId === null) {
             return true;
         }
 
@@ -232,7 +233,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if (!$this->isEngineTimeCached($engineId)) {
             return true;
         }
-        $time = $this->engineTime[$engineId];
+        $time = $this->getEngineTime($engineId);
 
         # If the time window is 150 seconds or more out, then force a resynchronization
         if (((new \DateTime())->getTimestamp() - $time->getWhenSynced()->getTimestamp()) >= self::TIME_WINDOW) {
@@ -247,7 +248,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options): MessageRequestInterface
     {
-        $engineId = $options['context_engine_id'] ?? '';
+        $engineId = $this->getEngineIdFromOptions($options);
 
         return new MessageRequestV3(
             new MessageHeader($this->generateId(1), MessageHeader::FLAG_REPORTABLE, $messageV3->getMessageHeader()->getSecurityModel()),
@@ -265,7 +266,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $usm = $discoveryResponse->getSecurityParameters();
         $response = $discoveryResponse->getResponse();
         $host = $options['host'] ?? '';
-        if (!($usm instanceof UsmSecurityParameters && (string) $usm->getEngineId() !== '')) {
+        if (!($usm instanceof UsmSecurityParameters && $usm->getEngineId())) {
             throw new SecurityModelException('Failed to discover the engine id for USM.');
         }
         if (!$response instanceof ReportResponse) {
@@ -278,7 +279,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             throw new SecurityModelException('Expected an usmStatsUnknownEngineIDs OID, but none was received.');
         }
         $this->knownEngines[$host] = $usm->getEngineId();
-        $this->engineTime[$usm->getEngineId()] = new TimeSync($usm->getEngineBoots(), $usm->getEngineTime());
+        $this->engineTime[$usm->getEngineId()->toBinary()] = new TimeSync($usm->getEngineBoots(), $usm->getEngineTime());
 
         return $message;
     }
@@ -293,6 +294,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
     /**
      * @param MessageResponseInterface $response
+     * @param array $options
      * @throws RediscoveryNeededException
      * @throws SecurityModelException
      */
@@ -303,8 +305,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         }
         /** @var UsmSecurityParameters $secParams */
         $secParams = $response->getSecurityParameters();
+        $knownEngine = $this->getEngineIdForHost($options['host']);
 
-        if ($secParams->getEngineId() !== $this->knownEngines[$options['host']]) {
+        if ($knownEngine === null || $secParams->getEngineId()->toBinary() !== $knownEngine->toBinary()) {
             throw new SecurityModelException('The expected engine ID does not match the known engine ID for this host.');
         }
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
@@ -316,7 +319,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         foreach ($response->getResponse()->getOids() as $oid) {
             if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
                 # This will force a re-sync for the next request if we have already cached time info..
-                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && isset($this->engineTime[$secParams->getEngineId()])) {
+                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && $this->isEngineTimeCached($secParams->getEngineId())) {
                     $this->clearCachedEngine($secParams->getEngineId());
                 }
                 throw new SecurityModelException(self::ERROR_MAP_USM[$oid->getOid()]);
@@ -332,41 +335,53 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
     /**
      * @param string $host
-     * @return null|string
+     * @return null|EngineId
      */
-    protected function getEngineIdForHost(string $host)
+    protected function getEngineIdForHost(string $host) : ?EngineId
     {
         return $this->knownEngines[$host] ?? null;
     }
 
     /**
-     * @param string $engineId
+     * @param EngineId $engineId
      * @return bool
      */
-    protected function isEngineTimeCached(string $engineId) : bool
+    protected function isEngineTimeCached(EngineId $engineId) : bool
     {
-        return array_key_exists($engineId, $this->engineTime);
+        return array_key_exists($engineId->toBinary(), $this->engineTime);
     }
 
     /**
-     * @param string $engineId
+     * @param EngineId $engineId
      * @return TimeSync
      */
-    protected function getEngineTime(string $engineId) : TimeSync
+    protected function getEngineTime(EngineId $engineId) : TimeSync
     {
-        return $this->engineTime[$engineId];
+        return $this->engineTime[$engineId->toBinary()];
     }
 
     /**
      * @param $engineId
      */
-    protected function clearCachedEngine($engineId) : void
+    protected function clearCachedEngine(EngineId $engineId) : void
     {
-        if (($host = array_search($engineId, $this->knownEngines)) !== false) {
-            unset($this->knownEngines[$host]);
+        foreach ($this->knownEngines as $i => $knownEngine) {
+            if ($knownEngine->toBinary() === $engineId->toBinary()) {
+                unset($this->knownEngines[$i]);
+                break;
+            }
         }
-        if (isset($this->engineTime[$engineId])) {
-            unset($this->engineTime[$engineId]);
+        if (isset($this->engineTime[$engineId->toBinary()])) {
+            unset($this->engineTime[$engineId->toBinary()]);
         }
+    }
+
+    /**
+     * @param array $options
+     * @return EngineId|null
+     */
+    protected function getEngineIdFromOptions(array $options) : ?EngineId
+    {
+        return ($options['engine_id'] instanceof EngineId) ? $options['engine_id'] : null;
     }
 }

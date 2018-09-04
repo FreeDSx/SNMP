@@ -13,6 +13,7 @@ namespace spec\FreeDSx\Snmp\Protocol\Factory;
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\Security\SecurityParametersInterface;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Protocol\Factory\SecurityParametersFactory;
@@ -29,7 +30,7 @@ class SecurityParametersFactorySpec extends ObjectBehavior
     function it_should_get_the_USM_security_parameters()
     {
         $this::get(3, Asn1::octetString((new SnmpEncoder())->encode(Asn1::sequence(
-            Asn1::octetString('foo'),
+            Asn1::octetString(EngineId::fromText('foobar')->toBinary()),
             Asn1::integer(0),
             Asn1::integer(0),
             Asn1::octetString('foo'),

@@ -13,7 +13,7 @@ SNMP Client Configuration
     * [use_priv](#use_priv)
     * [priv_mech](#priv_mech)
     * [priv_pwd](#priv_pwd)
-    * [context_engine_id](#context_engine_id)
+    * [engine_id](#engine_id)
     * [context_name](#context_name)
     * [timeout_connect](#timeout_connect)
     * [timeout_read](#timeout_read)
@@ -133,10 +133,12 @@ officially standardized and multiple implementations exist.
 **Default**: `(null)`
 
 ------------------
-#### context_engine_id
+#### engine_id
 
 The engine id of the remote SNMP host. If you specify it here, this will always be used. If you leave it empty, then the
 engine id will be discovered automatically as part of the SNMP version 3 USM discovery process.
+
+If you define this it must be an instance of `FreeDSx\Snmp\Message\EngineId`.
 
 **Default**: `(null)`
 

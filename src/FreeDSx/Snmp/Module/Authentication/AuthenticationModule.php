@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Module\Authentication;
 
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
+use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
 
@@ -131,10 +132,10 @@ class AuthenticationModule implements AuthenticationModuleInterface
      * authentication protocol.
      *
      * @param string $password
-     * @param string $engineId
+     * @param $engineId
      * @return string
      */
-    public function generateKey(string $password, string $engineId)
+    public function generateKey(string $password, EngineId $engineId)
     {
         # RFC 7860, Section 9.3, first bullet point:
         #     forming a string of length 1,048,576 octets by repeating the value
@@ -151,7 +152,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
         #     forming a second string by concatenating digest1, the SNMP
         #     engine's snmpEngineID value, and digest1.  This string is used as
         #     input to the hash function H.
-        $key = $this->hash($digest1.$engineId.$digest1);
+        $key = $this->hash($digest1.$engineId->toBinary().$digest1);
 
         return $key;
     }
@@ -192,12 +193,12 @@ class AuthenticationModule implements AuthenticationModuleInterface
     /**
      * @param AbstractMessageV3 $message
      * @param string $password
-     * @param string $engineId
+     * @param EngineId $engineId
      * @return string
      * @throws SnmpAuthenticationException
      * @throws \FreeDSx\Asn1\Exception\EncoderException
      */
-    protected function generateHMAC(AbstractMessageV3 $message, string $password, $engineId)
+    protected function generateHMAC(AbstractMessageV3 $message, string $password, EngineId $engineId)
     {
         # RFC 7860, Section 4.2.1. Step 2:
         #     Using the secret authKey of M octets, the HMAC is calculated over
