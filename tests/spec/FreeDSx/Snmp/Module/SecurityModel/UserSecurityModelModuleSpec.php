@@ -205,6 +205,18 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->getEngineId()->getFormat()->shouldBeEqualTo(EngineId::FORMAT_IPV4);
     }
 
+    function it_should_not_generate_an_engine_id_for_an_inform_request_on_an_outgoing_message()
+    {
+        $this->request->getMessageHeader()->setFlags(MessageHeader::FLAG_NO_AUTH_NO_PRIV);
+        $this->request->getScopedPdu()->setRequest(new InformRequest(new TimeTicksValue(1), new OidValue('1.2.3')));
+
+        # Need to call toBinary due to an optimization...
+        $engineId = EngineId::fromText('foo');
+        $engineId->toBinary();
+
+        $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->getEngineId()->shouldBeLike($engineId);
+    }
+
     function it_should_use_the_defined_engine_id_for_a_trap_on_an_outgoing_message()
     {
         $this->request->getMessageHeader()->setFlags(MessageHeader::FLAG_NO_AUTH_NO_PRIV);
@@ -226,11 +238,12 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
     }
 
-    function it_should_not_require_discovery_when_the_outgoing_request_is_an_inform()
+    function it_should_require_discovery_when_the_outgoing_request_is_an_inform($authFactory, $privacyFactory)
     {
+        $this->beConstructedWith($privacyFactory, $authFactory, [], []);
         $this->request->getScopedPdu()->setRequest(new InformRequest(new TimeTicksValue(1), new OidValue('1.2.3')));
 
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
 
     function it_should_need_a_discovery_if_the_host_is_not_known($authFactory, $privacyFactory)

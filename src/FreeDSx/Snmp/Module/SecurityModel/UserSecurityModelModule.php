@@ -391,7 +391,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function isTrapRequest(AbstractMessageV3 $messageV3) : bool
     {
-        return ($messageV3 instanceof MessageRequestV3 && ($messageV3->getRequest() instanceof TrapV2Request || $messageV3->getRequest() instanceof InformRequest));
+        return ($messageV3 instanceof MessageRequestV3 && $messageV3->getRequest() instanceof TrapV2Request);
     }
 
     /**
