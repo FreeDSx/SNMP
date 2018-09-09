@@ -29,6 +29,8 @@ use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;
 use FreeDSx\Snmp\Protocol\IdGeneratorTrait;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
 use FreeDSx\Snmp\Request\GetRequest;
+use FreeDSx\Snmp\Request\InformRequest;
+use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
 
 /**
@@ -159,28 +161,23 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     public function handleOutgoingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3
     {
-        $host = $options['host'] ?? '';
-        $engineId = $this->getEngineIdFromOptions($options) ?? $this->getEngineIdForHost($host);
-        if ($engineId === null) {
-            throw new RuntimeException(sprintf(
-                'The engine ID for %s is not known.',
-                $host
-            ));
-        }
-        if (!$this->isEngineTimeCached($engineId)) {
-            throw new RuntimeException(sprintf(
-                'The cached engine time was not found for %s.',
-                $host
-            ));
-        }
-
+        $engineId = $this->getOutgoingEngineId($message, $options);
         $header = $message->getMessageHeader();
         $user = $options['user'] ?? '';
-        $cachedTime = $this->getEngineTime($engineId);
+
+        # A trap does not do time discovery. Both get set to zero.
+        if ($this->isTrapRequest($message)) {
+            $engineBoot = 0;
+            $engineTime = 0;
+        } else {
+            $cachedTime = $this->getEngineTime($engineId);
+            $engineBoot = $cachedTime->getEngineBoot();
+            $engineTime = $cachedTime->getEngineTime();
+        }
         $usm = new UsmSecurityParameters(
             $engineId,
-            $cachedTime->getEngineBoot(),
-            $cachedTime->getEngineTime(),
+            $engineBoot,
+            $engineTime,
             $user
         );
 
@@ -215,7 +212,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     {
         $usm = $messageV3->getSecurityParameters();
         $host = $options['host'] ?? '';
-
+        if ($this->isTrapRequest($messageV3)) {
+            return false;
+        }
         $engineId = $this->getEngineIdFromOptions($options);
         if ($usm instanceof UsmSecurityParameters && $usm->getEngineId()) {
             $engineId = $usm->getEngineId();
@@ -383,5 +382,61 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected function getEngineIdFromOptions(array $options) : ?EngineId
     {
         return ($options['engine_id'] instanceof EngineId) ? $options['engine_id'] : null;
+    }
+
+    /**
+     * @param AbstractMessageV3 $messageV3
+     * @return bool
+     */
+    protected function isTrapRequest(AbstractMessageV3 $messageV3) : bool
+    {
+        return ($messageV3 instanceof MessageRequestV3 && ($messageV3->getRequest() instanceof TrapV2Request || $messageV3->getRequest() instanceof InformRequest));
+    }
+
+    /**
+     * @param AbstractMessageV3 $message
+     * @param array $options
+     * @return EngineId
+     * @throws SecurityModelException
+     */
+    protected function getOutgoingEngineId(AbstractMessageV3 $message, array $options) : EngineId
+    {
+        $host = $options['host'] ?? '';
+        $engineId = $this->getEngineIdFromOptions($options);
+
+        if ($engineId) {
+            return $engineId;
+        }
+
+        # Try to generate an EngineId for a trap request if no explicitly defined...
+        if ($this->isTrapRequest($message)) {
+            # This will have issues with IPv6. Anyway to support that? Seems like gethostbyname() should be fixed
+            $engineId = EngineId::fromIPv4($_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname()));
+
+            try {
+                $engineId->toBinary();
+            } catch (\Exception $e) {
+                throw new SecurityModelException(sprintf('Unable to generate an engine ID for trap. %s', $e->getMessage()), 0, $e);
+            }
+
+            return $engineId;
+        }
+
+        # The EngineId was not explicitly defined so we try to look it up based on the host and run some quick checks...
+        $engineId = $engineId ?? $this->getEngineIdForHost($host);
+        if ($engineId === null) {
+            throw new RuntimeException(sprintf(
+                'The engine ID for %s is not known.',
+                $host
+            ));
+        }
+        if (!$this->isEngineTimeCached($engineId)) {
+            throw new RuntimeException(sprintf(
+                'The cached engine time was not found for %s.',
+                $host
+            ));
+        }
+
+        return $engineId;
     }
 }

@@ -31,8 +31,12 @@ use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Module\SecurityModel\UserSecurityModelModule;
 use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Request\GetRequest;
+use FreeDSx\Snmp\Request\InformRequest;
+use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
 use FreeDSx\Snmp\Response\Response;
+use FreeDSx\Snmp\Value\OidValue;
+use FreeDSx\Snmp\Value\TimeTicksValue;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
@@ -182,8 +186,50 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->getUsername()->shouldBeEqualTo('foo');
     }
 
+    function it_should_set_the_engine_boots_and_time_correctly_for_a_trap()
+    {
+        $this->request->getMessageHeader()->setFlags(MessageHeader::FLAG_NO_AUTH_NO_PRIV);
+        $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
+
+        $engineId = EngineId::fromText('foobar123');
+        $this->handleOutgoingMessage($this->request, array_merge($this->options, ['engine_id' => $engineId]))->getSecurityParameters()->shouldBeLike(new UsmSecurityParameters(
+            $engineId, 0, 0, 'foo'
+        ));
+    }
+
+    function it_should_generate_an_engine_id_for_a_trap_if_needed_on_an_outgoing_message()
+    {
+        $this->request->getMessageHeader()->setFlags(MessageHeader::FLAG_NO_AUTH_NO_PRIV);
+        $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
+
+        $this->handleOutgoingMessage($this->request, $this->options)->getSecurityParameters()->getEngineId()->getFormat()->shouldBeEqualTo(EngineId::FORMAT_IPV4);
+    }
+
+    function it_should_use_the_defined_engine_id_for_a_trap_on_an_outgoing_message()
+    {
+        $this->request->getMessageHeader()->setFlags(MessageHeader::FLAG_NO_AUTH_NO_PRIV);
+        $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
+
+        $engineId = EngineId::fromText('foobar123');
+        $this->handleOutgoingMessage($this->request, array_merge($this->options, ['engine_id' => $engineId]))->getSecurityParameters()->getEngineId()->shouldBeEqualTo($engineId);
+    }
+
     function it_should_not_require_discovery_when_the_engine_and_time_is_known_and_valid()
     {
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
+    }
+
+    function it_should_not_require_discovery_when_the_outgoing_request_is_a_trap()
+    {
+        $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
+
+        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
+    }
+
+    function it_should_not_require_discovery_when_the_outgoing_request_is_an_inform()
+    {
+        $this->request->getScopedPdu()->setRequest(new InformRequest(new TimeTicksValue(1), new OidValue('1.2.3')));
+
         $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
     }
 
