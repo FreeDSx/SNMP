@@ -23,6 +23,7 @@ use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
+use FreeDSx\Snmp\Module\SecurityModel\Usm\TimeSync;
 use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Protocol\Factory\AuthenticationModuleFactory;
 use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;

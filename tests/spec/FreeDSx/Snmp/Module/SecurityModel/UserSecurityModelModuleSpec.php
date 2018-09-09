@@ -17,7 +17,7 @@ use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 use FreeDSx\Snmp\Module\Privacy\PrivacyModuleInterface;
-use FreeDSx\Snmp\Module\SecurityModel\TimeSync;
+use FreeDSx\Snmp\Module\SecurityModel\Usm\TimeSync;
 use FreeDSx\Snmp\Oid;
 use FreeDSx\Snmp\Protocol\Factory\AuthenticationModuleFactory;
 use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;

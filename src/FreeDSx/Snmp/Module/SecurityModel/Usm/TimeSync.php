@@ -8,7 +8,7 @@
  * file that was distributed with this source code.
  */
 
-namespace FreeDSx\Snmp\Module\SecurityModel;
+namespace FreeDSx\Snmp\Module\SecurityModel\Usm;
 
 
 /**

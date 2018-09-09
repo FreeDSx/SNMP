@@ -8,9 +8,9 @@
  * file that was distributed with this source code.
  */
 
-namespace spec\FreeDSx\Snmp\Module\SecurityModel;
+namespace spec\FreeDSx\Snmp\Module\SecurityModel\Usm;
 
-use FreeDSx\Snmp\Module\SecurityModel\TimeSync;
+use FreeDSx\Snmp\Module\SecurityModel\Usm\TimeSync;
 use PhpSpec\ObjectBehavior;
 
 class TimeSyncSpec extends ObjectBehavior
