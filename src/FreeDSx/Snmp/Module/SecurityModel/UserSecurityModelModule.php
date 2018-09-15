@@ -30,7 +30,6 @@ use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;
 use FreeDSx\Snmp\Protocol\IdGeneratorTrait;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
 use FreeDSx\Snmp\Request\GetRequest;
-use FreeDSx\Snmp\Request\InformRequest;
 use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
 
@@ -300,15 +299,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function validateIncomingResponse(MessageResponseInterface $response, array $options) : void
     {
-        if (!$response->getResponse() instanceof ReportResponse) {
-            return;
-        }
         /** @var UsmSecurityParameters $secParams */
         $secParams = $response->getSecurityParameters();
         $knownEngine = $this->getEngineIdForHost($options['host']);
 
         if ($knownEngine === null || $secParams->getEngineId()->toBinary() !== $knownEngine->toBinary()) {
             throw new SecurityModelException('The expected engine ID does not match the known engine ID for this host.');
+        }
+        # The rest of the checks relate specifically to report responses...
+        if (!$response->getResponse() instanceof ReportResponse) {
+            return;
         }
         if ($response->getResponse()->getOids()->has(self::USM_NOT_IN_TIME_WINDOW)) {
             throw new RediscoveryNeededException($response, sprintf(

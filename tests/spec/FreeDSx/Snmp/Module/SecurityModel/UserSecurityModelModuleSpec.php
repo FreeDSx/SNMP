@@ -321,7 +321,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
     {
         $response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
-            new ScopedPduResponse(new ReportResponse(1, 0, 0, new OidList())),
+            new ScopedPduResponse(new Response(1, 0, 0, new OidList())),
             null,
             new UsmSecurityParameters(EngineId::fromText('bar'), 1, 300, '', '', '')
         );
