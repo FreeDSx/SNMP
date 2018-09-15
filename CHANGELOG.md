@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+0.3.0 (2018-09-15)
+------------------
+* Provide a trap sink class to act as a server and collect incoming traps.
+* Add better engine ID handling / the ability to generate and parse engine IDs.
+* SNMP v3 traps are now sent using a locally generated engine ID / time.
+* The context_engine_id option has been renamed to engine_id.
+* Correct the order of the EngineId check on incoming messages.
+* Validate the time window on incoming messages.
+* Update the cached time, if applicable, based off current remote engine time.
+
 0.2.0 (2018-08-19)
 ------------------
 * Provide an SNMP walker helper class with a simple API.
