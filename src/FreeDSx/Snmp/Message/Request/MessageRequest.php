@@ -39,15 +39,6 @@ class MessageRequest extends AbstractMessage implements PduInterface
     }
 
     /**
-     * @param int $version
-     * @param MessageRequestInterface $request
-     */
-    public static function setConstructor(int $version, MessageRequestInterface $request) : void
-    {
-        self::$map[$version] = get_class($request);
-    }
-
-    /**
      * {@inheritdoc}
      */
     public static function fromAsn1(AbstractType $asn1)

@@ -11,67 +11,22 @@
 namespace spec\FreeDSx\Snmp\Message\Request;
 
 use FreeDSx\Asn1\Asn1;
-use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Asn1\Type\IncompleteType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequest;
-use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Message\Request\MessageRequestV1;
 use FreeDSx\Snmp\Message\Request\MessageRequestV2;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
-use FreeDSx\Snmp\Message\ScopedPduRequest;
+use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\OidList;
+use FreeDSx\Snmp\Protocol\SnmpEncoder;
 use FreeDSx\Snmp\Request\GetRequest;
-use FreeDSx\Snmp\Request\RequestInterface;
 use FreeDSx\Socket\PduInterface;
 use PhpSpec\ObjectBehavior;
 
 class MessageRequestSpec extends ObjectBehavior
 {
-    protected $factoryV1;
-
-    protected $factoryV2;
-
-    protected $factoryV3;
-
-    function let()
-    {
-        $this->factoryV1 = new class implements MessageRequestInterface {
-            public function getVersion(): int{}
-            public function getRequest(): RequestInterface{}
-            public function setRequest(RequestInterface $request){}
-            public function toAsn1(): AbstractType{}
-            public static function fromAsn1(AbstractType $asn1)
-            {
-                return new self();
-            }
-        };
-        $this->factoryV2 = new class implements MessageRequestInterface {
-            public function getVersion(): int{}
-            public function getRequest(): RequestInterface{}
-            public function setRequest(RequestInterface $request){}
-            public function toAsn1(): AbstractType{}
-            public static function fromAsn1(AbstractType $asn1)
-            {
-                return new self();
-            }
-        };
-        $this->factoryV3 = new class implements MessageRequestInterface {
-            public function getVersion(): int{}
-            public function getRequest(): RequestInterface{}
-            public function setRequest(RequestInterface $request){}
-            public function toAsn1(): AbstractType{}
-            public static function fromAsn1(AbstractType $asn1)
-            {
-                return new self();
-            }
-        };
-
-        $this::setConstructor(0, $this->factoryV1);
-        $this::setConstructor(1, $this->factoryV2);
-        $this::setConstructor(3, $this->factoryV3);
-    }
-
     function it_is_initializable()
     {
         $this->shouldHaveType(MessageRequest::class);
@@ -84,26 +39,63 @@ class MessageRequestSpec extends ObjectBehavior
 
     function it_should_construct_a_snmp_v1_request_from_asn1()
     {
-        $message = new MessageRequestV1('foo', new GetRequest(new OidList()));
+        $encoder = new SnmpEncoder();
 
-        $this::fromAsn1($message->toAsn1())->shouldReturnAnInstanceOf(get_class($this->factoryV1));
+        $pdu = '';
+        foreach ((new GetRequest(new OidList()))->toAsn1() as $child) {
+            $pdu .= $encoder->encode($child);
+        }
+
+        $asn1 = Asn1::sequence(
+            Asn1::integer(0),
+            Asn1::octetString('foo'),
+            Asn1::context(0, new IncompleteType($pdu))->setIsConstructed(true)
+
+        );
+
+        $this::fromAsn1($asn1)->shouldBeAnInstanceOf(MessageRequestV1::class);
     }
 
     function it_should_construct_a_snmp_v2_request_from_asn1()
     {
-        $message = new MessageRequestV2('foo', new GetRequest(new OidList()));
+        $encoder = new SnmpEncoder();
 
-        $this::fromAsn1($message->toAsn1())->shouldReturnAnInstanceOf(get_class($this->factoryV2));
+        $pdu = '';
+        foreach ((new GetRequest(new OidList()))->toAsn1() as $child) {
+            $pdu .= $encoder->encode($child);
+        }
+
+        $asn1 = Asn1::sequence(
+            Asn1::integer(1),
+            Asn1::octetString('foo'),
+            Asn1::context(0, new IncompleteType($pdu))->setIsConstructed(true)
+
+        );
+
+        $this::fromAsn1($asn1)->shouldReturnAnInstanceOf(MessageRequestV2::class);
     }
 
     function it_should_construct_a_snmp_v3_request_from_asn1()
     {
-        $message = new MessageRequestV3(
-            new MessageHeader(1),
-            new ScopedPduRequest(new GetRequest(new OidList()))
+        $encoder = new SnmpEncoder();
+
+        $pdu = '';
+        foreach ((new GetRequest(new OidList()))->toAsn1() as $child) {
+            $pdu .= $encoder->encode($child);
+        }
+
+        $asn1 = Asn1::sequence(
+            Asn1::integer(3),
+            (new MessageHeader(0, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3))->toAsn1(),
+            Asn1::octetString((new SnmpEncoder())->encode((new UsmSecurityParameters())->toAsn1())),
+            Asn1::sequence(
+                Asn1::octetString(''),
+                Asn1::octetString(''),
+                Asn1::context(0, new IncompleteType($pdu))->setIsConstructed(true)
+            )
         );
 
-        $this::fromAsn1($message->toAsn1())->shouldReturnAnInstanceOf(get_class($this->factoryV3));
+        $this::fromAsn1($asn1)->shouldReturnAnInstanceOf(MessageRequestV3::class);
     }
 
     function it_should_throw_an_exception_for_an_unrecognized_snmp_version_request()
