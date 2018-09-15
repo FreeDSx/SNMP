@@ -278,7 +278,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             throw new SecurityModelException('Expected an usmStatsUnknownEngineIDs OID, but none was received.');
         }
         $this->knownEngines[$host] = $usm->getEngineId();
-        $this->engineTime[$usm->getEngineId()->toBinary()] = new TimeSync($usm->getEngineBoots(), $usm->getEngineTime());
+        $this->updateCachedTime($usm);
 
         return $message;
     }
@@ -305,6 +305,17 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
         if ($knownEngine === null || $secParams->getEngineId()->toBinary() !== $knownEngine->toBinary()) {
             throw new SecurityModelException('The expected engine ID does not match the known engine ID for this host.');
+        }
+        # Section 3.2, Step 7.b.2
+        #    If the message is considered to be outside of the Time
+        #    Window then an error indication (notInTimeWindow) is
+        #    returned to the calling module.
+        if ($this->isOutsideTimeWindow($secParams)) {
+            throw new SecurityModelException('The received message is outside of the time window.');
+        }
+        # Section 3.2, Step 7.b.1
+        if ($this->shouldUpdateCachedTime($secParams)) {
+            $this->updateCachedTime($secParams);
         }
         # The rest of the checks relate specifically to report responses...
         if (!$response->getResponse() instanceof ReportResponse) {
@@ -358,6 +369,17 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected function getEngineTime(EngineId $engineId) : TimeSync
     {
         return $this->engineTime[$engineId->toBinary()];
+    }
+
+    /**
+     * @param UsmSecurityParameters $secParams
+     */
+    protected function updateCachedTime(UsmSecurityParameters $secParams) : void
+    {
+        $this->engineTime[$secParams->getEngineId()->toBinary()] = new TimeSync(
+            $secParams->getEngineBoots(),
+            $secParams->getEngineTime()
+        );
     }
 
     /**
@@ -439,5 +461,68 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         }
 
         return $engineId;
+    }
+
+    /**
+     * @param UsmSecurityParameters $secParams
+     * @return bool
+     */
+    protected function isOutsideTimeWindow(UsmSecurityParameters $secParams) : bool
+    {
+        if (!$this->isEngineTimeCached($secParams->getEngineId())) {
+            return false;
+        }
+        $timeSync = $this->getEngineTime($secParams->getEngineId());
+
+        # Section 3.2, Step 7.b.2
+        #   the value of the msgAuthoritativeEngineBoots field is
+        #   less than the local notion of the value of
+        #   snmpEngineBoots;
+        if ($secParams->getEngineBoots() < $timeSync->getEngineBoot()) {
+            return true;
+        }
+
+        # Section 3.2, Step 7.b.2
+        #    the value of the msgAuthoritativeEngineBoots field is
+        #    equal to the local notion of the value of snmpEngineBoots
+        #    and the value of the msgAuthoritativeEngineTime field is
+        #    more than 150 seconds less than the local notion of the
+        #    value of snmpEngineTime.
+        if ($secParams->getEngineBoots() === $timeSync->getEngineBoot() && (($timeSync->getEngineTime() - $secParams->getEngineTime()) > 150)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param UsmSecurityParameters $secParams
+     * @return bool
+     */
+    protected function shouldUpdateCachedTime(UsmSecurityParameters $secParams) : bool
+    {
+        if (!$this->isEngineTimeCached($secParams->getEngineId())) {
+            return true;
+        }
+        $timeSync = $this->getEngineTime($secParams->getEngineId());
+
+        # Section 3.2, Step 7.b.1
+        #    the extracted value of the msgAuthoritativeEngineBoots
+        #    field is greater than the local notion of the value of
+        #    snmpEngineBoots;
+        if ($secParams->getEngineBoots() > $timeSync->getEngineBoot()) {
+            return true;
+        }
+        # Section 3.2, Step 7.b.1
+        #    the extracted value of the msgAuthoritativeEngineBoots
+        #    field is equal to the local notion of the value of
+        #    snmpEngineBoots, and the extracted value of
+        #    msgAuthoritativeEngineTime field is greater than the
+        #    value of latestReceivedEngineTime,
+        if ($secParams->getEngineBoots() === $timeSync->getEngineBoot() && $secParams->getEngineTime() > $timeSync->getEngineTime()) {
+            return true;
+        }
+
+        return false;
     }
 }

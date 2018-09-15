@@ -74,19 +74,19 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
             new ScopedPduRequest(new GetRequest(new OidList())),
             hex2bin('67889ff865a14762d876cb5ddb640ff582681461bec6'),
-            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, 'foo', 'foobar123', hex2bin('0000000000000384'))
 
         );
         $this->response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
             null,
             hex2bin('67889ff865a14762d874cb5ddb640ff5ca02febb5e2f'),
-            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, 'foo', 'foobar123', hex2bin('0000000000000384'))
         );
         $authModule->authenticateOutgoingMsg(Argument::any(), Argument::any())->willReturn($this->request);
         $authModule->authenticateIncomingMsg(Argument::any(), Argument::any())->willReturn($this->request);
 
-        $this->beConstructedWith($privacyFactory, $authFactory, [EngineId::fromText('foo')->toBinary() => new TimeSync(1, 2)], ['foo' => EngineId::fromText('foo')]);
+        $this->beConstructedWith($privacyFactory, $authFactory, [EngineId::fromText('foo')->toBinary() => new TimeSync(1, 300)], ['foo' => EngineId::fromText('foo')]);
     }
 
     function it_is_initializable()
@@ -148,7 +148,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
             new ScopedPduResponse(new Response(0, 0, 0, new OidList())),
             null,
-            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('0000000000000384'))
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, 'foo', 'foobar123', hex2bin('0000000000000384'))
         ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,]))->getScopedPdu()->shouldBeLike(new ScopedPduResponse(new Response(0, 0, 0, new OidList())));
     }
 
@@ -328,6 +328,49 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->shouldThrow(new SecurityModelException('The expected engine ID does not match the known engine ID for this host.'))->during(
             'handleIncomingMessage',
             [$response, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]
+        );
+    }
+
+    function it_should_throw_a_SecurityModelException_if_an_incoming_message_is_not_in_the_time_window()
+    {
+        $response1 = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new Response(1, 0, 0, new OidList())),
+            null,
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 149, '', '', '')
+        );
+        $this->shouldThrow(new SecurityModelException('The received message is outside of the time window.'))->during(
+            'handleIncomingMessage',
+            [$response1, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]
+        );
+
+        $response2 = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new Response(1, 0, 0, new OidList())),
+            null,
+            new UsmSecurityParameters(EngineId::fromText('foo'), 0, 300, '', '', '')
+        );
+        $this->shouldThrow(new SecurityModelException('The received message is outside of the time window.'))->during(
+            'handleIncomingMessage',
+            [$response2, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,])]
+        );
+    }
+
+    function it_should_update_the_cached_time_on_an_incoming_message_if_needed()
+    {
+        $engineId = EngineId::fromText('foo');
+        $engineId->toBinary();
+        $request = $this->request;
+        $request->setMessageHeader(new MessageHeader(1));
+        $response = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_NO_AUTH_NO_PRIV, 3),
+            new ScopedPduResponse(new Response(1, 0, 0, new OidList())),
+            null,
+            new UsmSecurityParameters(EngineId::fromText('foo'), 2, 100 , '', '', '')
+        );
+        $this->handleIncomingMessage($response, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,]));
+        $this->handleOutgoingMessage($request, array_merge($this->options, ['use_auth' => false, 'use_priv' => false,]))->getSecurityParameters()->shouldBeLike(
+            new UsmSecurityParameters($engineId, 2, 100, 'foo')
         );
     }
 
