@@ -10,6 +10,7 @@ Some main features include:
 * Supports all privacy encryption mechanisms (des, 3des, aes128, aes192, aes256).
 * Supports all client request types (Get, GetNext, GetBulk, Set, Inform, TrapV1, TrapV2).
 * Supports sending SNMPv1 and SNMPv2 traps (including inform requests).
+* Trap Sink server for receiving and processing incoming traps.
 
 The OpenSSL extension is required for privacy / encryption support.
 
@@ -20,6 +21,8 @@ The OpenSSL extension is required for privacy / encryption support.
   * [General Usage](/docs/Client/General-Usage.md)
   * [Request Types](/docs/Client/Request-Types.md)
   * [SNMP Walk](/docs/Client/SNMP-Walk.md)
+* [SNMP Server](/docs/Server)
+  * [Trap Sink](/docs/Server/Trap-Sink.md)
 
 # Getting Started
 
