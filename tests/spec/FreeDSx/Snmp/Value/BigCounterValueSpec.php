@@ -12,6 +12,7 @@ namespace spec\FreeDSx\Snmp\Value;
 
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\IncompleteType;
+use FreeDSx\Snmp\Exception\InvalidArgumentException;
 use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
 use FreeDSx\Snmp\Value\AbstractValue;
 use FreeDSx\Snmp\Value\BigCounterValue;
@@ -64,6 +65,37 @@ class BigCounterValueSpec extends ObjectBehavior
     function it_should_have_a_string_representation()
     {
         $this->__toString()->shouldBeEqualTo('9000');
+    }
+
+    function it_should_check_whether_the_value_is_a_bigint()
+    {
+        $this->isBigInt()->shouldBeEqualTo(false);
+        $this->setValue('18446744073709551615');
+        $this->isBigInt()->shouldBeEqualTo(true);
+    }
+
+    function it_should_be_constructed_from_a_bigint_string_value()
+    {
+        $this->beConstructedWith('18446744073709551615');
+        $this->getValue()->shouldBeEqualTo('18446744073709551615');
+    }
+
+    function it_should_set_a_bigint_value()
+    {
+        $this->setValue('18446744073709551615');
+        $this->getValue()->shouldBeEqualTo('18446744073709551615');
+    }
+
+    function it_should_not_allow_non_numeric_integers_during_construction()
+    {
+        $this->shouldThrow(InvalidArgumentException::class)->during('__construct', ['foo']);
+        $this->shouldThrow(InvalidArgumentException::class)->during('__construct', ['15.5']);
+    }
+
+    function it_should_not_allow_non_numeric_integers_during_set()
+    {
+        $this->shouldThrow(InvalidArgumentException::class)->during('setValue', ['foo']);
+        $this->shouldThrow(InvalidArgumentException::class)->during('setValue', ['15.5']);
     }
 
     function it_should_have_an_ASN1_representation()

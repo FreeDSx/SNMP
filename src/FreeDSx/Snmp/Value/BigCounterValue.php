@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Value;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Asn1\Type\IntegerType;
+use FreeDSx\Snmp\Exception\InvalidArgumentException;
 
 /**
  * Represents a big counter value.
@@ -29,15 +30,16 @@ class BigCounterValue extends AbstractValue
     /**
      * @param int $value
      */
-    public function __construct(int $value)
+    public function __construct($value)
     {
+        $this->validate($value);
         $this->value = $value;
     }
 
     /**
-     * @return int
+     * @return string|int
      */
-    public function getValue(): int
+    public function getValue()
     {
         return $this->value;
     }
@@ -46,10 +48,40 @@ class BigCounterValue extends AbstractValue
      * @param int $value
      * @return BigCounterValue
      */
-    public function setValue(int $value)
+    public function setValue($value)
     {
+        $this->validate($value);
         $this->value = $value;
 
         return $this;
+    }
+
+    /**
+     * Whether or not the contained value is larger than the PHP_INT_MAX value (represented as a string value).
+     *
+     * @return bool
+     */
+    public function isBigInt() : bool
+    {
+        if (is_int($this->value)) {
+            return false;
+        }
+
+        return is_float($this->value + 0);
+    }
+
+    /**
+     * @param $integer
+     */
+    protected function validate($integer) : void
+    {
+        if (is_int($integer)) {
+            return;
+        }
+        if (is_string($integer) && is_numeric($integer) && strpos($integer, '.') === false) {
+            return;
+        }
+
+        throw new InvalidArgumentException('The value passed to the BigCounter class must be numeric.');
     }
 }
