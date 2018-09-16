@@ -12,7 +12,7 @@ Some main features include:
 * Supports sending SNMPv1 and SNMPv2 traps (including inform requests).
 * Trap Sink server for receiving and processing incoming traps.
 
-The OpenSSL extension is required for privacy / encryption support.
+The OpenSSL extension is required for privacy / encryption support. The GMP extension is required for 64-bit counters (BigCounter).
 
 # Documentation
 
