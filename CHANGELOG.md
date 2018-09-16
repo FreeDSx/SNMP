@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+0.3.1 (2018-09-16)
+------------------
+* Fix handling of 64-bit counters (BigCounter). Suggest the GMP extension.
+
 0.3.0 (2018-09-15)
 ------------------
 * Provide a trap sink class to act as a server and collect incoming traps.
