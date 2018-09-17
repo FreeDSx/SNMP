@@ -208,11 +208,6 @@ class TrapProtocolHandler
         $header = $message->getMessageHeader();
         $secParams = $message->getSecurityParameters();
 
-        # @todo Currently unsupported. Lots of work needed to support an inform request in v3.
-        if ($message->getRequest() instanceof InformRequest) {
-            return null;
-        }
-
         try {
             $securityModule = $this->securityModelFactory->get($header->getSecurityModel());
             # Only supporting USM currently
@@ -224,10 +219,15 @@ class TrapProtocolHandler
                 return null;
             }
             $options = $this->mergeOptionsFromUser($usmUser, $options);
+            $message = $securityModule->handleIncomingMessage($message, $options);
 
-            return $securityModule->handleIncomingMessage($message, $options);
+            # @todo Currently unsupported. Lots of work needed to support an inform request in v3.
+            if (!$message->getScopedPdu() || $message->getScopedPdu()->getRequest() instanceof InformRequest) {
+                return null;
+            }
+
+            return $message;
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
             return null;
         }
     }

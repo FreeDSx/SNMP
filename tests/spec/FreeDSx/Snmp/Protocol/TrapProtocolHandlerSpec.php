@@ -228,6 +228,25 @@ class TrapProtocolHandlerSpec extends ObjectBehavior
         $this->handle('192.168.1.1:12345', 'foo', []);
     }
 
+    function it_should_handle_a_v3_message_thats_encrypted($trapListener, $encoder, $securityModule)
+    {
+        $trapV3 = Asn1::sequence(
+            Asn1::integer(3),
+            (new MessageHeader(0, MessageHeader::FLAG_AUTH_PRIV, 3))->toAsn1(),
+            Asn1::octetString((new SnmpEncoder())->encode((new UsmSecurityParameters(EngineId::fromText('foobar123'), 0, 0, 'user1'))->toAsn1())),
+            Asn1::octetString('foobar123')
+        );
+
+        $trapListener->accept(Argument::any())->willReturn(true);
+        $trapListener->receive(Argument::any())->shouldBeCalled();
+        $encoder->decode(Argument::any())->willReturn($trapV3);
+        $trapListener->getUsmUser(Argument::any(), '192.168.1.1', 'user1')->shouldBeCalled()->willReturn(new UsmUser('user1'));
+
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->willReturn($this->v3MessageWithTrap);
+
+        $this->handle('192.168.1.1:12345', 'foo', []);
+    }
+
     function it_should_not_send_a_trap_to_the_listener_when_a_usm_user_is_not_found_for_v3($trapListener, $encoder)
     {
         $trapV3 = Asn1::sequence(
