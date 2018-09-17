@@ -21,11 +21,6 @@ use FreeDSx\Socket\SocketServer;
 class TrapServerRunner implements ServerRunnerInterface
 {
     /**
-     * @var SocketServer
-     */
-    protected $server;
-
-    /**
      * @var array
      */
     protected $options;
@@ -50,10 +45,11 @@ class TrapServerRunner implements ServerRunnerInterface
      */
     public function run(SocketServer $server)
     {
-        $this->server = $server;
-
-        while ($data = $this->server->receive($ipAddress)) {
-            $this->handler->handle($ipAddress, $data, $this->options);
+        while ($data = $server->receive($ipAddress)) {
+            try {
+                $this->handler->handle($ipAddress, $data, $this->options);
+            } catch (\Exception|\Throwable $e) {
+            }
         }
     }
 }
