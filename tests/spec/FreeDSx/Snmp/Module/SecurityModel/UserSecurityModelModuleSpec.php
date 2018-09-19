@@ -444,4 +444,16 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
             [$response, array_merge($this->options, ['use_priv' => false,])]
         );
     }
+
+    function it_should_throw_a_security_model_exception_if_the_decrypted_pdu_cannot_be_assembled($privacyModule, $authModule)
+    {
+        /** @var AuthenticationModuleInterface $authModule */
+        $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->request);
+        /** @var PrivacyModuleInterface $privacyModule */
+        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
+            hex2bin('04088000cd5404666f6f0400a00b0201000201000201003000')
+        );
+
+        $this->shouldThrow(new SecurityModelException('Failed to assemble decrypted PDU.'))->during('handleIncomingMessage', [$this->request, $this->options]);
+    }
 }

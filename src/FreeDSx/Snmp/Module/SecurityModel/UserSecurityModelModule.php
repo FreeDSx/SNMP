@@ -136,13 +136,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                 $options['priv_pwd']
             );
 
+            try {
+                $pdu = call_user_func($pduFactory.'::fromAsn1', (new SnmpEncoder())->decode($decryptedPdu));
+            } catch (\Exception|\Throwable $e) {
+                throw new SecurityModelException('Failed to assemble decrypted PDU.', $e->getCode(), $e);
+            }
+
             $requestObject = new \ReflectionObject($message);
             $pduProperty = $requestObject->getProperty('scopedPdu');
             $pduProperty->setAccessible(true);
-            $pduProperty->setValue(
-                $message,
-                call_user_func($pduFactory.'::fromAsn1', (new SnmpEncoder())->decode($decryptedPdu))
-            );
+            $pduProperty->setValue($message, $pdu);
 
             $encryptedProperty = $requestObject->getProperty('encryptedPdu');
             $encryptedProperty->setAccessible(true);
