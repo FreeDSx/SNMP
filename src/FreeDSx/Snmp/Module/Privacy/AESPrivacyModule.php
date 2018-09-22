@@ -84,7 +84,7 @@ class AESPrivacyModule implements PrivacyModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd)
+    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3
     {
         if (!$this->has64BitSupport) {
             throw new SnmpEncryptionException('AES privacy requires 64bit int support.');
@@ -118,7 +118,7 @@ class AESPrivacyModule implements PrivacyModuleInterface
      */
     protected function toKeySaltIV($cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null): array
     {
-        $keySize = self::KEY_SIZE[$this->algoAlias($this->algorithm)];
+        $keySize = self::KEY_SIZE[$this->algoAlias()];
         $keyTooShort = (strlen($cryptKey) < $keySize);
 
         if ($keyTooShort && substr($this->algorithm, -3) === 'blu') {

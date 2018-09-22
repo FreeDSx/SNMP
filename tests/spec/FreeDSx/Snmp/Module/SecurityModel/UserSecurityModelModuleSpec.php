@@ -13,6 +13,7 @@ namespace spec\FreeDSx\Snmp\Module\SecurityModel;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
+use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
@@ -72,14 +73,14 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $authFactory->get(Argument::any())->willReturn($authModule);
         $this->request = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            new ScopedPduRequest(new GetRequest(new OidList())),
+            new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
             hex2bin('67889ff865a14762d876cb5ddb640ff582681461bec6'),
             new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, 'foo', 'foobar123', hex2bin('0000000000000384'))
 
         );
         $this->response = new MessageResponseV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
-            null,
+            new ScopedPduResponse(new Response(0), EngineId::fromText('foo')),
             hex2bin('67889ff865a14762d874cb5ddb640ff5ca02febb5e2f'),
             new UsmSecurityParameters(EngineId::fromText('foo'), 1, 300, 'foo', 'foobar123', hex2bin('0000000000000384'))
         );
@@ -119,9 +120,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         /** @var AuthenticationModuleInterface $authModule */
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->request);
         /** @var PrivacyModuleInterface $privacyModule */
-        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
-            hex2bin('301904088000cd5404666f6f0400a00b0201000201000201003000')
-        );
+        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn($this->request);
 
         $this->handleIncomingMessage($this->request, $this->options)->getScopedPdu()->shouldBeLike(
             new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo'))
@@ -133,9 +132,7 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         /** @var AuthenticationModuleInterface $authModule */
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->response);
         /** @var PrivacyModuleInterface $privacyModule */
-        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
-            hex2bin('301904088000cd5404666f6f0400a20b0201000201000201003000')
-        );
+        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn($this->response);
 
         $this->handleIncomingMessage($this->response, $this->options)->getScopedPdu()->shouldBeLike(
             new ScopedPduResponse(new Response(0, 0, 0, new OidList()), EngineId::fromText('foo'))
@@ -445,14 +442,12 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         );
     }
 
-    function it_should_throw_a_security_model_exception_if_the_decrypted_pdu_cannot_be_assembled($privacyModule, $authModule)
+    function it_should_throw_a_security_model_exception_if_the_encrypted_pdu_cannot_be_decrypted($privacyModule, $authModule)
     {
         /** @var AuthenticationModuleInterface $authModule */
         $authModule->authenticateIncomingMsg(Argument::any(), 'foobar123')->shouldBeCalled()->willReturn($this->request);
         /** @var PrivacyModuleInterface $privacyModule */
-        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willReturn(
-            hex2bin('04088000cd5404666f6f0400a00b0201000201000201003000')
-        );
+        $privacyModule->decryptData(Argument::any(), $authModule, 'foobar123')->shouldBeCalled()->willThrow(new SnmpEncryptionException('Failed to assemble decrypted PDU.'));
 
         $this->shouldThrow(new SecurityModelException('Failed to assemble decrypted PDU.'))->during('handleIncomingMessage', [$this->request, $this->options]);
     }

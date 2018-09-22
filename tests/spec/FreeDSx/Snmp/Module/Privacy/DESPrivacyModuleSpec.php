@@ -71,13 +71,22 @@ class DESPrivacyModuleSpec extends ObjectBehavior
         $this->message->getSecurityParameters()->setPrivacyParams(hex2bin('0000000100000384'));
 
         # The additional data at the end is due to RFC 3414, 8.1.1.2. The padding is ignored while decoding.
-        $this->decryptData($this->message, new AuthenticationModule('sha1'),'foobar123')->shouldBeEqualTo(
-            hex2bin('301904088000cd5404666f6f0400a00b020100020100020100300000000000000808080808080808')
-        );
+        $this->decryptData($this->message, new AuthenticationModule('sha1'),'foobar123')->getScopedPdu()->shouldBeLike(new ScopedPduRequest(
+            new GetRequest(new OidList()),
+            EngineId::fromText('foo')
+        ));
     }
 
     function it_should_require_that_the_privacy_password_be_at_least_8_characters()
     {
         $this->shouldThrow(SnmpEncryptionException::class)->during('encryptData', [$this->message, new AuthenticationModule('sha1'), 'foobar1']);
+    }
+
+    function it_should_throw_an_SnmpEncryptionException_if_the_encrypted_data_is_malformed()
+    {
+        $this->message->setEncryptedPdu(hex2bin('ffaabb7bffbb23e13d57f9dfa6d80c01734bb339f7873c6b94ef5f73dd625c374ff3bd78b0d1d8d9'));
+        $this->message->getSecurityParameters()->setPrivacyParams(hex2bin('0000000100000384'));
+
+        $this->shouldThrow(new SnmpEncryptionException('Failed to assemble decrypted PDU.'))->during('decryptData', [$this->message,  new AuthenticationModule('md5'),'foobar123']);
     }
 }

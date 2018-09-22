@@ -10,6 +10,7 @@
 
 namespace FreeDSx\Snmp\Module\Privacy;
 
+use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 
@@ -28,9 +29,10 @@ interface PrivacyModuleInterface
      * @param AbstractMessageV3 $message
      * @param AuthenticationModuleInterface $authMod
      * @param string $privPwd
-     * @return string
+     * @return AbstractMessageV3
+     * @throws SnmpEncryptionException
      */
-    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd);
+    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3;
 
     /**
      * Encrypt message data according to the algorithm.
@@ -39,6 +41,7 @@ interface PrivacyModuleInterface
      * @param AuthenticationModuleInterface $authMod
      * @param string $privPwd
      * @return AbstractMessageV3
+     * @throws SnmpEncryptionException
      */
     public function encryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3;
 

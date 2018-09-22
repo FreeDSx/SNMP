@@ -13,6 +13,10 @@ namespace FreeDSx\Snmp\Module\Privacy;
 use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\EngineId;
+use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
+use FreeDSx\Snmp\Message\ScopedPdu;
+use FreeDSx\Snmp\Message\ScopedPduRequest;
+use FreeDSx\Snmp\Message\ScopedPduResponse;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
@@ -42,7 +46,7 @@ trait PrivacyTrait
     /**
      * {@inheritdoc}
      */
-    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd)
+    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -79,7 +83,15 @@ trait PrivacyTrait
             throw new SnmpEncryptionException('Unable to decrypt the scopedPdu');
         }
 
-        return $decryptedPdu;
+        $pduFactory = $message instanceof MessageRequestInterface ? ScopedPduRequest::class : ScopedPduResponse::class;
+        try {
+            $pdu = call_user_func($pduFactory.'::fromAsn1', (new SnmpEncoder())->decode($decryptedPdu));
+        } catch (\Exception|\Throwable $e) {
+            throw new SnmpEncryptionException('Failed to assemble decrypted PDU.', $e->getCode(), $e);
+        }
+        $this->setPduDataInMessage($message, null, $pdu);
+
+        return $message;
     }
 
     /**
@@ -126,7 +138,7 @@ trait PrivacyTrait
                 $this->algorithm
             ));
         }
-        $message->setEncryptedPdu($encryptedPdu);
+        $this->setPduDataInMessage($message, $encryptedPdu, null, true);
 
         return $message;
     }
@@ -138,8 +150,6 @@ trait PrivacyTrait
      *
      * @param string $cryptKey
      * @param UsmSecurityParameters $usm
-     * @param string $privMech
-     * @param string $authMech
      * @param AuthenticationModuleInterface $authMod
      * @param null|string $salt
      * @return array
@@ -242,5 +252,26 @@ trait PrivacyTrait
         }
 
         return $this->algorithm;
+    }
+
+    /**
+     * @param AbstractMessageV3 $message
+     * @param string|null $encryptedData
+     * @param ScopedPdu|null $pdu
+     * @param bool $encOnly
+     */
+    protected function setPduDataInMessage(AbstractMessageV3 $message, $encryptedData, ?ScopedPdu $pdu, bool $encOnly = false) : void
+    {
+        $requestObject = new \ReflectionObject($message);
+
+        if (!$encOnly) {
+            $pduProperty = $requestObject->getProperty('scopedPdu');
+            $pduProperty->setAccessible(true);
+            $pduProperty->setValue($message, $pdu);
+        }
+
+        $encryptedProperty = $requestObject->getProperty('encryptedPdu');
+        $encryptedProperty->setAccessible(true);
+        $encryptedProperty->setValue($message, $encryptedData);
     }
 }

@@ -14,6 +14,7 @@ use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
+use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -28,7 +29,6 @@ use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Protocol\Factory\AuthenticationModuleFactory;
 use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;
 use FreeDSx\Snmp\Protocol\IdGeneratorTrait;
-use FreeDSx\Snmp\Protocol\SnmpEncoder;
 use FreeDSx\Snmp\Request\GetRequest;
 use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
@@ -130,26 +130,15 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             }
         }
         if ($options['use_priv']) {
-            $decryptedPdu = $this->privacyFactory->get($options['priv_mech'])->decryptData(
-                $message,
-                $this->authFactory->get($options['auth_mech']),
-                $options['priv_pwd']
-            );
-
             try {
-                $pdu = call_user_func($pduFactory.'::fromAsn1', (new SnmpEncoder())->decode($decryptedPdu));
-            } catch (\Exception|\Throwable $e) {
-                throw new SecurityModelException('Failed to assemble decrypted PDU.', $e->getCode(), $e);
+                $message = $this->privacyFactory->get($options['priv_mech'])->decryptData(
+                    $message,
+                    $this->authFactory->get($options['auth_mech']),
+                    $options['priv_pwd']
+                );
+            } catch (SnmpEncryptionException $e) {
+                throw new SecurityModelException($e->getMessage());
             }
-
-            $requestObject = new \ReflectionObject($message);
-            $pduProperty = $requestObject->getProperty('scopedPdu');
-            $pduProperty->setAccessible(true);
-            $pduProperty->setValue($message, $pdu);
-
-            $encryptedProperty = $requestObject->getProperty('encryptedPdu');
-            $encryptedProperty->setAccessible(true);
-            $encryptedProperty->setValue($message, null);
         }
 
         if ($message instanceof MessageResponseInterface) {
@@ -184,23 +173,27 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             $user
         );
 
-        $message->setSecurityParameters($usm);
-        $message->setEncryptedPdu(null);
-        $message->getScopedPdu()->setContextEngineId($engineId);
-        $header->setSecurityModel($message->getSecurityParameters()->getSecurityModel());
-
+        $this->setupOutgoingMessage($message, $usm);
         if ($header->hasPrivacy()) {
             $password = $options['priv_pwd'] ?? '';
-            $this->privacyFactory->get($options['priv_mech'])->encryptData(
-                $message,
-                $this->authFactory->get($options['auth_mech']),
-                $password
-            );
+            try {
+                $this->privacyFactory->get($options['priv_mech'])->encryptData(
+                    $message,
+                    $this->authFactory->get($options['auth_mech']),
+                    $password
+                );
+            } catch (SnmpEncryptionException $e) {
+                throw new SecurityModelException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         if ($header->hasAuthentication()) {
             $password = $options['auth_pwd'] ?? '';
-            $this->authFactory->get($options['auth_mech'])->authenticateOutgoingMsg($message, $password);
+            try {
+                $this->authFactory->get($options['auth_mech'])->authenticateOutgoingMsg($message, $password);
+            } catch (SnmpAuthenticationException $e) {
+                throw new SecurityModelException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         return $message;
@@ -527,5 +520,27 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         }
 
         return false;
+    }
+
+    /**
+     * @param AbstractMessageV3 $message
+     * @param UsmSecurityParameters $secParams
+     */
+    protected function setupOutgoingMessage(AbstractMessageV3 $message, UsmSecurityParameters $secParams) : void
+    {
+        $msgObject = new \ReflectionObject($message);
+        $scopedPduObject = new \ReflectionObject($message->getScopedPdu());
+
+        $secParamsProperty = $msgObject->getProperty('securityParams');
+        $secParamsProperty->setAccessible(true);
+        $secParamsProperty->setValue($message, $secParams);
+
+        $encryptedProperty = $msgObject->getProperty('encryptedPdu');
+        $encryptedProperty->setAccessible(true);
+        $encryptedProperty->setValue($message, null);
+
+        $contextEngineIdProperty = $scopedPduObject->getProperty('contextEngineId');
+        $contextEngineIdProperty->setAccessible(true);
+        $contextEngineIdProperty->setValue($message, $secParams->getEngineId());
     }
 }
