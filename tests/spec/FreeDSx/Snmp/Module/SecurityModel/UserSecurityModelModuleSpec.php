@@ -149,7 +149,30 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         ), array_merge($this->options, ['use_auth' => false, 'use_priv' => false,]))->getScopedPdu()->shouldBeLike(new ScopedPduResponse(new Response(0, 0, 0, new OidList())));
     }
 
-    function it_should_encrypt_an_outgoing_message_if_it_has_privacy($privacyModule, $authModule)
+    function it_should_encrypt_an_outgoing_message_response_if_it_has_privacy($privacyModule, $authModule)
+    {
+        $response1 = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            new ScopedPduResponse(new Response(0)),
+            null,
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123')
+        );
+        $response2 = new MessageResponseV3(
+            new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
+            null,
+            hex2bin('5649df94a907aa48bfe6e074c5b3cbc7f2840a219bd175e0d33a4163f8a8d1637dba55a2665fc356'),
+            new UsmSecurityParameters(EngineId::fromText('foo'), 1, 1, 'foo', 'foobar123', hex2bin('fe609d2981ff5a0f'))
+        );
+
+        /** @var PrivacyModuleInterface $privacyModule */
+        $privacyModule->encryptData($response1, $authModule, 'foobar123')->shouldBeCalled()->willReturn($response2);
+        /** @var AuthenticationModuleInterface $authModule */
+        $authModule->authenticateOutgoingMsg($response2, 'foobar123')->shouldBeCalled()->willReturn($response2);
+
+        $this->handleOutgoingMessage($response1, $this->options);
+    }
+
+    function it_should_encrypt_an_outgoing_message_request_if_it_has_privacy($privacyModule, $authModule)
     {
         /** @var PrivacyModuleInterface $privacyModule */
         $privacyModule->encryptData($this->request, $authModule, 'foobar123')->shouldBeCalled()->willReturn($this->request);

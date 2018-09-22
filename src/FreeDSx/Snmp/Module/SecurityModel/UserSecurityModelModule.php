@@ -11,7 +11,6 @@
 namespace FreeDSx\Snmp\Module\SecurityModel;
 
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
-use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
 use FreeDSx\Snmp\Exception\SnmpEncryptionException;
@@ -22,7 +21,6 @@ use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
-use FreeDSx\Snmp\Message\ScopedPduResponse;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\SecurityModel\Usm\TimeSync;
 use FreeDSx\Snmp\OidList;
@@ -107,7 +105,6 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     {
         $securityParams = $message->getSecurityParameters();
         $header = $message->getMessageHeader();
-        $pduFactory = $message instanceof MessageRequestInterface ? ScopedPduRequest::class : ScopedPduResponse::class;
 
         if (!$securityParams) {
             throw new SecurityModelException('The received SNMP message is missing the security parameters.');
@@ -177,7 +174,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if ($header->hasPrivacy()) {
             $password = $options['priv_pwd'] ?? '';
             try {
-                $this->privacyFactory->get($options['priv_mech'])->encryptData(
+                $message = $this->privacyFactory->get($options['priv_mech'])->encryptData(
                     $message,
                     $this->authFactory->get($options['auth_mech']),
                     $password
@@ -190,7 +187,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if ($header->hasAuthentication()) {
             $password = $options['auth_pwd'] ?? '';
             try {
-                $this->authFactory->get($options['auth_mech'])->authenticateOutgoingMsg($message, $password);
+                $message = $this->authFactory->get($options['auth_mech'])->authenticateOutgoingMsg($message, $password);
             } catch (SnmpAuthenticationException $e) {
                 throw new SecurityModelException($e->getMessage(), $e->getCode(), $e);
             }
@@ -427,7 +424,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             return $engineId;
         }
 
-        # Try to generate an EngineId for a trap request if no explicitly defined...
+        # Try to generate an EngineId for a trap request if none is explicitly defined...
         if ($this->isTrapRequest($message)) {
             # This will have issues with IPv6. Anyway to support that? Seems like gethostbyname() should be fixed
             $engineId = EngineId::fromIPv4($_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname()));
@@ -444,13 +441,13 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         # The EngineId was not explicitly defined so we try to look it up based on the host and run some quick checks...
         $engineId = $engineId ?? $this->getEngineIdForHost($host);
         if ($engineId === null) {
-            throw new RuntimeException(sprintf(
+            throw new SecurityModelException(sprintf(
                 'The engine ID for %s is not known.',
                 $host
             ));
         }
         if (!$this->isEngineTimeCached($engineId)) {
-            throw new RuntimeException(sprintf(
+            throw new SecurityModelException(sprintf(
                 'The cached engine time was not found for %s.',
                 $host
             ));
