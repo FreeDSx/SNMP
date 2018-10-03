@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+0.3.2 (2018-10-02)
+------------------
+* Fix privacy handling in the trap sink.
+* Be more defensive about how exceptions are handled in the trap sink.
+* Throw a more descriptive message if a PDU cannot be assembled after being decrypted.
+* Update the privacy interface to be consistent.
+* Add more specs around USM response types and privacy in general.
+
 0.3.1 (2018-09-16)
 ------------------
 * Fix handling of 64-bit counters (BigCounter). Suggest the GMP extension.
