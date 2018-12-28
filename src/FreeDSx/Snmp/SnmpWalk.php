@@ -10,6 +10,8 @@
 
 namespace FreeDSx\Snmp;
 
+use FreeDSx\Snmp\Exception\EndOfWalkException;
+
 /**
  * Provides a simple API to perform an SNMP walk.
  *
@@ -38,20 +40,32 @@ class SnmpWalk
     protected $current;
 
     /**
+     * @var Oid|null
+     */
+    protected $next;
+
+    /**
      * @var int
      */
     protected $count = 0;
 
     /**
+     * @var bool
+     */
+    protected $subtreeOnly;
+
+    /**
      * @param SnmpClient $client
      * @param null|string $startAt
      * @param null|string $endAt
+     * @param bool $subtreeOnly
      */
-    public function __construct(SnmpClient $client, ?string $startAt = null, ?string $endAt = null)
+    public function __construct(SnmpClient $client, ?string $startAt = null, ?string $endAt = null, bool $subtreeOnly = true)
     {
         $this->client = $client;
         $this->startAt = $startAt ?? '1.3.6.1.2.1';
         $this->endAt = $endAt;
+        $this->subtreeOnly = $subtreeOnly;
     }
 
     /**
@@ -60,29 +74,40 @@ class SnmpWalk
      * @return Oid
      * @throws Exception\ConnectionException
      * @throws Exception\SnmpRequestException
+     * @throws EndOfWalkException
      */
     public function next() : Oid
     {
-        $this->current = $this->client->getNext($this->current ? $this->current->getOid() : $this->startAt)->first();
+        if ($this->isComplete()) {
+            throw new EndOfWalkException('There are no more OIDs left in the walk.');
+        }
+        $this->current = $this->next ?? $this->getNextOid();
         $this->count++;
+        if ($this->next) {
+            $this->next = null;
+        }
 
         return $this->current;
     }
 
     /**
      * @return bool
+     * @throws Exception\ConnectionException
+     * @throws Exception\SnmpRequestException
      */
     public function isComplete() : bool
     {
-        if (!$this->current) {
-            return false;
-        }
-
-        if ($this->current->getOid() === $this->endAt) {
+        if ($this->current && $this->current->isEndOfMibView()) {
             return true;
         }
+        if ($this->current && $this->current->getOid() === $this->endAt) {
+            return true;
+        }
+        if ($this->subtreeOnly) {
+            return $this->isEndOfSubtree();
+        }
 
-        return $this->current->isEndOfMibView();
+        return false;
     }
 
     /**
@@ -96,9 +121,22 @@ class SnmpWalk
     }
 
     /**
+     * @param bool $subtreeOnly
+     * @return $this
+     */
+    public function subtreeOnly(bool $subtreeOnly = true)
+    {
+        $this->subtreeOnly = $subtreeOnly;
+
+        return $this;
+    }
+
+    /**
      * Whether or not call the next method will produce more OIDs.
      *
      * @return bool
+     * @throws Exception\ConnectionException
+     * @throws Exception\SnmpRequestException
      */
     public function hasOids() : bool
     {
@@ -113,6 +151,7 @@ class SnmpWalk
     public function restart()
     {
         $this->current = null;
+        $this->next = null;
         $this->count = 0;
 
         return $this;
@@ -155,5 +194,29 @@ class SnmpWalk
         $this->current = new Oid($oid);
 
         return $this;
+    }
+
+    /**
+     * @return Oid
+     * @throws Exception\ConnectionException
+     * @throws Exception\SnmpRequestException
+     */
+    protected function getNextOid() : Oid
+    {
+        return $this->client->getNext($this->current ? $this->current->getOid() : $this->startAt)->first();
+    }
+
+    /**
+     * @return bool
+     * @throws Exception\ConnectionException
+     * @throws Exception\SnmpRequestException
+     */
+    protected function isEndOfSubtree() : bool
+    {
+        if ($this->next === null) {
+            $this->next = $this->getNextOid();
+        }
+
+        return (substr($this->next->getOid(), 0, strlen($this->startAt)) !== $this->startAt);
     }
 }
