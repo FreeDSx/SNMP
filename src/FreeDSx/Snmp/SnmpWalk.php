@@ -83,9 +83,7 @@ class SnmpWalk
         }
         $this->current = $this->next ?? $this->getNextOid();
         $this->count++;
-        if ($this->next) {
-            $this->next = null;
-        }
+        $this->next = null;
 
         return $this->current;
     }
