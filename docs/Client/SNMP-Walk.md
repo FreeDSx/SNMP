@@ -18,12 +18,16 @@ has several methods to help control various aspects of the walk.
 ## Basic Use
 
 You can perform a basic walk using the following example. By default the walk will start at OID `1.3.6.1.2.1`. and will
-go until the end of the MIB view. You can control this behavior by passing a `$startAt` and `$endAt` parameter to walk
-(respectively).
+go until the end of the subtree. You can control this behavior by passing a `$startAt` and `$endAt` parameter to walk
+(respectively). If you would like to walk until the end of the MIB view, instead of the subtree, you can pass use the
+method `subtreeOnly(false)` of the walk class.
 
 ```php
 # Using the SnmpClient, get the helper class for the walk...
 $walk = $snmp->walk();
+
+# Specify to walk past the end of the subtree if desired
+# $walk->subtreeOnly(false);
 
 # Keep the walk going until there are no more OIDs left
 while($walk->hasOids()) {
@@ -138,4 +142,13 @@ The inverse of `isComplete()`. It will return true if there are still OIDs to be
 while ($walk->hasOids()) {
     $oid = $walk->next();
 }
+```
+
+### subtreeOnly(bool $subtreeOnly = true)
+
+Whether or not to walk only the subtree specified by the starting OID. The default is to only walk the subtree.
+
+```php
+# Walk past the subtree...
+$walk->subtreeOnly(false);
 ```
