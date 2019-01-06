@@ -55,10 +55,10 @@ class OidValues
     }
 
     /**
-     * @param int $value
+     * @param int|string $value
      * @return BigCounterValue
      */
-    public static function bigCounter(int $value) : BigCounterValue
+    public static function bigCounter($value) : BigCounterValue
     {
         return new BigCounterValue($value);
     }

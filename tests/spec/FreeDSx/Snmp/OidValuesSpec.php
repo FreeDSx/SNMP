@@ -48,6 +48,11 @@ class OidValuesSpec extends ObjectBehavior
         $this::bigCounter(1)->shouldBeLike(new BigCounterValue(1));
     }
 
+    function it_should_get_a_big_counter_value_with_a_numeric_string()
+    {
+        $this::bigCounter('123456789')->shouldBeLike(new BigCounterValue('123456789'));
+    }
+
     function it_should_get_a_counter_value()
     {
         $this::counter(1)->shouldBeLike(new CounterValue(1));
