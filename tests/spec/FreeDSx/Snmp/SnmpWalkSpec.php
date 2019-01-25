@@ -200,4 +200,11 @@ class SnmpWalkSpec extends ObjectBehavior
         $this->maxRepetitions(50);
         $this->next();
     }
+
+    function it_should_get_the_next_oid_when_calling_getOid($client)
+    {
+        $client->getNext('1.3.6.1.2.1')->shouldBeCalled()->willReturn(New OidList(new Oid('1.3.6.1.2.1.1')));
+
+        $this->getOid()->shouldBeLike(new Oid('1.3.6.1.2.1.1'));
+    }
 }

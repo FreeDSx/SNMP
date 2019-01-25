@@ -102,6 +102,19 @@ class SnmpWalk
     }
 
     /**
+     * An alias of the next() method.
+     *
+     * @return Oid
+     * @throws EndOfWalkException
+     * @throws Exception\ConnectionException
+     * @throws Exception\SnmpRequestException
+     */
+    public function getOid() : Oid
+    {
+        return $this->next();
+    }
+
+    /**
      * @return bool
      * @throws Exception\ConnectionException
      * @throws Exception\SnmpRequestException
