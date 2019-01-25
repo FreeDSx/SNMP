@@ -16,11 +16,13 @@ use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\SnmpClient;
 use FreeDSx\Snmp\SnmpWalk;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 
 class SnmpWalkSpec extends ObjectBehavior
 {
     function let(SnmpClient $client)
     {
+        $client->getOptions()->willReturn(['version' => 1]);
         $this->beConstructedWith($client);
     }
 
@@ -165,5 +167,37 @@ class SnmpWalkSpec extends ObjectBehavior
 
         $this->isComplete()->shouldBeEqualTo(true);
         $this->hasOids()->shouldBeEqualTo(false);
+    }
+
+    function it_should_use_GetBulk_if_the_client_is_set_to_snmp_v2($client)
+    {
+        $client->getOptions()->willReturn(['version' => 2]);
+        $client->getBulk(100, 0, '1.3.6.1.2.1')->shouldBeCalled()->willReturn(New OidList(new Oid('1.3.6.1.2.1.1'), new Oid('1.3.6.1.2.1.2')));
+
+        $this->next()->shouldBeLike(new Oid('1.3.6.1.2.1.1'));
+        $this->next()->shouldBeLike(new Oid('1.3.6.1.2.1.2'));
+
+        $client->getBulk(100, 0, '1.3.6.1.2.1.2')->shouldBeCalled()->willReturn(New OidList(new Oid('1.3.6.1.2.1.3')));
+
+        $this->next()->shouldBeLike(new Oid('1.3.6.1.2.1.3'));
+    }
+
+    function it_should_use_GetNext_if_use_get_bulk_is_set_to_false($client)
+    {
+        $client->getOptions()->willReturn(['version' => 2]);
+        $this->useGetBulk(false);
+
+        $client->getNext('1.3.6.1.2.1')->shouldBeCalled()->willReturn(New OidList(new Oid('1.3.6.1.2.1.1')));
+        $client->getBulk(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
+        $this->next();
+    }
+
+    function it_should_use_the_specified_max_repetitions($client)
+    {
+        $client->getOptions()->willReturn(['version' => 3]);
+        $client->getBulk(50, 0, '1.3.6.1.2.1')->shouldBeCalled()->willReturn(New OidList(new Oid('1.3.6.1.2.1.1'), new Oid('1.3.6.1.2.1.2')));
+
+        $this->maxRepetitions(50);
+        $this->next();
     }
 }
