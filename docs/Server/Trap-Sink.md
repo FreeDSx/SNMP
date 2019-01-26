@@ -38,7 +38,7 @@ The port to listen for traps on.
 
 Only accept traps using this SNMP version.
 
-**Default**: `162`
+**Default**: `(null)`
 
 ------------------
 #### community
