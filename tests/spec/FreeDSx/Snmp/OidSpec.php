@@ -180,6 +180,16 @@ class OidSpec extends ObjectBehavior
         ));
     }
 
+    function it_should_have_an_ASN1_representation_with_a_leading_dot_notation()
+    {
+        $this->beConstructedWith('.1.2.3.4.5', null);
+
+        $this->toAsn1()->shouldBeLike(Asn1::sequence(
+            Asn1::oid('1.2.3.4.5'),
+            Asn1::null()
+        ));
+    }
+
     function it_should_be_constructed_from_an_ASN1_representation_with_a_value()
     {
         $this::fromAsn1(Asn1::sequence(

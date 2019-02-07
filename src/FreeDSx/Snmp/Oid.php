@@ -170,7 +170,9 @@ class Oid implements ProtocolElementInterface
      */
     public function toAsn1() : AbstractType
     {
-        $varBind = Asn1::sequence(Asn1::oid($this->oid));
+        # It's common to represent OIDs with a leading dot. However, this is irrelevant to the ASN.1 BER representation.
+        # This is a convenience to detect and strip a leading dot if used.
+        $varBind = Asn1::sequence(Asn1::oid($this->oid[0] === '.' ? \substr($this->oid, 1) : $this->oid));
 
         if ($this->value === null && $this->status === null) {
             $varBind->addChild(Asn1::null());
