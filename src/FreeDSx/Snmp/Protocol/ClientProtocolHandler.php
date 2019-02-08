@@ -107,10 +107,10 @@ class ClientProtocolHandler
      */
     public function handle(RequestInterface $request, array $options) : ?MessageResponseInterface
     {
-        $options = array_merge($this->options, $options);
+        $options = \array_merge($this->options, $options);
         $message = $this->getMessageRequest($request, $options);
 
-        if (!in_array($request->getPduTag(), $this->allowedRequests[$message->getVersion()])) {
+        if (!\in_array($request->getPduTag(), $this->allowedRequests[$message->getVersion()])) {
             throw new InvalidArgumentException(sprintf(
                 'The request type "%s" is not allowed in SNMP version %s.',
                 get_class($request),
@@ -174,7 +174,7 @@ class ClientProtocolHandler
         $securityModule = $this->securityModelFactory->get($header->getSecurityModel());
 
         try {
-            if ($forcedDiscovery || $securityModule->isDiscoveryNeeded($message, $options)) {
+            if ($forcedDiscovery || $securityModule->isDiscoveryRequestNeeded($message, $options)) {
                 $this->performDiscovery($message, $securityModule, $options);
             }
 
@@ -305,7 +305,7 @@ class ClientProtocolHandler
             return;
         }
         $response = $message->getResponse();
-        if (!in_array($response->getPduTag(), $this->allowedResponses[$message->getVersion()])) {
+        if (!\in_array($response->getPduTag(), $this->allowedResponses[$message->getVersion()])) {
             throw new SnmpRequestException($message, sprintf(
                 'The PDU type received (%s) is not allowed in SNMP version %s.',
                 get_class($response),

@@ -114,7 +114,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn(new MessageResponseV3(new MessageHeader(1), new ScopedPduResponse(new Response(1))));
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
@@ -136,7 +136,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
 
@@ -156,7 +156,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
 
@@ -176,7 +176,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
@@ -198,7 +198,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
 
@@ -271,7 +271,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->shouldBeCalled()->willReturn($response);
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
 
@@ -292,7 +292,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $queue->getMessage()->willReturn($discoveryResponse, $response);
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldNotBeCalled();
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldNotBeCalled();
@@ -319,7 +319,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         );
 
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
@@ -346,7 +346,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $socket->write('foo')->shouldBeCalled();
         $queue->getMessage()->willReturn($response);
         /** @var SecurityModelModuleInterface $securityModule */
-        $securityModule->isDiscoveryNeeded(Argument::any(), Argument::any())->willReturn(false);
+        $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->willReturn(false);
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->willReturn($request);

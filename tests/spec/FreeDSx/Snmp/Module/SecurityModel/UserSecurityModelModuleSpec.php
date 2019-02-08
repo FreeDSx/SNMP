@@ -248,14 +248,14 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
 
     function it_should_not_require_discovery_when_the_engine_and_time_is_known_and_valid()
     {
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
+        $this->isDiscoveryRequestNeeded($this->request, $this->options)->shouldBeEqualTo(false);
     }
 
     function it_should_not_require_discovery_when_the_outgoing_request_is_a_trap()
     {
         $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
 
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(false);
+        $this->isDiscoveryRequestNeeded($this->request, $this->options)->shouldBeEqualTo(false);
     }
 
     function it_should_require_discovery_when_the_outgoing_request_is_an_inform($authFactory, $privacyFactory)
@@ -263,28 +263,28 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->beConstructedWith($privacyFactory, $authFactory, [], []);
         $this->request->getScopedPdu()->setRequest(new InformRequest(new TimeTicksValue(1), new OidValue('1.2.3')));
 
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+        $this->isDiscoveryRequestNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
 
     function it_should_need_a_discovery_if_the_host_is_not_known($authFactory, $privacyFactory)
     {
         $this->beConstructedWith($privacyFactory, $authFactory, [], []);
 
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+        $this->isDiscoveryRequestNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
 
     function it_should_need_a_discovery_if_the_engine_time_was_not_cached($authFactory, $privacyFactory)
     {
         $this->beConstructedWith($privacyFactory, $authFactory, [], ['foo' => 'foo']);
 
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+        $this->isDiscoveryRequestNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
 
     function it_should_need_discovery_if_the_last_sync_time_was_over_150_seconds($privacyFactory, $authFactory)
     {
         $this->beConstructedWith($privacyFactory, $authFactory, [EngineId::fromText('foo')->toBinary() => new TimeSync(10, 10, new \DateTime('01-01-2018 16:00:00'))], ['foo' => EngineId::fromText('foo')]);
 
-        $this->isDiscoveryNeeded($this->request, $this->options)->shouldBeEqualTo(true);
+        $this->isDiscoveryRequestNeeded($this->request, $this->options)->shouldBeEqualTo(true);
     }
 
     function it_should_throw_a_rediscovery_exception_if_an_incoming_message_has_a_notInTimeWindow_report_response()

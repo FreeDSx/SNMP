@@ -20,9 +20,12 @@ use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
+use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
+use FreeDSx\Snmp\Message\ScopedPduResponse;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\SecurityModel\Usm\TimeSync;
+use FreeDSx\Snmp\Oid;
 use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Protocol\Factory\AuthenticationModuleFactory;
 use FreeDSx\Snmp\Protocol\Factory\PrivacyModuleFactory;
@@ -73,6 +76,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      * @var AuthenticationModuleFactory
      */
     protected $authFactory;
+
+    /**
+     * @var EngineId
+     */
+    protected $engineId;
+
+    /**
+     * @var TimeSync
+     */
+    protected $localEngineTime;
 
     /**
      * @var TimeSync[]
@@ -201,7 +214,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      * @param array $options
      * @return bool
      */
-    public function isDiscoveryNeeded(AbstractMessageV3 $messageV3, array $options) : bool
+    public function isDiscoveryRequestNeeded(AbstractMessageV3 $messageV3, array $options) : bool
     {
         $usm = $messageV3->getSecurityParameters();
         $host = $options['host'] ?? '';
@@ -247,6 +260,50 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             new ScopedPduRequest(new GetRequest(new OidList()), $engineId),
             null,
             new UsmSecurityParameters($engineId, 0, 0)
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isDiscoveryResponseNeeded(AbstractMessageV3 $messageV3, array $options) : bool
+    {
+        if (!$messageV3 instanceof MessageRequestInterface) {
+            return false;
+        }
+
+        return ($this->isDiscoveryRequest($messageV3) || $this->isTimeSynchronizationRequest($messageV3, $options));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDiscoveryResponse(AbstractMessageV3 $messageV3, array $options) : MessageResponseInterface
+    {
+        $flags = MessageHeader::FLAG_NO_AUTH_NO_PRIV;
+        if ($messageV3->getMessageHeader()->hasAuthentication()) {
+            $flags |= MessageHeader::FLAG_AUTH;
+        }
+
+        return new MessageResponseV3(
+            new MessageHeader($messageV3->getMessageHeader()->getId(), $flags),
+            new ScopedPduResponse(
+                new ReportResponse(
+                    $messageV3->getRequest()->getId(),
+                    0,
+                    0,
+                    new OidList(Oid::fromCounter(self::USM_UNKNOWN_ENGINE_ID, 1))
+                ),
+                $this->getAuthoritativeEngineId($options),
+                $messageV3->getScopedPdu()->getContextName()
+            ),
+            null,
+            new UsmSecurityParameters(
+                $this->getAuthoritativeEngineId($options),
+                $this->localEngineTime->getEngineBoot(),
+                $this->localEngineTime->getEngineTime(),
+                $messageV3->getSecurityParameters()->getUsername()
+            )
         );
     }
 
@@ -338,6 +395,79 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
+     * @param MessageRequestInterface $message
+     * @param array $options
+     * @throws SecurityModelException
+     */
+    protected function validateIncomingRequest(MessageRequestInterface $message, array $options) : void
+    {
+        /** @var UsmSecurityParameters $usm */
+        $usm = $message->getSecurityParameters();
+        $engineId = $this->getAuthoritativeEngineId($options);
+
+        if ($message->getMessageHeaders()->hasPrivacy() && $message->getEncryptedPdu() === null) {
+            throw new SecurityModelException('The header has privacy marked but the encrypted PDU was not set.');
+        }
+        if ($this->isDiscoveryRequest($message) || $this->isTimeSynchronizationRequest($message, $options)) {
+            return;
+        }
+        if ($this->isOutsideAuthoritativeTimeWindow($usm)) {
+            throw new SecurityModelException('The received message is outside of the time window.');
+        }
+        if ($usm->getEngineId()->toBinary() !== $engineId->toBinary()) {
+            throw new SecurityModelException('The engineID is incorrect.');
+        }
+    }
+
+    /**
+     * @param MessageRequestInterface $message
+     * @return bool
+     */
+    protected function isDiscoveryRequest(MessageRequestInterface $message) : bool
+    {
+        /** @var UsmSecurityParameters $usm */
+        $usm = $message->getSecurityParameters();
+        $request = $message->getRequest();
+
+        if ($usm->getEngineId() !== null) {
+            return false;
+        }
+        if (!($request instanceof GetRequest && $request->getOids()->count() === 0)) {
+            return false;
+        }
+
+        return ($usm->getEngineBoots() === 0 && $usm->getEngineTime() === 0);
+    }
+
+    /**
+     * @param MessageRequestInterface $message
+     * @param array $options
+     * @return bool
+     * @throws SecurityModelException
+     */
+    protected function isTimeSynchronizationRequest(MessageRequestInterface $message, array $options) : bool
+    {
+        /** @var UsmSecurityParameters $usm */
+        $usm = $message->getSecurityParameters();
+        $request = $message->getRequest();
+        $engineId = $this->getAuthoritativeEngineId($options);
+        /** @var MessageHeader $header */
+        $header = $message->getMessageHeader();
+
+        if (!($usm->getEngineId() && $usm->getEngineId()->toBinary() === $engineId->toBinary())) {
+            return false;
+        }
+        if (!($request instanceof GetRequest && $request->getOids()->count() === 0)) {
+            return false;
+        }
+        if (!($header->hasAuthentication() && $header->isReportable())) {
+            return false;
+        }
+
+        return ($usm->getEngineBoots() === 0 && $usm->getEngineTime() === 0);
+    }
+
+    /**
      * @param string $host
      * @return null|EngineId
      */
@@ -426,16 +556,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
         # Try to generate an EngineId for a trap request if none is explicitly defined...
         if ($this->isTrapRequest($message)) {
-            # This will have issues with IPv6. Anyway to support that? Seems like gethostbyname() should be fixed
-            $engineId = EngineId::fromIPv4($_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname()));
-
-            try {
-                $engineId->toBinary();
-            } catch (\Exception $e) {
-                throw new SecurityModelException(sprintf('Unable to generate an engine ID for trap. %s', $e->getMessage()), 0, $e);
-            }
-
-            return $engineId;
+            return $this->generateIPv4EngineId();
         }
 
         # The EngineId was not explicitly defined so we try to look it up based on the host and run some quick checks...
@@ -482,6 +603,37 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         #    more than 150 seconds less than the local notion of the
         #    value of snmpEngineTime.
         if ($secParams->getEngineBoots() === $timeSync->getEngineBoot() && (($timeSync->getEngineTime() - $secParams->getEngineTime()) > 150)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Section 3.2, Step 7
+     *    If the message is considered to be outside of the Time Window
+     *    then the usmStatsNotInTimeWindows counter is incremented and
+     *    an error indication (notInTimeWindow) together with the OID,
+     *    the value of the incremented counter, and an indication that
+     *    the error must be reported with a securityLevel of authNoPriv,
+     *    is returned to the calling module
+     *
+     * @param UsmSecurityParameters $secParams
+     * @return bool
+     */
+    protected function isOutsideAuthoritativeTimeWindow(UsmSecurityParameters $secParams) : bool
+    {
+        # Section 3.2, Step 7.a
+        #    the value of the msgAuthoritativeEngineBoots field differs
+        #    from the local value of snmpEngineBoots;
+        if ($secParams->getEngineBoots() !== $this->localEngineTime->getEngineBoot()) {
+            return true;
+        }
+        # Section 3.2, Step 7.a
+        #    the value of the msgAuthoritativeEngineTime field differs
+        #    from the local notion of snmpEngineTime by more than +/- 150
+        #    seconds.
+        if (\abs($this->localEngineTime->getEngineTime() - $secParams->getEngineTime()) > 150) {
             return true;
         }
 
@@ -539,5 +691,42 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $contextEngineIdProperty = $scopedPduObject->getProperty('contextEngineId');
         $contextEngineIdProperty->setAccessible(true);
         $contextEngineIdProperty->setValue($message, $secParams->getEngineId());
+    }
+
+    /**
+     * @return EngineId
+     * @throws SecurityModelException
+     */
+    protected function generateIPv4EngineId() : EngineId
+    {
+        # This will have issues with IPv6. Anyway to support that? Seems like gethostbyname() should be fixed
+        $engineId = EngineId::fromIPv4($_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname()));
+
+        try {
+            $engineId->toBinary();
+        } catch (\Exception $e) {
+            throw new SecurityModelException(sprintf('Unable to generate an engine ID for trap. %s', $e->getMessage()), 0, $e);
+        }
+
+        return $engineId;
+    }
+
+    /**
+     * @param array $options
+     * @return EngineId
+     * @throws SecurityModelException
+     */
+    protected function getAuthoritativeEngineId(array $options) : EngineId
+    {
+        if ($this->engineId) {
+            return $this->engineId;
+        }
+
+        $this->engineId = $this->getEngineIdFromOptions($options);
+        if (!$this->engineId) {
+            $this->generateIPv4EngineId();
+        }
+
+        return $this->engineId;
     }
 }
