@@ -112,12 +112,12 @@ class EngineId
     {
         if ($this->binary === null) {
             $enterpriseId = ($this->format !== null) ? ($this->enterpriseId | 0x80000000) : $this->enterpriseId;
-            $enterpriseId = hex2bin(str_pad(dechex($enterpriseId), 8, "0", STR_PAD_LEFT));
+            $enterpriseId = \hex2bin(\str_pad(\dechex($enterpriseId), 8, "0", STR_PAD_LEFT));
 
             if ($this->format !== null) {
-                $this->binary = $enterpriseId.chr($this->format).self::encodeDataFormat($this->format, $this->data);
+                $this->binary = $enterpriseId.\chr($this->format).self::encodeDataFormat($this->format, $this->data);
             } else {
-                $this->binary = $enterpriseId.str_pad($this->data, 8, "\x00", STR_PAD_LEFT);
+                $this->binary = $enterpriseId.\str_pad($this->data, 8, "\x00", STR_PAD_LEFT);
             }
         }
 
@@ -129,7 +129,7 @@ class EngineId
      */
     public function toHex() : string
     {
-        return bin2hex($this->toBinary());
+        return \bin2hex($this->toBinary());
     }
 
     /**
@@ -229,26 +229,26 @@ class EngineId
      */
     protected static function parse($engineId) : EngineId
     {
-        $length = strlen($engineId);
+        $length = \strlen($engineId);
         # The engine ID must be between 5 and 32 bytes long
         if ($length < 5 || $length > 32) {
             throw new UnexpectedValueException('The engine ID length is invalid.');
         }
         # It cannot be composed of all H'00' or H'FF'
-        if (str_repeat("\x00", $length) === $engineId || str_repeat("\xff", $length) === $engineId) {
+        if (\str_repeat("\x00", $length) === $engineId || \str_repeat("\xff", $length) === $engineId) {
             throw new UnexpectedValueException('The engine ID is malformed.');
         }
         $format = null;
-        $enterpriseId = hexdec(bin2hex(substr($engineId, 0, 4)));
+        $enterpriseId = \hexdec(\bin2hex(\substr($engineId, 0, 4)));
 
         # The first bit specifies whether it is variable length format from RFC3411...
-        if (ord($engineId[0]) >= 128) {
-            $format = ord($engineId[4]);
+        if (\ord($engineId[0]) >= 128) {
+            $format = \ord($engineId[4]);
             # The first bit of the ID is an identifier for variable length format, so flip it.
             $enterpriseId ^= 0x80000000;
-            $data = self::parseDataFormat($format, substr($engineId, 5));
+            $data = self::parseDataFormat($format, \substr($engineId, 5));
         } else {
-            $data = substr($engineId, 4);
+            $data = \substr($engineId, 4);
         }
 
         return new self($data, $format, $enterpriseId);
@@ -270,7 +270,7 @@ class EngineId
         } elseif ($format === self::FORMAT_TEXT) {
             $data = (string) $data;
         } elseif ($format === self::FORMAT_OCTET) {
-            $data = bin2hex($data);
+            $data = \bin2hex($data);
         }
 
         return $data;
@@ -302,21 +302,21 @@ class EngineId
      */
     protected static function encodeOctets($data)
     {
-        if (strpos($data, self::$octetDelim) !== false) {
-            $data = explode(self::$octetDelim, $data);
+        if (\strpos($data, self::$octetDelim) !== false) {
+            $data = \explode(self::$octetDelim, $data);
             foreach ($data as $i => $piece) {
-                $data[$i] = str_pad($piece, 2, '0', STR_PAD_LEFT);
+                $data[$i] = \str_pad($piece, 2, '0', STR_PAD_LEFT);
             }
-            $data = implode('', $data);
+            $data = \implode('', $data);
         }
-        if (!ctype_xdigit($data)) {
+        if (!\ctype_xdigit($data)) {
             throw new UnexpectedValueException('The octets contains invalid values.');
         }
-        if (strlen($data) % 2) {
+        if (\strlen($data) % 2) {
             throw new UnexpectedValueException('The octets must be an even length.');
         }
 
-        return hex2bin($data);
+        return \hex2bin($data);
     }
 
     /**
@@ -325,17 +325,17 @@ class EngineId
      */
     protected static function parseIPv4($data) : string
     {
-        $length = strlen($data);
+        $length = \strlen($data);
         if ($length !== 4) {
             throw new UnexpectedValueException(sprintf('Expected 4 bytes for IPv4, got %s.', $length));
         }
 
         $ipAddress = [];
         for ($i = 0; $i < 4; $i++) {
-            $ipAddress[] = ord($data[$i]);
+            $ipAddress[] = \ord($data[$i]);
         }
 
-        return implode('.', $ipAddress);
+        return \implode('.', $ipAddress);
     }
 
     /**
@@ -344,14 +344,14 @@ class EngineId
      */
     protected static function encodeIPv4(string $data)
     {
-        if (!filter_var($data, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        if (!\filter_var($data, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             throw new UnexpectedValueException(sprintf('The IPv4 address is invalid: %s', $data));
         }
-        $pieces = explode('.', $data);
+        $pieces = \explode('.', $data);
 
         $encoded = '';
         foreach ($pieces as $piece) {
-            $encoded .= chr((int) $piece);
+            $encoded .= \chr((int) $piece);
         }
 
         return $encoded;
@@ -363,17 +363,17 @@ class EngineId
      */
     protected static function parseIPv6($data) : string
     {
-        $length = strlen($data);
+        $length = \strlen($data);
         if ($length !== 12) {
             throw new UnexpectedValueException(sprintf('Expected 12 bytes for IPv6, got %s.', $length));
         }
 
-        $pieces = str_split($data, 2);
+        $pieces = \str_split($data, 2);
         foreach ($pieces as $i => $piece) {
-            $pieces[$i] = ltrim(bin2hex($piece), '0');
+            $pieces[$i] = \ltrim(\bin2hex($piece), '0');
         }
 
-        return implode(':', $pieces);
+        return \implode(':', $pieces);
     }
 
     /**
@@ -382,15 +382,15 @@ class EngineId
      */
     protected static function encodeIPv6(string $data)
     {
-        if (!filter_var($data, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        if (!\filter_var($data, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             throw new UnexpectedValueException(sprintf('The IPv6 address is invalid: %s', $data));
         }
-        $pieces = explode(':', $data);
+        $pieces = \explode(':', $data);
 
         $encoded = '';
         foreach ($pieces as $piece) {
-            $piece = str_pad($piece, 4, '0', STR_PAD_LEFT);
-            $encoded .= hex2bin($piece);
+            $piece = \str_pad($piece, 4, '0', STR_PAD_LEFT);
+            $encoded .= \hex2bin($piece);
         }
 
         return $encoded;
@@ -402,12 +402,12 @@ class EngineId
      */
     protected static function parseMAC($data) : string
     {
-        $length = strlen($data);
+        $length = \strlen($data);
         if ($length !== 6) {
             throw new UnexpectedValueException(sprintf('Expected 6 bytes for a MAC, got %s.', $length));
         }
 
-        return implode(':', str_split(bin2hex($data), 2));
+        return \implode(':', \str_split(\bin2hex($data), 2));
     }
 
     /**
@@ -416,15 +416,15 @@ class EngineId
      */
     protected static function encodeMAC(string $data)
     {
-        if (!filter_var($data, FILTER_VALIDATE_MAC)) {
+        if (!\filter_var($data, FILTER_VALIDATE_MAC)) {
             throw new UnexpectedValueException(sprintf('The MAC is invalid: %s', $data));
         }
-        $pieces = explode(':', $data);
+        $pieces = \explode(':', $data);
 
         foreach ($pieces as $i => $piece) {
-            $pieces[$i] = str_pad($piece, '2', '0', STR_PAD_LEFT);
+            $pieces[$i] = \str_pad($piece, '2', '0', STR_PAD_LEFT);
         }
 
-        return hex2bin(implode('', $pieces));
+        return \hex2bin(\implode('', $pieces));
     }
 }

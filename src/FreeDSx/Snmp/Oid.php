@@ -198,7 +198,7 @@ class Oid implements ProtocolElementInterface
      */
     public static function fromAsn1(AbstractType $varBind)
     {
-        if (!($varBind instanceof SequenceType && count($varBind) >= 1)) {
+        if (!($varBind instanceof SequenceType && \count($varBind->getChildren()) >= 1)) {
             throw new ProtocolException('The Oid format is invalid.');
         }
         $oidName = $varBind->getChild(0);

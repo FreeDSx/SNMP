@@ -67,7 +67,7 @@ class TrapProtocolHandler
     public function __construct(TrapListenerInterface $listener, array $options, ?SnmpEncoder $encoder = null, ?Socket $socket = null, ?SecurityModelModuleFactory $securityModelFactory = null)
     {
         $this->listener = $listener;
-        $this->options = array_merge($this->options, $options);
+        $this->options = \array_merge($this->options, $options);
         $this->encoder = $encoder;
         $this->socket = $socket;
         $this->securityModelFactory = $securityModelFactory ?: new SecurityModelModuleFactory();
@@ -80,12 +80,12 @@ class TrapProtocolHandler
      */
     public function handle(string $ipAddress, $data, array $options) : void
     {
-        $options = array_merge($this->options, $options);
+        $options = \array_merge($this->options, $options);
 
-        $port = (int) substr($ipAddress, strrpos($ipAddress, ':'));
+        $port = (int) \substr($ipAddress, \strrpos($ipAddress, ':'));
         # IPv6 should be enclosed in brackets, though PHP doesn't represent it that way from a socket.
         # Adding the trim in case that changes at some point.
-        $ipAddress = trim(substr($ipAddress, 0, strrpos($ipAddress, ':')), '[]');
+        $ipAddress = \trim(\substr($ipAddress, 0, \strrpos($ipAddress, ':')), '[]');
 
         if (!$this->isIpAddressAllowed($ipAddress, $options)) {
             return;
@@ -148,7 +148,7 @@ class TrapProtocolHandler
     protected function isIpAddressAllowed(string $ip, array $options) : bool
     {
         if ($options['whitelist'] !== null && is_array($options['whitelist'])) {
-            return in_array($ip, $options['whitelist']);
+            return \in_array($ip, $options['whitelist']);
         } else {
             return $this->listener->accept($ip);
         }

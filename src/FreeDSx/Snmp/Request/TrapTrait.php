@@ -80,7 +80,7 @@ trait TrapTrait
         list($id, $errorStatus, $errorIndex, $oidList) = parent::getBaseElements($type);
 
         /** @var OidList $oidList */
-        if (\count($oidList) < 2) {
+        if (\count($oidList->toArray()) < 2) {
             throw new ProtocolException('The trap is malformed. It must have at least 2 VarBind values.');
         }
         $sysUpTime = $oidList->index(1);
@@ -94,7 +94,7 @@ trait TrapTrait
         $trapRequest = new self(
             $sysUpTime->getValue(),
             $trapOid->getValue(),
-            new OidList(...array_slice($oidList->toArray(), 2))
+            new OidList(...\array_slice($oidList->toArray(), 2))
         );
         $trapRequest->id = $id;
         $trapRequest->errorStatus = $errorStatus;

@@ -77,7 +77,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
         $digest = $usm->getAuthParams();
-        if (strlen($digest) !== self::N[$this->algorithm]) {
+        if (\strlen($digest) !== self::N[$this->algorithm]) {
             throw new SnmpAuthenticationException(sprintf(
                 'Expected a digest of %s bytes, but it is %s.',
                 self::N[$this->algorithm],
@@ -86,7 +86,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
         }
 
         # As in an outgoing message, replace the digest with zero octets.
-        $usm->setAuthParams(str_repeat("\x00", self::N[$this->algorithm]));
+        $usm->setAuthParams(\str_repeat("\x00", self::N[$this->algorithm]));
         $hmac = $this->generateHMAC($message, $password, $usm->getEngineId());
         if ($hmac !== $digest) {
             throw new SnmpAuthenticationException('The received message contains the wrong digest.');
@@ -101,7 +101,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
     public function authenticateOutgoingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3
     {
         # RFC 3414, Section 11.2. Passwords must be at least 8 characters in length
-        if (strlen($password) < 8) {
+        if (\strlen($password) < 8) {
             throw new SnmpAuthenticationException('The authentication password must be at least 8 characters long.');
         }
         /** @var UsmSecurityParameters $usm */
@@ -111,7 +111,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
         #     The msgAuthenticationParameters field is set to the serialization
         #     of an OCTET STRING containing N zero octets; it is serialized
         #     according to the rules in [RFC3417].
-        $usm->setAuthParams(str_repeat("\x00", self::N[$this->algorithm]));
+        $usm->setAuthParams(\str_repeat("\x00", self::N[$this->algorithm]));
         # RFC 7860, Section 4.2.1. Step 4:
         #     The msgAuthenticationParameters field is replaced with the MAC
         #     obtained in the previous step.
@@ -142,8 +142,8 @@ class AuthenticationModule implements AuthenticationModuleInterface
         #     of the password as often as necessary, truncating accordingly, and
         #     using the resulting string as the input to the hash function H.
         #     The resulting digest, termed "digest1", is used in the next step.
-        $digest1 = $this->hash(substr(
-            str_repeat($password, (ceil(10478576 / strlen($password)))),
+        $digest1 = $this->hash(\substr(
+            str_repeat($password, (\ceil(10478576 / \strlen($password)))),
             0,
             1048576
         ));
@@ -162,7 +162,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
      */
     public function hash($value)
     {
-        $digest = hash($this->algorithm, $value, true);
+        $digest = \hash($this->algorithm, $value, true);
         $this->throwOnHashError($digest);
 
         return $digest;
@@ -204,10 +204,10 @@ class AuthenticationModule implements AuthenticationModuleInterface
         #     Using the secret authKey of M octets, the HMAC is calculated over
         #     the wholeMsg according to RFC 6234 with hash function H.
         $key = $this->generateKey($password, $engineId);
-        $hmac = hash_hmac(
+        $hmac = \hash_hmac(
             $this->algorithm,
             (new SnmpEncoder())->encode($message->toAsn1()),
-            substr($key, 0, self::M[$this->algorithm]),
+            \substr($key, 0, self::M[$this->algorithm]),
             true
         );
         $this->throwOnHashError($hmac);
@@ -215,6 +215,6 @@ class AuthenticationModule implements AuthenticationModuleInterface
         # RFC 7860, Section 4.2.1. Step 3:
         #     The N first octets of the above HMAC are taken as the computed
         #     MAC value.
-        return substr($hmac, 0, self::N[$this->algorithm]);
+        return \substr($hmac, 0, self::N[$this->algorithm]);
     }
 }

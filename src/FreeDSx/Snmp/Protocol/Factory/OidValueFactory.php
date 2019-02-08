@@ -58,10 +58,10 @@ class OidValueFactory
      */
     public static function get(AbstractType $type)
     {
-        if (isset(self::$simpleMap[get_class($type)])) {
-            return call_user_func(self::$simpleMap[get_class($type)].'::fromAsn1', $type);
+        if (isset(self::$simpleMap[\get_class($type)])) {
+            return \call_user_func(self::$simpleMap[\get_class($type)].'::fromAsn1', $type);
         } elseif ($type->getTagClass() === AbstractType::TAG_CLASS_APPLICATION && isset(self::$appMap[$type->getTagNumber()])) {
-            return call_user_func(self::$appMap[$type->getTagNumber()].'::fromAsn1', $type);
+            return \call_user_func(self::$appMap[$type->getTagNumber()].'::fromAsn1', $type);
         } else {
             throw new ProtocolException(sprintf(
                 'The SNMP VarBind value from ASN.1 type %s and tag %s is not recognized.',

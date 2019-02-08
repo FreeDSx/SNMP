@@ -30,7 +30,7 @@ class AuthenticationModuleFactory
     {
         $module = AuthenticationModule::class;
 
-        foreach (call_user_func($module.'::supports') as $algorithm) {
+        foreach (\call_user_func($module.'::supports') as $algorithm) {
             $this->modules[$algorithm] = $module;
         }
     }

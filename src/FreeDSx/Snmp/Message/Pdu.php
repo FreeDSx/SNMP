@@ -189,7 +189,7 @@ class Pdu implements ProtocolElementInterface
     protected static function getBaseElements(AbstractType $type) : array
     {
         $type = (new SnmpEncoder())->complete($type, AbstractType::TAG_TYPE_SEQUENCE);
-        if (\count($type) !== 4) {
+        if (\count($type->getChildren()) !== 4) {
             throw new ProtocolException('The PDU must be a sequence with 4 elements.');
         }
         $id = $type->getChild(0);

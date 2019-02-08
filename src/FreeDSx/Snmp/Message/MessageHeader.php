@@ -107,7 +107,7 @@ class MessageHeader implements ProtocolElementInterface
 
             return $this;
         }
-        if (!in_array($flag, self::FLAGS)) {
+        if (!\in_array($flag, self::FLAGS)) {
             throw new InvalidArgumentException(sprintf(
                 'The flag %s is not valid.',
                 $flag
@@ -239,7 +239,7 @@ class MessageHeader implements ProtocolElementInterface
         return Asn1::sequence(
             Asn1::integer($this->id),
             Asn1::integer($this->maxSize),
-            Asn1::octetString(chr($this->flags)),
+            Asn1::octetString(\chr($this->flags)),
             Asn1::integer($this->securityModel)
         );
     }
@@ -249,7 +249,7 @@ class MessageHeader implements ProtocolElementInterface
      */
     public static function fromAsn1(AbstractType $type)
     {
-        if (!$type instanceof SequenceType && \count($type) !== 4) {
+        if (!$type instanceof SequenceType && \count($type->getChildren()) !== 4) {
             throw new ProtocolException('The message header must be a sequence with 4 elements.');
         }
         $id = $type->getChild(0);

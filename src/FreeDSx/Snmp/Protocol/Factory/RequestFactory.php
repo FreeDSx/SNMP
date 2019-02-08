@@ -55,6 +55,6 @@ class RequestFactory
             ));
         }
 
-        return call_user_func(self::$map[$type->getTagNumber()].'::fromAsn1', $type);
+        return \call_user_func(self::$map[$type->getTagNumber()].'::fromAsn1', $type);
     }
 }

@@ -158,7 +158,7 @@ abstract class AbstractMessageV3 implements PduInterface
      */
     protected static function parseCommonElements(AbstractType $type)
     {
-        if (!($type instanceof SequenceType && count($type) === 4)) {
+        if (!($type instanceof SequenceType && count($type->getChildren()) === 4)) {
             throw new ProtocolException('The SNMP message must be a sequence with at least 4 elements.');
         }
         $version = $type->getChild(0);

@@ -135,7 +135,7 @@ trait ProtocolTrait
      */
     protected function isRequestAllowed(int $version, int $request) : bool
     {
-        return in_array($request, $this->allowedRequests[$version]);
+        return \in_array($request, $this->allowedRequests[$version]);
     }
 
     /**
@@ -146,7 +146,7 @@ trait ProtocolTrait
     protected function socket(array $options = []) : Socket
     {
         if (!$this->socket) {
-            $options = array_merge($this->options, $options);
+            $options = \array_merge($this->options, $options);
             try {
                 $this->socket = Socket::create($options['host'], [
                     'transport' => $options['transport'],

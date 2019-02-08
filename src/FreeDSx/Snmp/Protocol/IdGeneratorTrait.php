@@ -42,6 +42,6 @@ trait IdGeneratorTrait
         $min = $this->options['id_min'] ?? $min ?? self::$minId;
         $max = $this->options['id_max'] ?? $max ?? self::$maxId;
 
-        return random_int($min, $max);
+        return \random_int($min, $max);
     }
 }

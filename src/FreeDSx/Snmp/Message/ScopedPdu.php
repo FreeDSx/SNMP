@@ -94,7 +94,7 @@ abstract class ScopedPdu implements ProtocolElementInterface
      */
     protected static function parseBaseElements(AbstractType $type) : array
     {
-        if (!($type instanceof SequenceType && \count($type) === 3)) {
+        if (!($type instanceof SequenceType && \count($type->getChildren()) === 3)) {
             throw new ProtocolException('Expected the scoped PDU to be a sequence with exactly 3 elements.');
         }
         $engineId = $type->getChild(0);

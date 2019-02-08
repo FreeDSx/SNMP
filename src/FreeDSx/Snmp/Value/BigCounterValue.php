@@ -63,11 +63,11 @@ class BigCounterValue extends AbstractValue
      */
     public function isBigInt() : bool
     {
-        if (is_int($this->value)) {
+        if (\is_int($this->value)) {
             return false;
         }
 
-        return is_float($this->value + 0);
+        return \is_float($this->value + 0);
     }
 
     /**
@@ -75,10 +75,10 @@ class BigCounterValue extends AbstractValue
      */
     protected function validate($integer) : void
     {
-        if (is_int($integer)) {
+        if (\is_int($integer)) {
             return;
         }
-        if (is_string($integer) && is_numeric($integer) && strpos($integer, '.') === false) {
+        if (\is_string($integer) && \is_numeric($integer) && \strpos($integer, '.') === false) {
             return;
         }
 

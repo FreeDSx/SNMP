@@ -27,7 +27,7 @@ trait DESPrivacyTrait
     public function __construct(string $algorithm, ?int $localBoot = null)
     {
         $this->algorithm = $algorithm;
-        $this->localBoot = ($localBoot === null) ? random_int(0, self::$maxSalt) : $localBoot;
+        $this->localBoot = ($localBoot === null) ? \random_int(0, self::$maxSalt) : $localBoot;
     }
 
     /**
@@ -41,7 +41,7 @@ trait DESPrivacyTrait
 
         # The resulting "salt" is then XOR-ed with the pre-IV to obtain the IV.
         for ($i = 0; $i < 8; $i++) {
-            $iv .= chr(ord($salt[$i]) ^ ord($preIV[$i]));
+            $iv .= \chr(\ord($salt[$i]) ^ \ord($preIV[$i]));
         }
 
         return $iv;
@@ -52,10 +52,10 @@ trait DESPrivacyTrait
      */
     protected function validateEncodedPdu($scopedPdu)
     {
-        $pduLength = strlen($scopedPdu);
+        $pduLength = \strlen($scopedPdu);
 
         if (($mod = $pduLength % 8)) {
-            $scopedPdu .= str_repeat("\x00", (8 - $mod));
+            $scopedPdu .= \str_repeat("\x00", (8 - $mod));
         }
 
         return $scopedPdu;
@@ -66,7 +66,7 @@ trait DESPrivacyTrait
      */
     protected function validateEncryptedPdu($encryptedPdu)
     {
-        if (strlen($encryptedPdu) % 8) {
+        if (\strlen($encryptedPdu) % 8) {
             throw new SnmpEncryptionException('The encrypted PDU must be a multiple of 8 octets, but it is not');
         }
 

@@ -34,7 +34,7 @@ class SecurityModelModuleFactory
     public function __construct()
     {
         $module = UserSecurityModelModule::class;
-        $this->map[call_user_func($module.'::supports')] = $module;
+        $this->map[\call_user_func($module.'::supports')] = $module;
     }
 
     /**

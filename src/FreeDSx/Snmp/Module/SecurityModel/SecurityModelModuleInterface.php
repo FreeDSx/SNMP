@@ -61,7 +61,25 @@ interface SecurityModelModuleInterface
      * @param array $options
      * @return bool
      */
-    public function isDiscoveryNeeded(AbstractMessageV3 $messageV3, array $options) : bool;
+    public function isDiscoveryRequestNeeded(AbstractMessageV3 $messageV3, array $options) : bool;
+
+    /**
+     * Generate a needed discovery response given the request.
+     *
+     * @param AbstractMessageV3 $messageV3
+     * @param array $options
+     * @return MessageResponseInterface
+     */
+    public function getDiscoveryResponse(AbstractMessageV3 $messageV3, array $options) : MessageResponseInterface;
+
+    /**
+     * Given the message, determine if a discovery response needs to be sent.
+     *
+     * @param AbstractMessageV3 $messageV3
+     * @param array $options
+     * @return bool
+     */
+    public function isDiscoveryResponseNeeded(AbstractMessageV3 $messageV3, array $options) : bool;
 
     /**
      * When the discovery response is returned it will be passed here for any specific module processing.

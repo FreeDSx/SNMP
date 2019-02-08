@@ -35,7 +35,7 @@ class PrivacyModuleFactory
         $aesModule = AESPrivacyModule::class;
 
         foreach ([$desModule, $des3Module, $aesModule] as $module) {
-            foreach (call_user_func($module.'::supports') as $algorithm) {
+            foreach (\call_user_func($module.'::supports') as $algorithm) {
                 $this->modules[$algorithm] = $module;
             }
         }

@@ -59,7 +59,7 @@ class IpAddressValue extends AbstractValue
     {
         return Asn1::application(
             self::ASN1_TAG,
-            Asn1::octetString(pack('N', ip2long($this->value)))
+            Asn1::octetString(\pack('N', \ip2long($this->value)))
         );
     }
 
@@ -70,11 +70,11 @@ class IpAddressValue extends AbstractValue
     {
         $ip = parent::fromAsn1($type);
 
-        $value = @unpack("Nip", $ip->value);
+        $value = @\unpack("Nip", $ip->value);
         if (!isset($value['ip'])) {
             throw new ProtocolException('Unable to parse IP address value.');
         }
-        $ip->value = long2ip($value['ip']);
+        $ip->value = \long2ip($value['ip']);
 
         return $ip;
     }

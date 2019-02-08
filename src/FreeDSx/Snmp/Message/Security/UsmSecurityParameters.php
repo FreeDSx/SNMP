@@ -232,7 +232,7 @@ class UsmSecurityParameters implements SecurityParametersInterface
     public static function fromAsn1(AbstractType $type)
     {
         $usm = (new SnmpEncoder())->decode($type->getValue());
-        if (!($usm instanceof SequenceType && \count($usm) === 6)) {
+        if (!($usm instanceof SequenceType && \count($usm->getChildren()) === 6)) {
             throw new ProtocolException('Expected the USM to be a sequence type with 6 elements.');
         }
 
@@ -259,7 +259,7 @@ class UsmSecurityParameters implements SecurityParametersInterface
                 ));
             }
         }
-        $args = array_map(function ($type) {
+        $args = \array_map(function ($type) {
             /** @var AbstractType $type */
             return $type->getValue();
         }, $args);

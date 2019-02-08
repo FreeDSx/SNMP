@@ -50,9 +50,9 @@ class DESPrivacyModule implements PrivacyModuleInterface
         # The first 8 octets of the 16-octet secret (private privacy key) are
         # used as a DES key.  Since DES uses only 56 bits, the Least
         # Significant Bit in each octet is disregarded.
-        $key = substr($cryptKey, 0, 8);
+        $key = \substr($cryptKey, 0, 8);
         # The last 8 octets of the 16-octet secret (private privacy key) are used as pre-IV.
-        $preIV = substr($cryptKey, 8, 8);
+        $preIV = \substr($cryptKey, 8, 8);
 
         # The 32-bit snmpEngineBoots is converted to the first 4 octets (Most
         # Significant Byte first) of our "salt".  The 32-bit integer is then

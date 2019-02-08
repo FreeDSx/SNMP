@@ -93,7 +93,7 @@ abstract class AbstractMessage implements PduInterface
      */
     protected static function parseCommunity(AbstractType $asn1)
     {
-        if (!($asn1 instanceof SequenceType && count($asn1) === 3)) {
+        if (!($asn1 instanceof SequenceType && count($asn1->getChildren()) === 3)) {
             throw new ProtocolException('The SNMP message must be a sequence with at least 3 elements.');
         }
         $version = $asn1->getChild(0);

@@ -64,6 +64,6 @@ class MessageResponse extends AbstractMessage implements PduInterface
             ));
         }
 
-        return call_user_func(self::$map[$version].'::fromAsn1', $asn1);
+        return \call_user_func(self::$map[$version].'::fromAsn1', $asn1);
     }
 }

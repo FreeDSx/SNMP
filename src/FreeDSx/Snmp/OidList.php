@@ -103,7 +103,7 @@ class OidList implements \IteratorAggregate, \Countable, ProtocolElementInterfac
      */
     public function first() : ?Oid
     {
-        $oid = reset($this->oids);
+        $oid = \reset($this->oids);
 
         return $oid ?: null;
     }
@@ -115,8 +115,8 @@ class OidList implements \IteratorAggregate, \Countable, ProtocolElementInterfac
      */
     public function last() : ?Oid
     {
-        $oid = end($this->oids);
-        reset($this->oids);
+        $oid = \end($this->oids);
+        \reset($this->oids);
 
         return $oid ?: null;
     }
