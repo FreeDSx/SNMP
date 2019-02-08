@@ -19,8 +19,7 @@
   },
   "require-dev": {
     "phpspec/phpspec": "^5.0",
-    "friendsofphp/php-cs-fixer": "^2.0.0",
-    "phpbench/phpbench": "@dev"
+    "friendsofphp/php-cs-fixer": "^2.0.0"
   },
   "suggest": {
     "ext-openssl": "For SNMP privacy encryption support.",
