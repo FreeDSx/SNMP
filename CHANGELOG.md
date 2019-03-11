@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.4.0 (2019-03-11)
+------------------
+* Update the ASN.1 / Socket versions for performance / memory improvements.
+* The SnmpWalk helper will now default to sending getBulk requests if the SNMP version is 2 or 3.
+* Added a getOid() method to SnmpWalk as an alias of next().
+* Allow a leading dot "." on OIDs being sent. It will strip the dot when encoding.
+
 0.3.2 (2018-10-02)
 ------------------
 * Fix privacy handling in the trap sink.
