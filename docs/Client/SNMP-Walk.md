@@ -6,6 +6,7 @@ has several methods to help control various aspects of the walk.
 
 * [Basic Use](#basic-use)
 * [API](#api)
+  * [getOid](#getoid)
   * [next](#next)
   * [skipTo](#skipto)
   * [restart](#restart)
@@ -14,6 +15,9 @@ has several methods to help control various aspects of the walk.
   * [count](#count)
   * [isComplete](#iscomplete)
   * [hasOids](#hasoids)
+  * [subtreeOnly](#subtreeonlybool-subtreeonly--true)
+  * [maxRepetitions](#maxrepetitionsint-maxrepetitions)
+  * [useGetBulk](#usegetbulkbool-usegetbulk)
 
 ## Basic Use
 
@@ -44,7 +48,18 @@ while($walk->hasOids()) {
 echo sprintf("Walked a total of %s OIDs.", $walk->count()).PHP_EOL; 
 ```
 
+By default the client will send a getBulk request if you are using SNMP v2/v3, which improves performance.
+
 ## API
+
+### getOid
+
+An alias of `next()` for getting the next OID in the walk.
+
+```php
+$oid = $walk->getOid();
+echo sprintf("%s = %s", $oid->getOid(), $oid->getValue()).PHP_EOL;
+```
 
 ### next
 
@@ -151,4 +166,29 @@ Whether or not to walk only the subtree specified by the starting OID. The defau
 ```php
 # Walk past the subtree...
 $walk->subtreeOnly(false);
+```
+
+###  maxRepetitions(int $maxRepetitions)
+
+Specifies the maximum amount of OIDs to attempt to retrieve at a time during a getBulk request (SNMP v2/v3) during the
+walk. This defaults to 100. You may have to modify this depending on device behavior. The larger this is set, the faster
+the walk will likely complete.
+
+**Note**: Per SNMP RFCs, devices are only supposed to return the max amount of OIDs that can fit within a UDP packet,
+regardless of how high this is set. However, not all devices seem to behave this way and may have specific maximums for
+this value. If you notice issues, setting this lower may help.
+
+```php
+# Walk past the subtree...
+$walk->maxRepetitions(10);
+```
+
+### useGetBulk(bool $useGetBulk)
+
+Specifies whether a getBulk request should be sent for the walk. By default it will send using a getBulk request if you
+are using SNMP v2/v3.
+
+```php
+# Explicitly disable getBulk requests if you want...
+$walk->useGetBulk(false);
 ```
