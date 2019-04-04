@@ -11,6 +11,7 @@
 namespace FreeDSx\Snmp;
 
 use FreeDSx\Snmp\Exception\EndOfWalkException;
+use function count;
 
 /**
  * Provides a simple API to perform an SNMP walk.
@@ -91,7 +92,7 @@ class SnmpWalk
         if ($this->isComplete()) {
             throw new EndOfWalkException('There are no more OIDs left in the walk.');
         }
-        if (!$this->next) {
+        if (count($this->next) === 0) {
             $this->next = $this->getNextOid();
         }
         $this->throwIfNoNextOids();
@@ -276,7 +277,7 @@ class SnmpWalk
      */
     protected function isEndOfSubtree() : bool
     {
-        if (!$this->next) {
+        if (count($this->next) === 0) {
             $this->next = $this->getNextOid();
         }
         $this->throwIfNoNextOids();
@@ -289,7 +290,7 @@ class SnmpWalk
      */
     protected function throwIfNoNextOids() : void
     {
-        if (!$this->next) {
+        if (count($this->next) === 0) {
             throw new EndOfWalkException('There are no more OIDs left in the walk.');
         }
     }
