@@ -35,17 +35,15 @@ abstract class AbstractValue implements ProtocolElementInterface
     protected $value;
 
     /**
-     * @param $value
-     * @param bool $strict
-     * @return bool
+     * @param mixed $value
      */
     public function equals($value, bool $strict = true) : bool
     {
         if ($strict) {
             return $this->value === $value;
-        } else {
-            return $this->value == $value;
         }
+
+        return $this->value == $value;
     }
 
     /**

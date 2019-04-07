@@ -25,9 +25,6 @@
     "ext-openssl": "For SNMP privacy encryption support.",
     "ext-gmp": "Needed for counter64 bigint SNMP values."
   },
-  "config": {
-    "bin-dir": "bin"
-  },
   "autoload": {
     "psr-4": {"FreeDSx\\Snmp\\": "src/FreeDSx/Snmp"}
   }

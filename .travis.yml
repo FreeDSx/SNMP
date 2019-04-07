@@ -15,4 +15,4 @@ before_install:
 install: composer update $COMPOSER_FLAGS --prefer-dist
 
 script:
-  - bin/phpspec run --format=pretty --no-interaction
+  - vendor/bin/phpspec run --format=pretty --no-interaction

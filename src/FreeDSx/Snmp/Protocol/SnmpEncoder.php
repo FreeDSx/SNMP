@@ -46,10 +46,12 @@ class SnmpEncoder extends BerEncoder
 {
     public function __construct(array $options = [])
     {
-        parent::__construct([
-            'primitive_only' => [
-                AbstractType::TAG_TYPE_OCTET_STRING,
-            ],
-        ]);
+        parent::__construct(
+            $options + [
+                'primitive_only' => [
+                    AbstractType::TAG_TYPE_OCTET_STRING,
+                ],
+            ]
+        );
     }
 }

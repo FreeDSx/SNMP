@@ -107,7 +107,7 @@ class MessageHeader implements ProtocolElementInterface
 
             return $this;
         }
-        if (!\in_array($flag, self::FLAGS)) {
+        if (!\in_array($flag, self::FLAGS, true)) {
             throw new InvalidArgumentException(sprintf(
                 'The flag %s is not valid.',
                 $flag

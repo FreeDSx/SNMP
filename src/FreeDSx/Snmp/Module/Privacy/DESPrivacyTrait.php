@@ -33,9 +33,8 @@ trait DESPrivacyTrait
     /**
      * @param $preIV
      * @param $salt
-     * @return string
      */
-    protected function generateIV($preIV, $salt)
+    protected function generateIV(string $preIV, string $salt) : string
     {
         $iv = '';
 
@@ -50,7 +49,7 @@ trait DESPrivacyTrait
     /**
      * {@inheritdoc}
      */
-    protected function validateEncodedPdu($scopedPdu)
+    protected function validateEncodedPdu(string $scopedPdu) : string
     {
         $pduLength = \strlen($scopedPdu);
 
@@ -64,7 +63,7 @@ trait DESPrivacyTrait
     /**
      * {@inheritdoc}
      */
-    protected function validateEncryptedPdu($encryptedPdu)
+    protected function validateEncryptedPdu(string $encryptedPdu) : string
     {
         if (\strlen($encryptedPdu) % 8) {
             throw new SnmpEncryptionException('The encrypted PDU must be a multiple of 8 octets, but it is not');

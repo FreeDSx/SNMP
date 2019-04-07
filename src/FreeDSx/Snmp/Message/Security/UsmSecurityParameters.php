@@ -229,9 +229,9 @@ class UsmSecurityParameters implements SecurityParametersInterface
     /**
      * {@inheritdoc}
      */
-    public static function fromAsn1(AbstractType $type)
+    public static function fromAsn1(AbstractType $asnType)
     {
-        $usm = (new SnmpEncoder())->decode($type->getValue());
+        $usm = (new SnmpEncoder())->decode($asnType->getValue());
         if (!($usm instanceof SequenceType && \count($usm->getChildren()) === 6)) {
             throw new ProtocolException('Expected the USM to be a sequence type with 6 elements.');
         }
@@ -259,9 +259,8 @@ class UsmSecurityParameters implements SecurityParametersInterface
                 ));
             }
         }
-        $args = \array_map(function ($type) {
-            /** @var AbstractType $type */
-            return $type->getValue();
+        $args = \array_map(function (AbstractType $asnType) {
+            return $asnType->getValue();
         }, $args);
         $args[0] = ($args[0] === '') ? null : EngineId::fromBinary($args[0]);
 

@@ -45,6 +45,7 @@ class OidValueFactory
         6 => BigCounterValue::class,
     ];
 
+    /** @var string[] */
     protected static $simpleMap = [
         IntegerType::class => IntegerValue::class,
         OctetStringType::class => StringValue::class,

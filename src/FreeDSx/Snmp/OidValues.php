@@ -28,8 +28,7 @@ use FreeDSx\Snmp\Value\UnsignedIntegerValue;
 class OidValues
 {
     /**
-     * @param $value
-     * @return ArbitraryValue
+     * @param mixed $value
      */
     public static function arbitrary($value) : ArbitraryValue
     {

@@ -118,10 +118,10 @@ class Requests
     }
 
     /**
-     * @param $sysUpTime
-     * @param $trapOid
-     * @param $oids
-     * @return array
+     * @param TimeTicksValue|mixed $sysUpTime
+     * @param OidValue|mixed $trapOid
+     * @param Oid[]|string[] $oids
+     * @return mixed[]
      */
     protected static function toTrapArgs($sysUpTime, $trapOid, $oids) : array
     {

@@ -33,6 +33,7 @@ use FreeDSx\Snmp\Protocol\IdGeneratorTrait;
 use FreeDSx\Snmp\Request\GetRequest;
 use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
+use function assert;
 
 /**
  * Handles User based Security Model functionality for incoming / outgoing messages.
@@ -122,14 +123,20 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if (!$securityParams) {
             throw new SecurityModelException('The received SNMP message is missing the security parameters.');
         }
-        if ($options['use_auth'] && !$header->hasAuthentication()) {
+
+        $useAuth = $options['use_auth'];
+        $usePriv = $options['use_priv'];
+        assert(is_bool($useAuth));
+        assert(is_bool($usePriv));
+
+        if ($useAuth && !$header->hasAuthentication()) {
             throw new SecurityModelException('Authentication was requested, but the received header has none specified.');
         }
-        if ($options['use_priv'] && !$header->hasPrivacy()) {
+        if ($usePriv && !$header->hasPrivacy()) {
             throw new SecurityModelException('Privacy was requested, but the received header has none specified.');
         }
 
-        if ($options['use_auth']) {
+        if ($useAuth) {
             try {
                 $message = $this->authFactory->get($options['auth_mech'])->authenticateIncomingMsg(
                     $message,
@@ -139,7 +146,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                 throw new SecurityModelException($e->getMessage());
             }
         }
-        if ($options['use_priv']) {
+        if ($usePriv) {
             try {
                 $message = $this->privacyFactory->get($options['priv_mech'])->decryptData(
                     $message,
@@ -380,7 +387,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         foreach ($response->getResponse()->getOids() as $oid) {
             if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
                 # This will force a re-sync for the next request if we have already cached time info..
-                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME) && $this->isEngineTimeCached($secParams->getEngineId())) {
+                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME, true) && $this->isEngineTimeCached($secParams->getEngineId())) {
                     $this->clearCachedEngine($secParams->getEngineId());
                 }
                 throw new SecurityModelException(self::ERROR_MAP_USM[$oid->getOid()]);

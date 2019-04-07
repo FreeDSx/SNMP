@@ -36,10 +36,7 @@ class IpAddressValue extends AbstractValue
         $this->value = $value;
     }
 
-    /**
-     * @param string $value
-     */
-    public function setValue(string $value)
+    public function setValue(string $value) : void
     {
         $this->value = $value;
     }
