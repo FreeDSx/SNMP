@@ -1,23 +1,27 @@
 language: php
 
 php:
-  - 7.1
-  - 7.2
-  - 7.3
+    - 7.1
+    - 7.2
+    - 7.3
+    - 7.4snapshot
 
 cache:
-  directories:
-    - $HOME/.composer/cache/files
+    directories:
+        - $HOME/.composer/cache
 
 before_install:
-  - composer self-update
+    - composer self-update
 
-install: composer update $COMPOSER_FLAGS --prefer-dist
+install: travis_retry composer update $COMPOSER_FLAGS --prefer-dist
 
 script:
     - vendor/bin/phpspec run --format=pretty --no-interaction
 
 jobs:
+    allow_failures:
+        -   php: 7.4snapshot
+
     include:
         -   stage: Code Quality
             php: 7.3
