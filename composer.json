@@ -27,5 +27,8 @@
   },
   "autoload": {
     "psr-4": {"FreeDSx\\Snmp\\": "src/FreeDSx/Snmp"}
+  },
+  "config": {
+    "sort-packages": true
   }
 }
