@@ -37,7 +37,9 @@ class EngineId
 
     public const FORMAT_OCTET = 5;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     protected static $octetDelim = ' ';
 
     /**

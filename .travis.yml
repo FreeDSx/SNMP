@@ -15,4 +15,12 @@ before_install:
 install: composer update $COMPOSER_FLAGS --prefer-dist
 
 script:
-  - vendor/bin/phpspec run --format=pretty --no-interaction
+    - vendor/bin/phpspec run --format=pretty --no-interaction
+
+jobs:
+    include:
+        -   stage: Code Quality
+            php: 7.3
+            env: PHPStan
+            install: travis_retry composer install --prefer-dist
+            script: vendor/bin/phpstan analyse

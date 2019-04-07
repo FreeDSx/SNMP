@@ -10,7 +10,6 @@
 
 namespace FreeDSx\Snmp\Protocol;
 
-use function assert;
 use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Exception\InvalidArgumentException;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
@@ -266,8 +265,9 @@ class ClientProtocolHandler
 
         $useAuth = $options['use_auth'];
         $usePriv = $options['use_priv'];
-        assert(is_bool($useAuth));
-        assert(is_bool($usePriv));
+        if (!is_bool($useAuth) || !is_bool($usePriv)) {
+            throw new InvalidArgumentException('Options use_auth and use_priv must have boolean value.');
+        }
 
         if ($useAuth || $usePriv) {
             if (!isset($this->securityModel[$options['security_model']])) {

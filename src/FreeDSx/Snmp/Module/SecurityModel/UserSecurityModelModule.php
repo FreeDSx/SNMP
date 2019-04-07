@@ -10,6 +10,7 @@
 
 namespace FreeDSx\Snmp\Module\SecurityModel;
 
+use FreeDSx\Snmp\Exception\InvalidArgumentException;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpAuthenticationException;
@@ -33,7 +34,6 @@ use FreeDSx\Snmp\Protocol\IdGeneratorTrait;
 use FreeDSx\Snmp\Request\GetRequest;
 use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
-use function assert;
 
 /**
  * Handles User based Security Model functionality for incoming / outgoing messages.
@@ -126,8 +126,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
         $useAuth = $options['use_auth'];
         $usePriv = $options['use_priv'];
-        assert(is_bool($useAuth));
-        assert(is_bool($usePriv));
+        if (!is_bool($useAuth) || !is_bool($usePriv)) {
+            throw new InvalidArgumentException('Options use_auth and use_priv must have boolean value.');
+        }
 
         if ($useAuth && !$header->hasAuthentication()) {
             throw new SecurityModelException('Authentication was requested, but the received header has none specified.');

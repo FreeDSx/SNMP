@@ -36,6 +36,19 @@ class TrapProtocolHandler
 {
     use ProtocolTrait;
 
+    private const DEFAULT_OPTIONS = [
+        'timeout_connect' => 5,
+        'timeout_read' => 10,
+        'ssl_validate_cert' => true,
+        'ssl_allow_self_signed' => null,
+        'ssl_ca_cert' => null,
+        'ssl_peer_name' => null,
+        'whitelist' => null,
+        'version' => null,
+        'community' => null,
+        'engine_id' => null,
+    ];
+
     /**
      * @var TrapListenerInterface
      */
@@ -51,18 +64,7 @@ class TrapProtocolHandler
     public function __construct(TrapListenerInterface $listener, array $options, ?SnmpEncoder $encoder = null, ?Socket $socket = null, ?SecurityModelModuleFactory $securityModelFactory = null)
     {
         $this->listener = $listener;
-        $this->options = $options + [
-            'timeout_connect' => 5,
-            'timeout_read' => 10,
-            'ssl_validate_cert' => true,
-            'ssl_allow_self_signed' => null,
-            'ssl_ca_cert' => null,
-            'ssl_peer_name' => null,
-            'whitelist' => null,
-            'version' => null,
-            'community' => null,
-            'engine_id' => null,
-        ];
+        $this->options = $options + self::DEFAULT_OPTIONS;
         $this->encoder = $encoder;
         $this->socket = $socket;
         $this->securityModelFactory = $securityModelFactory ?: new SecurityModelModuleFactory();
