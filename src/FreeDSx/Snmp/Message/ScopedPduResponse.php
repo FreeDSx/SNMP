@@ -22,21 +22,28 @@ use FreeDSx\Snmp\Response\ResponseInterface;
 class ScopedPduResponse extends ScopedPdu
 {
     /**
+     * @var ResponseInterface
+     */
+    private $response;
+
+    /**
      * @param ResponseInterface $response
      * @param null|EngineId $contextEngineId
      * @param string $contextName
      */
     public function __construct(ResponseInterface $response, ?EngineId $contextEngineId = null, string $contextName = '')
     {
+        $this->response = $response;
+
         parent::__construct($response, $contextEngineId, $contextName);
     }
 
     /**
-     * @return Pdu|ResponseInterface
+     * @return ResponseInterface
      */
     public function getResponse() : ResponseInterface
     {
-        return $this->pdu;
+        return $this->response;
     }
 
     /**
@@ -44,7 +51,7 @@ class ScopedPduResponse extends ScopedPdu
      */
     public static function fromAsn1(AbstractType $type)
     {
-        list($engineId, $contextName, $pdu) = self::parseBaseElements($type);
+        [$engineId, $contextName, $pdu] = self::parseBaseElements($type);
 
         return new self(
             ResponseFactory::get($pdu),

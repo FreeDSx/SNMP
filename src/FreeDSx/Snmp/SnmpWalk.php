@@ -123,10 +123,10 @@ class SnmpWalk
      */
     public function isComplete() : bool
     {
-        if ($this->current && $this->current->isEndOfMibView()) {
+        if ($this->current !== null && $this->current->isEndOfMibView()) {
             return true;
         }
-        if ($this->current && $this->current->getOid() === $this->endAt) {
+        if ($this->current !== null && $this->current->getOid() === $this->endAt) {
             return true;
         }
         if ($this->subtreeOnly) {
@@ -260,7 +260,7 @@ class SnmpWalk
      */
     protected function getNextOid() : array
     {
-        $currentOid = $this->current ? $this->current->getOid() : $this->startAt;
+        $currentOid = $this->current === null ? $this->startAt : $this->current->getOid();
 
         if (($this->useGetBulk === null || $this->useGetBulk) && $this->client->getOptions()['version'] >= 2) {
             return $this->client->getBulk($this->maxRepetitions, 0, $currentOid)->toArray();

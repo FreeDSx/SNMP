@@ -16,6 +16,8 @@ use FreeDSx\Asn1\Type\OctetStringType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
+use FreeDSx\Snmp\Request\RequestInterface;
+use FreeDSx\Snmp\Response\ResponseInterface;
 
 /**
  * Represents a Scoped PDU. RFC 3412, Section 6.
@@ -41,16 +43,16 @@ abstract class ScopedPdu implements ProtocolElementInterface
     protected $contextName;
 
     /**
-     * @var Pdu
+     * @var ResponseInterface|RequestInterface
      */
-    protected $pdu;
+    private $pdu;
 
     /**
-     * @param Pdu $pdu
+     * @param ResponseInterface|RequestInterface $pdu
      * @param null|EngineId $contextEngineId
      * @param string $contextName
      */
-    public function __construct(Pdu $pdu, ?EngineId $contextEngineId = null, $contextName = '')
+    public function __construct($pdu, ?EngineId $contextEngineId = null, $contextName = '')
     {
         $this->pdu = $pdu;
         $this->contextEngineId = $contextEngineId;
@@ -65,9 +67,6 @@ abstract class ScopedPdu implements ProtocolElementInterface
         return $this->contextName;
     }
 
-    /**
-     * @return string
-     */
     public function getContextEngineId() : ?EngineId
     {
         return $this->contextEngineId;
@@ -103,8 +102,8 @@ abstract class ScopedPdu implements ProtocolElementInterface
 
         if (!$engineId instanceof OctetStringType) {
             throw new ProtocolException(sprintf(
-               'Expected the engine id to be an octet string, got %s',
-               get_class($engineId)
+                'Expected the engine id to be an octet string, got %s',
+                get_class($engineId)
             ));
         }
         if (!$contextName instanceof OctetStringType) {

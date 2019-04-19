@@ -16,6 +16,7 @@ use FreeDSx\Asn1\Type\IntegerType;
 use FreeDSx\Asn1\Type\OidType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Value\IpAddressValue;
 use FreeDSx\Snmp\Value\TimeTicksValue;
@@ -61,7 +62,7 @@ use FreeDSx\Snmp\Protocol\SnmpEncoder;
  *
  * @author Chad Sikorra <Chad.Sikorra@gmail.com>
  */
-class TrapV1Request implements RequestInterface
+class TrapV1Request extends Pdu implements RequestInterface
 {
     use RequestTrait;
 
@@ -107,11 +108,6 @@ class TrapV1Request implements RequestInterface
     protected $sysUpTime;
 
     /**
-     * @var OidList
-     */
-    protected $oids;
-
-    /**
      * @param string $enterprise
      * @param IpAddressValue $ipAddress
      * @param int $genericType
@@ -126,15 +122,8 @@ class TrapV1Request implements RequestInterface
         $this->genericType = $genericType;
         $this->specificType = $specificType;
         $this->sysUpTime = $sysUpTime;
-        $this->oids = $oids;
-    }
 
-    /**
-     * @return OidList
-     */
-    public function getOids() : OidList
-    {
-        return $this->oids;
+        parent::__construct(0, 0, 0, $oids);
     }
 
     /**
@@ -148,9 +137,6 @@ class TrapV1Request implements RequestInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getIpAddress() : IpAddressValue
     {
         return $this->ipAddress;

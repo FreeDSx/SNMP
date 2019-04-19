@@ -139,7 +139,7 @@ trait ProtocolTrait
      */
     protected function socket(array $options = []) : Socket
     {
-        if (!$this->socket) {
+        if ($this->socket == null) {
             $options += $this->options;
             try {
                 $this->socket = Socket::create($options['host'], [
@@ -166,7 +166,7 @@ trait ProtocolTrait
      */
     protected function encoder() : SnmpEncoder
     {
-        if (!$this->encoder) {
+        if ($this->encoder === null) {
             $this->encoder = new SnmpEncoder();
         }
 
@@ -179,7 +179,7 @@ trait ProtocolTrait
      */
     protected function queue() : Asn1MessageQueue
     {
-        if (!$this->queue) {
+        if ($this->queue == null) {
             $this->queue = new Asn1MessageQueue(
                 $this->socket(),
                 $this->encoder(),

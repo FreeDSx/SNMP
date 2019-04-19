@@ -17,6 +17,7 @@ use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\EngineId;
+use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -179,8 +180,8 @@ class ClientProtocolHandler
             $message = $securityModule->handleOutgoingMessage($message, $options);
             $response = $this->sendRequestGetResponse($message);
 
-            if ($response) {
-                $response = $securityModule->handleIncomingMessage($response, $options);
+            if ($response !== null) {
+                $securityModule->handleIncomingMessage($response, $options);
                 $this->validateResponse($response, $id);
             }
 
@@ -197,7 +198,6 @@ class ClientProtocolHandler
 
     /**
      * @param MessageRequestV3 $message
-     * @param $securityModule
      * @param array $options
      * @throws ConnectionException
      * @throws SnmpRequestException
@@ -209,6 +209,7 @@ class ClientProtocolHandler
         $id = $this->generateId();
         $this->setPduId($discovery->getRequest(), $id);
         $response = $this->sendRequestGetResponse($discovery);
+        assert($response instanceof MessageResponseV3);
         $this->validateResponse($response, $id, false);
         $securityModule->handleDiscoveryResponse($message, $response, $options);
     }

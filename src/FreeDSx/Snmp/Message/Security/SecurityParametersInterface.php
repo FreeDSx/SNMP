@@ -25,4 +25,6 @@ interface SecurityParametersInterface extends ProtocolElementInterface
      * @return int
      */
     public function getSecurityModel() : int;
+
+    public function getUsername() : string;
 }

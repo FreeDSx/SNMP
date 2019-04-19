@@ -30,11 +30,8 @@ class AESPrivacyModuleSpec extends ObjectBehavior
 {
     protected $message;
 
-    protected $encodedPdu;
-
     function let()
     {
-        $this->encodedPdu = hex2bin('301904088000cd5404666f6f0400a00b0201000201000201003000');
         $this->message = new MessageRequestV3(
             new MessageHeader(1, MessageHeader::FLAG_AUTH_PRIV, 3),
             new ScopedPduRequest(new GetRequest(new OidList()), EngineId::fromText('foo')),
@@ -80,13 +77,6 @@ class AESPrivacyModuleSpec extends ObjectBehavior
         $this->beConstructedWith('aes128', 900);
         $this->encryptData($response, new AuthenticationModule('sha1'), 'foobar123')->getEncryptedPdu()->shouldBeEqualTo(hex2bin('40790d9d2b48450fb731050074b9c8d711af0fdd9a15b31a112511'));
         $this->encryptData($response, new AuthenticationModule('sha1'), 'foobar123')->getSecurityParameters()->getPrivacyParams()->shouldBeEqualTo(hex2bin('0000000000000385'));
-    }
-
-    function it_should_encrypt_data_using_aes128()
-    {
-        $this->beConstructedWith('aes128', 900);
-        $this->encryptData($this->message, new AuthenticationModule('sha1'), 'foobar123')->getEncryptedPdu()->shouldBeEqualTo(hex2bin("40790d9d2b48450fb731050074b9cad79c30572531da8db2af86ed"));
-        $this->encryptData($this->message, new AuthenticationModule('sha1'), 'foobar123')->getSecurityParameters()->getPrivacyParams()->shouldBeEqualTo(hex2bin('0000000000000385'));
     }
 
     function it_should_encrypt_data_using_aes192()

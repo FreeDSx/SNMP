@@ -30,9 +30,6 @@ class GetNextRequest extends Pdu implements RequestInterface
      */
     protected $includeValues = false;
 
-    /**
-     * @param OidList ...$oids
-     */
     public function __construct(OidList $oids)
     {
         parent::__construct(0, 0, 0, $oids);

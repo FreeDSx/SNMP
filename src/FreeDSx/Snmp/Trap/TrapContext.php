@@ -52,9 +52,6 @@ class TrapContext
         $this->message = $message;
     }
 
-    /**
-     * @return MessageRequestInterface|AbstractMessage|AbstractMessageV3
-     */
     public function getMessage() : MessageRequestInterface
     {
         return $this->message;

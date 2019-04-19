@@ -57,9 +57,9 @@ class SnmpRequestException extends \Exception
     public function __construct(?MessageResponseInterface $response, ?string $message = null, \Throwable $previous = null)
     {
         $this->snmpMessage = $response;
-        $errorCode = $response ? $response->getResponse()->getErrorStatus() : 0;
+        $errorCode = $response === null ? 0 : $response->getResponse()->getErrorStatus();
 
-        if ($message === null && $response) {
+        if ($message === null && $response !== null) {
             $message = $this->generateMessage($response);
         } else {
             $message = (string) $message;
@@ -73,7 +73,7 @@ class SnmpRequestException extends \Exception
      */
     public function getResponse() : ?Pdu
     {
-        return $this->snmpMessage ? $this->snmpMessage->getResponse() : null;
+        return $this->snmpMessage === null ? null: $this->snmpMessage->getResponse();
     }
 
     /**

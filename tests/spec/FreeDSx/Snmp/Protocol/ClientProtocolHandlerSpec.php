@@ -118,7 +118,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::any(), Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled();
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3])->shouldBeAnInstanceOf(MessageResponseV3::class);
     }
@@ -138,7 +138,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         /** @var SecurityModelModuleInterface $securityModule */
         $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled();
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3, 'use_auth' => true, 'auth_pwd' => 'foobar123', 'auth_mech' => 'md5']);
     }
@@ -158,7 +158,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         /** @var SecurityModelModuleInterface $securityModule */
         $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled();
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3, 'use_priv' => true, 'use_auth' => true, 'auth_pwd' => 'foobar123', 'auth_mech' => 'md5', 'priv_pwd' => 'foobar123', 'priv_mech' => 'des']);
     }
@@ -178,7 +178,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         /** @var SecurityModelModuleInterface $securityModule */
         $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(true);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled();
         $securityModule->getDiscoveryRequest(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
         $securityModule->handleDiscoveryResponse(Argument::type(MessageRequestV3::class), Argument::type(MessageResponseV3::class), Argument::any())->shouldBeCalled()->willReturn($request);
 
@@ -200,7 +200,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         /** @var SecurityModelModuleInterface $securityModule */
         $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled();
 
         $this->handle(Requests::get('1.2.3'), ['version' => 3, 'use_auth' => false, 'auth_mech' => 'md5']);
     }
@@ -273,7 +273,7 @@ class ClientProtocolHandlerSpec extends ObjectBehavior
         /** @var SecurityModelModuleInterface $securityModule */
         $securityModule->isDiscoveryRequestNeeded(Argument::any(), Argument::any())->shouldBeCalled()->willReturn(false);
         $securityModule->handleOutgoingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($request);
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled()->willReturn($response);
+        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->shouldBeCalled();
 
         $this->shouldThrow(new SnmpRequestException($response, 'Unexpected message ID received. Expected 1 but got 2.'))->during('handle', [Requests::get('1.2.3'), ['version' => 3]]);
     }

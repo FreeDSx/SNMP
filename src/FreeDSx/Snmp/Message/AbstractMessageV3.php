@@ -62,7 +62,7 @@ abstract class AbstractMessageV3 implements PduInterface
     protected $header;
 
     /**
-     * @var null|ScopedPdu
+     * @var null|ScopedPduRequest|ScopedPduResponse
      */
     protected $scopedPdu;
 
@@ -98,20 +98,22 @@ abstract class AbstractMessageV3 implements PduInterface
         return $this->header;
     }
 
-    /**
-     * @return SecurityParametersInterface|null
-     */
     public function getSecurityParameters() : ?SecurityParametersInterface
     {
         return $this->securityParams;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getEncryptedPdu()
+    public function getEncryptedPdu() : ?string
     {
         return $this->encryptedPdu;
+    }
+
+    /**
+     * @return ScopedPdu|ScopedPduRequest|ScopedPduResponse|null
+     */
+    public function getScopedPdu()
+    {
+        return $this->scopedPdu;
     }
 
     /**
@@ -128,7 +130,7 @@ abstract class AbstractMessageV3 implements PduInterface
     public function toAsn1(): AbstractType
     {
         $securityParams = '';
-        if ($this->securityParams) {
+        if ($this->securityParams !== null) {
             $securityParams = (new SnmpEncoder())->encode($this->securityParams->toAsn1());
         }
 
@@ -152,11 +154,9 @@ abstract class AbstractMessageV3 implements PduInterface
      * Extracts the common parts of the SNMP v3 message, then the request / response can be determined depending on
      * whether we are handling a request or response.
      *
-     * @param AbstractType $type
-     * @return array
-     * @throws ProtocolException
+     * @return mixed[]
      */
-    protected static function parseCommonElements(AbstractType $type)
+    protected static function parseCommonElements(AbstractType $type) : array
     {
         if (!($type instanceof SequenceType && count($type->getChildren()) === 4)) {
             throw new ProtocolException('The SNMP message must be a sequence with at least 4 elements.');

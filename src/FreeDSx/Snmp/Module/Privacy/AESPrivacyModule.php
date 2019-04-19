@@ -84,25 +84,25 @@ class AESPrivacyModule implements PrivacyModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3
+    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : void
     {
         if (!$this->has64BitSupport) {
             throw new SnmpEncryptionException('AES privacy requires 64bit int support.');
         }
 
-        return $this->decrypt($message, $authMod, $privPwd);
+        $this->decrypt($message, $authMod, $privPwd);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function encryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3
+    public function encryptData($message, AuthenticationModuleInterface $authMod, string $privPwd) : void
     {
         if (!$this->has64BitSupport) {
             throw new SnmpEncryptionException('AES privacy requires 64bit int support.');
         }
 
-        return $this->encrypt($message, $authMod, $privPwd);
+        $this->encrypt($message, $authMod, $privPwd);
     }
 
     /**

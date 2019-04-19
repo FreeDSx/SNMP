@@ -29,7 +29,6 @@ interface AuthenticationModuleInterface
      * @param AbstractMessageV3 $message
      * @param string $password
      * @throws SnmpAuthenticationException
-     * @return mixed
      */
     public function authenticateIncomingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3;
 
@@ -40,7 +39,6 @@ interface AuthenticationModuleInterface
      * @param AbstractMessageV3 $message
      * @param string $password
      * @throws SnmpAuthenticationException
-     * @return mixed
      */
     public function authenticateOutgoingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3;
 

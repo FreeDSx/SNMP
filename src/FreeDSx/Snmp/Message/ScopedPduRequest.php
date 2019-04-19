@@ -21,6 +21,12 @@ use FreeDSx\Snmp\Request\RequestInterface;
  */
 class ScopedPduRequest extends ScopedPdu
 {
+
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
     /**
      * @param null|EngineId $contextEngineId
      * @param string $contextName
@@ -28,6 +34,8 @@ class ScopedPduRequest extends ScopedPdu
      */
     public function __construct(RequestInterface $request, ?EngineId $contextEngineId = null, string $contextName = '')
     {
+        $this->request = $request;
+
         parent::__construct($request, $contextEngineId, $contextName);
     }
 
@@ -53,12 +61,9 @@ class ScopedPduRequest extends ScopedPdu
         return $this;
     }
 
-    /**
-     * @return Pdu
-     */
     public function getRequest() : RequestInterface
     {
-        return $this->pdu;
+        return $this->request;
     }
 
     /**
@@ -67,7 +72,7 @@ class ScopedPduRequest extends ScopedPdu
      */
     public function setRequest(RequestInterface $request)
     {
-        $this->pdu = $request;
+        $this->request = $request;
 
         return $this;
     }
@@ -77,7 +82,7 @@ class ScopedPduRequest extends ScopedPdu
      */
     public static function fromAsn1(AbstractType $type)
     {
-        list($engineId, $contextName, $pdu) = self::parseBaseElements($type);
+        [$engineId, $contextName, $pdu] = self::parseBaseElements($type);
 
         return new self(
             RequestFactory::get($pdu),

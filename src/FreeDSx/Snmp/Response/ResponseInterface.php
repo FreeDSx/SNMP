@@ -10,6 +10,8 @@
 
 namespace FreeDSx\Snmp\Response;
 
+use FreeDSx\Snmp\Message\Security\SecurityParametersInterface;
+use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
 
 /**
@@ -19,8 +21,13 @@ use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
  */
 interface ResponseInterface extends ProtocolElementInterface
 {
-    /**
-     * @return int
-     */
+    public function getId() : int;
+
     public function getPduTag() : int;
+
+    public function getErrorIndex() : int;
+
+    public function getErrorStatus() : int;
+
+    public function getOids() : OidList;
 }
