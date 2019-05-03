@@ -281,9 +281,7 @@ class Oid implements ProtocolElementInterface
     }
 
     /**
-     * @param string $oid
-     * @param $counter
-     * @return Oid
+     * @param int|string $counter
      */
     public static function fromBigCounter(string $oid, $counter) : Oid
     {

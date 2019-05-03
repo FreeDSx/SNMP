@@ -51,11 +51,7 @@ interface AuthenticationModuleInterface
      */
     public function generateKey(string $password, EngineId $engineId);
 
-    /**
-     * @param $value
-     * @return string
-     */
-    public function hash($value);
+    public function hash(string $value) : string;
 
     /**
      * Get the algorithms supported as an array of string names.

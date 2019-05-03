@@ -44,12 +44,8 @@ use FreeDSx\Asn1\Type\AbstractType;
  */
 class SnmpEncoder extends BerEncoder
 {
-    public function __construct(array $options = [])
+    public function __construct()
     {
-        parent::__construct([
-            'primitive_only' => [
-                AbstractType::TAG_TYPE_OCTET_STRING,
-            ],
-        ]);
+        parent::__construct(['primitive_only' => [AbstractType::TAG_TYPE_OCTET_STRING]]);
     }
 }

@@ -1,5 +1,4 @@
 composer.lock
 composer.phar
-.idea/
+phpstan.neon
 vendor/
-bin/

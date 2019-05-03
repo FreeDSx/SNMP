@@ -160,7 +160,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function hash($value)
+    public function hash(string $value) : string
     {
         $digest = \hash($this->algorithm, $value, true);
         $this->throwOnHashError($digest);
@@ -177,8 +177,7 @@ class AuthenticationModule implements AuthenticationModuleInterface
     }
 
     /**
-     * @param $result
-     * @throws SnmpAuthenticationException
+     * @param mixed $result
      */
     protected function throwOnHashError($result) : void
     {

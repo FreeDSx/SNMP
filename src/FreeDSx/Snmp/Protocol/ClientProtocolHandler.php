@@ -32,6 +32,7 @@ use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
 use FreeDSx\Socket\Queue\Asn1MessageQueue;
 use FreeDSx\Socket\Socket;
+use function is_bool;
 
 /**
  * Handles SNMP client protocol logic.
@@ -41,37 +42,6 @@ use FreeDSx\Socket\Socket;
 class ClientProtocolHandler
 {
     use ProtocolTrait;
-
-    /**
-     * @var array
-     */
-    protected $options = [
-        'transport' => 'udp',
-        'use_tls' => false,
-        'ssl_validate_cert' => true,
-        'ssl_allow_self_signed' => null,
-        'ssl_ca_cert' => null,
-        'ssl_peer_name' => null,
-        'port' => 161,
-        'host' => 'localhost',
-        'user' => null,
-        'community' => 'public',
-        'udp_retry' => 5,
-        'timeout_connect' => 5,
-        'timeout_read' => 10,
-        'version' => 2,
-        'security_model' => 'usm',
-        'engine_id' => null,
-        'context_name' => null,
-        'use_auth' => false,
-        'use_priv' => false,
-        'auth_mech' => null,
-        'priv_mech' => null,
-        'priv_pwd' => null,
-        'auth_pwd' => null,
-        'id_min' => null,
-        'id_max' => null,
-    ];
 
     /**
      * @var array
@@ -91,7 +61,33 @@ class ClientProtocolHandler
     {
         $this->socket = $socket;
         $this->encoder = $encoder;
-        $this->options = $options;
+        $this->options = $options + [
+            'transport' => 'udp',
+            'use_tls' => false,
+            'ssl_validate_cert' => true,
+            'ssl_allow_self_signed' => null,
+            'ssl_ca_cert' => null,
+            'ssl_peer_name' => null,
+            'port' => 161,
+            'host' => 'localhost',
+            'user' => null,
+            'community' => 'public',
+            'udp_retry' => 5,
+            'timeout_connect' => 5,
+            'timeout_read' => 10,
+            'version' => 2,
+            'security_model' => 'usm',
+            'engine_id' => null,
+            'context_name' => null,
+            'use_auth' => false,
+            'use_priv' => false,
+            'auth_mech' => null,
+            'priv_mech' => null,
+            'priv_pwd' => null,
+            'auth_pwd' => null,
+            'id_min' => null,
+            'id_max' => null,
+        ];
         $this->queue = $queue;
         $this->securityModelFactory = $securityModelFactory ?: new SecurityModelModuleFactory();
     }
@@ -110,7 +106,7 @@ class ClientProtocolHandler
         $options = \array_merge($this->options, $options);
         $message = $this->getMessageRequest($request, $options);
 
-        if (!\in_array($request->getPduTag(), $this->allowedRequests[$message->getVersion()])) {
+        if (!\in_array($request->getPduTag(), $this->allowedRequests[$message->getVersion()], true)) {
             throw new InvalidArgumentException(sprintf(
                 'The request type "%s" is not allowed in SNMP version %s.',
                 get_class($request),
@@ -244,11 +240,8 @@ class ClientProtocolHandler
      * Needed to set the ID in the PDU. Unfortunately the protocol designers put the ID for the overall message inside
      * of the PDU (essentially the request / response objects). This made it awkward to work with when separating the
      * logic of the ID generation /message creation. Maybe a better way to handle this in general?
-     *
-     * @param RequestInterface $request
-     * @param int $id
      */
-    protected function setPduId(RequestInterface $request, int $id)
+    protected function setPduId(RequestInterface $request, int $id) : void
     {
         # The Trap v1 PDU has no request ID associated with it.
         if ($request instanceof  TrapV1Request) {
@@ -270,7 +263,13 @@ class ClientProtocolHandler
     {
         $header = new MessageHeader($this->generateId(0));
 
-        if ($options['use_auth'] || $options['use_priv']) {
+        $useAuth = $options['use_auth'];
+        $usePriv = $options['use_priv'];
+        if (!is_bool($useAuth) || !is_bool($usePriv)) {
+            throw new InvalidArgumentException('Options use_auth and use_priv must have boolean value.');
+        }
+
+        if ($useAuth || $usePriv) {
             if (!isset($this->securityModel[$options['security_model']])) {
                 throw new InvalidArgumentException(sprintf(
                     'The security model %s is not recognized.',
@@ -279,10 +278,10 @@ class ClientProtocolHandler
             }
             $header->setSecurityModel($this->securityModel[$options['security_model']]);
         }
-        if ($options['use_auth']) {
+        if ($useAuth) {
             $header->addFlag(MessageHeader::FLAG_AUTH);
         }
-        if ($options['use_priv']) {
+        if ($usePriv) {
             $header->addFlag(MessageHeader::FLAG_PRIV);
         }
         # Unconfirmed PDUs do not have the reportable flag set
@@ -301,11 +300,11 @@ class ClientProtocolHandler
      */
     protected function validateResponse(?MessageResponseInterface $message, int $expectedId, bool $throwOnReport = true) : void
     {
-        if (!$message) {
+        if ($message === null) {
             return;
         }
         $response = $message->getResponse();
-        if (!\in_array($response->getPduTag(), $this->allowedResponses[$message->getVersion()])) {
+        if (!\in_array($response->getPduTag(), $this->allowedResponses[$message->getVersion()], true)) {
             throw new SnmpRequestException($message, sprintf(
                 'The PDU type received (%s) is not allowed in SNMP version %s.',
                 get_class($response),

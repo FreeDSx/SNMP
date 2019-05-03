@@ -77,10 +77,9 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
     }
 
     /**
-     * @param $encryptedPdu
-     * @return $this
+     * @return static
      */
-    public function setEncryptedPdu($encryptedPdu)
+    public function setEncryptedPdu(?string $encryptedPdu) : self
     {
         $this->encryptedPdu = $encryptedPdu;
 

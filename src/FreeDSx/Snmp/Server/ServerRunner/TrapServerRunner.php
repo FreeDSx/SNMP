@@ -43,7 +43,7 @@ class TrapServerRunner implements ServerRunnerInterface
     /**
      * {@inheritdoc}
      */
-    public function run(SocketServer $server)
+    public function run(SocketServer $server) : void
     {
         while ($data = $server->receive($ipAddress)) {
             try {

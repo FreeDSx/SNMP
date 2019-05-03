@@ -67,7 +67,7 @@ class TrapSink
      *
      * @throws ConnectionException
      */
-    public function listen()
+    public function listen() : void
     {
         try {
             $this->server()->run(SocketServer::bindUdp($this->options['ip'], $this->options['port']));

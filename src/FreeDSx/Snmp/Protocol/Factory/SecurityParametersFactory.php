@@ -53,7 +53,7 @@ class SecurityParametersFactory
      */
     public static function set(string $class) : void
     {
-        if (!\in_array(SecurityParametersInterface::class, class_implements($class))) {
+        if (!\in_array(SecurityParametersInterface::class, class_implements($class), true)) {
             throw new InvalidArgumentException(sprintf(
                 'The security parameters "%s" must implement "%s", but it does not.',
                 $class,

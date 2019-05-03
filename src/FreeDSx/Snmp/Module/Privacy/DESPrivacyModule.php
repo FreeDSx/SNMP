@@ -45,7 +45,7 @@ class DESPrivacyModule implements PrivacyModuleInterface
     /**
      * {@inheritdoc}
      */
-    protected function toKeySaltIV($cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null) : array
+    protected function toKeySaltIV(string $cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, ?string $salt = null) : array
     {
         # The first 8 octets of the 16-octet secret (private privacy key) are
         # used as a DES key.  Since DES uses only 56 bits, the Least

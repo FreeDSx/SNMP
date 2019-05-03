@@ -31,6 +31,9 @@ trait IdGeneratorTrait
      */
     protected static $minId = -214783648;
 
+    /** @var mixed[] */
+    private $options = [];
+
     /**
      * @param int|null $min
      * @param int|null $max

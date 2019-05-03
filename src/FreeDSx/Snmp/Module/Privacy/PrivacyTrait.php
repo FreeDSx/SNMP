@@ -156,18 +156,9 @@ trait PrivacyTrait
      */
     abstract protected function toKeySaltIV($cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null) : array;
 
-    /**
-     * @param $scopedPdu
-     * @return string
-     */
-    abstract protected function validateEncodedPdu($scopedPdu);
+    abstract protected function validateEncodedPdu(string $scopedPdu) : string ;
 
-    /**
-     * @param $encryptedPdu
-     * @return string
-     * @throws SnmpEncryptionException
-     */
-    abstract protected function validateEncryptedPdu($encryptedPdu);
+    abstract protected function validateEncryptedPdu(string $encryptedPdu) : string;
 
     /**
      * @param int $int
@@ -187,14 +178,8 @@ trait PrivacyTrait
 
     /**
      * Uses the key localization method from the 3DES Reeder draft to deal with keys that are not long enough.
-     *
-     * @param AuthenticationModuleInterface $authMod
-     * @param string $cryptKey
-     * @param EngineId $engineId
-     * @param int $keySize
-     * @return string
      */
-    protected function localizeReeder(AuthenticationModuleInterface $authMod, $cryptKey, EngineId $engineId, int $keySize)
+    protected function localizeReeder(AuthenticationModuleInterface $authMod, string $cryptKey, EngineId $engineId, int $keySize) : string
     {
         # Section 2.1
         # -----------
@@ -225,13 +210,8 @@ trait PrivacyTrait
 
     /**
      * Uses the key localization method from the AES Blumenthal draft to deal with keys that are not long enough.
-     *
-     * @param AuthenticationModuleInterface $authMod
-     * @param $cryptKey
-     * @param int $keySize
-     * @return string
      */
-    protected function localizeBlumenthal(AuthenticationModuleInterface $authMod, $cryptKey, int $keySize)
+    protected function localizeBlumenthal(AuthenticationModuleInterface $authMod, string $cryptKey, int $keySize) : string
     {
         $c = \ceil($keySize / strlen($cryptKey));
 

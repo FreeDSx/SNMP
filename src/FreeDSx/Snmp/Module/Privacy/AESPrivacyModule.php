@@ -116,7 +116,7 @@ class AESPrivacyModule implements PrivacyModuleInterface
     /**
      * {@inheritdoc}
      */
-    protected function toKeySaltIV($cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null): array
+    protected function toKeySaltIV(string $cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, ?string $salt = null): array
     {
         $keySize = self::KEY_SIZE[$this->algoAlias()];
         $keyTooShort = (\strlen($cryptKey) < $keySize);
@@ -147,18 +147,12 @@ class AESPrivacyModule implements PrivacyModuleInterface
         return ['key' => $key, 'salt' => $salt, 'iv' => $iv];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function validateEncodedPdu($scopedPdu)
+    protected function validateEncodedPdu(string $scopedPdu) : string
     {
         return $scopedPdu;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function validateEncryptedPdu($encryptedPdu)
+    protected function validateEncryptedPdu(string $encryptedPdu) : string
     {
         return $encryptedPdu;
     }

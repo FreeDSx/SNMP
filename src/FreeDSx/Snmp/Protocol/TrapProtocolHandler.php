@@ -36,15 +36,7 @@ class TrapProtocolHandler
 {
     use ProtocolTrait;
 
-    /**
-     * @var TrapListenerInterface
-     */
-    protected $listener;
-
-    /**
-     * @var array
-     */
-    protected $options = [
+    private const DEFAULT_OPTIONS = [
         'timeout_connect' => 5,
         'timeout_read' => 10,
         'ssl_validate_cert' => true,
@@ -58,6 +50,11 @@ class TrapProtocolHandler
     ];
 
     /**
+     * @var TrapListenerInterface
+     */
+    protected $listener;
+
+    /**
      * @param TrapListenerInterface $listener
      * @param array $options
      * @param SnmpEncoder|null $encoder
@@ -67,7 +64,7 @@ class TrapProtocolHandler
     public function __construct(TrapListenerInterface $listener, array $options, ?SnmpEncoder $encoder = null, ?Socket $socket = null, ?SecurityModelModuleFactory $securityModelFactory = null)
     {
         $this->listener = $listener;
-        $this->options = \array_merge($this->options, $options);
+        $this->options = $options + self::DEFAULT_OPTIONS;
         $this->encoder = $encoder;
         $this->socket = $socket;
         $this->securityModelFactory = $securityModelFactory ?: new SecurityModelModuleFactory();
@@ -148,7 +145,7 @@ class TrapProtocolHandler
     protected function isIpAddressAllowed(string $ip, array $options) : bool
     {
         if ($options['whitelist'] !== null && is_array($options['whitelist'])) {
-            return \in_array($ip, $options['whitelist']);
+            return \in_array($ip, $options['whitelist'], true);
         } else {
             return $this->listener->accept($ip);
         }
@@ -185,7 +182,7 @@ class TrapProtocolHandler
     }
 
     /**
-     * @param $data
+     * @param mixed $data
      * @return MessageRequestInterface|AbstractMessage|AbstractMessageV3|null
      */
     protected function getMessage($data) : ?MessageRequestInterface

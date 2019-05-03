@@ -71,7 +71,7 @@ class BigCounterValue extends AbstractValue
     }
 
     /**
-     * @param $integer
+     * @param mixed $integer
      */
     protected function validate($integer) : void
     {

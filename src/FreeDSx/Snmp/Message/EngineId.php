@@ -37,6 +37,9 @@ class EngineId
 
     public const FORMAT_OCTET = 5;
 
+    /**
+     * @var string
+     */
     protected static $octetDelim = ' ';
 
     /**
@@ -59,12 +62,7 @@ class EngineId
      */
     protected $binary;
 
-    /**
-     * @param int $enterpriseId
-     * @param $data
-     * @param null|int $format
-     */
-    public function __construct($data, ?int $format, int $enterpriseId = self::ENTERPRISE_NUMBER)
+    public function __construct(string $data, ?int $format, int $enterpriseId = self::ENTERPRISE_NUMBER)
     {
         $this->data = $data;
         $this->format = $format;
@@ -142,11 +140,8 @@ class EngineId
 
     /**
      * Construct the EngineID object based on a binary representation.
-     *
-     * @param $engineId
-     * @return EngineId
      */
-    public static function fromBinary($engineId) : EngineId
+    public static function fromBinary(string $engineId) : EngineId
     {
         return self::parse($engineId);
     }
@@ -223,11 +218,7 @@ class EngineId
         return new self($data, null, $enterpriseNumber);
     }
 
-    /**
-     * @param $engineId
-     * @return EngineId
-     */
-    protected static function parse($engineId) : EngineId
+    protected static function parse(string $engineId) : EngineId
     {
         $length = \strlen($engineId);
         # The engine ID must be between 5 and 32 bytes long
@@ -255,11 +246,9 @@ class EngineId
     }
 
     /**
-     * @param int $format
-     * @param $data
      * @return mixed
      */
-    protected static function parseDataFormat(int $format, $data)
+    protected static function parseDataFormat(int $format, string $data)
     {
         if ($format === self::FORMAT_IPV4) {
             $data = self::parseIPv4($data);
@@ -268,7 +257,7 @@ class EngineId
         } elseif ($format === self::FORMAT_MAC) {
             $data = self::parseMAC($data);
         } elseif ($format === self::FORMAT_TEXT) {
-            $data = (string) $data;
+            $data = $data;
         } elseif ($format === self::FORMAT_OCTET) {
             $data = \bin2hex($data);
         }
@@ -277,11 +266,9 @@ class EngineId
     }
 
     /**
-     * @param int $format
-     * @param $data
      * @return bool|string
      */
-    protected static function encodeDataFormat(int $format, $data)
+    protected static function encodeDataFormat(int $format, string $data)
     {
         if ($format === self::FORMAT_IPV4) {
             $data = self::encodeIPv4($data);
@@ -319,11 +306,7 @@ class EngineId
         return \hex2bin($data);
     }
 
-    /**
-     * @param $data
-     * @return string
-     */
-    protected static function parseIPv4($data) : string
+    protected static function parseIPv4(string $data) : string
     {
         $length = \strlen($data);
         if ($length !== 4) {
@@ -357,11 +340,7 @@ class EngineId
         return $encoded;
     }
 
-    /**
-     * @param $data
-     * @return string
-     */
-    protected static function parseIPv6($data) : string
+    protected static function parseIPv6(string $data) : string
     {
         $length = \strlen($data);
         if ($length !== 12) {
@@ -396,11 +375,7 @@ class EngineId
         return $encoded;
     }
 
-    /**
-     * @param $data
-     * @return string
-     */
-    protected static function parseMAC($data) : string
+    protected static function parseMAC(string $data) : string
     {
         $length = \strlen($data);
         if ($length !== 6) {

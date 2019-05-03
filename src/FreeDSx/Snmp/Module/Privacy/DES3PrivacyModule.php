@@ -44,7 +44,7 @@ class DES3PrivacyModule implements PrivacyModuleInterface
     /**
      * {@inheritdoc}
      */
-    protected function toKeySaltIV($cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null): array
+    protected function toKeySaltIV(string $cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, ?string $salt = null): array
     {
         $cryptKey = $this->localizeReeder($authMod, $cryptKey, $usm->getEngineId(), 32);
 
