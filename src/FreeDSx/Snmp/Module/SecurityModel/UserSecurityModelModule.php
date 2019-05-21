@@ -291,6 +291,11 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             $flags |= MessageHeader::FLAG_AUTH;
         }
 
+        $securityParameters = $messageV3->getSecurityParameters();
+        if (! ($securityParameters instanceof UsmSecurityParameters)) {
+            throw new InvalidArgumentException();
+        }
+
         return new MessageResponseV3(
             new MessageHeader($messageV3->getMessageHeader()->getId(), $flags),
             new ScopedPduResponse(
@@ -308,7 +313,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                 $this->getAuthoritativeEngineId($options),
                 $this->localEngineTime->getEngineBoot(),
                 $this->localEngineTime->getEngineTime(),
-                $messageV3->getSecurityParameters()->getUsername()
+                $securityParameters->getUsername()
             )
         );
     }

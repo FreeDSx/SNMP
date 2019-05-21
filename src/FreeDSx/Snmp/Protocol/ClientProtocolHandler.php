@@ -209,7 +209,9 @@ class ClientProtocolHandler
         $id = $this->generateId();
         $this->setPduId($discovery->getRequest(), $id);
         $response = $this->sendRequestGetResponse($discovery);
-        assert($response instanceof MessageResponseV3);
+        if (! ($response instanceof MessageResponseV3)) {
+            throw new SecurityModelException('V3 response expected');
+        }
         $this->validateResponse($response, $id, false);
         $securityModule->handleDiscoveryResponse($message, $response, $options);
     }
