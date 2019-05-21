@@ -20,19 +20,15 @@ use FreeDSx\Snmp\Request\RequestInterface;
  */
 trait MessageRequestTrait
 {
-    /**
-     * @return Pdu|RequestInterface
-     */
     public function getRequest() : RequestInterface
     {
         return $this->pdu;
     }
 
     /**
-     * @param RequestInterface $request
-     * @return $this
+     * @return static
      */
-    public function setRequest(RequestInterface $request)
+    public function setRequest(RequestInterface $request) : self
     {
         $this->pdu = $request;
 

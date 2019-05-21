@@ -77,7 +77,7 @@ abstract class AbstractValue implements ProtocolElementInterface
                 'Expected tag number %s for class "%s". Got %s.',
                 static::ASN1_TAG,
                 static::class,
-                $type->getTagNumber
+                $type->getTagNumber()
             ));
         }
 

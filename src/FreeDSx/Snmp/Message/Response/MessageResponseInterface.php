@@ -20,9 +20,6 @@ use FreeDSx\Snmp\Response\ResponseInterface;
  */
 interface MessageResponseInterface
 {
-    /**
-     * @return int
-     */
     public function getVersion() : int;
 
     /**

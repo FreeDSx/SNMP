@@ -163,19 +163,12 @@ class UsmSecurityParameters implements SecurityParametersInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getPrivacyParams() : ?string
     {
         return $this->privacyParams;
     }
 
-    /**
-     * @param null|string $privacyParams
-     * @return UsmSecurityParameters
-     */
-    public function setPrivacyParams(?string $privacyParams)
+    public function setPrivacyParams(?string $privacyParams) : UsmSecurityParameters
     {
         $this->privacyParams = $privacyParams;
 

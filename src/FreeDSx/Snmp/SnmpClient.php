@@ -60,7 +60,7 @@ class SnmpClient
     protected $socket;
 
     /**
-     * @var ClientProtocolHandler
+     * @var ClientProtocolHandler|null
      */
     protected $handler;
 
@@ -138,7 +138,7 @@ class SnmpClient
     {
         $oid = $this->getOid($oid);
 
-        return $oid ? (string) $oid->getValue() : null;
+        return $oid === null ? null : (string) $oid->getValue();
     }
 
     /**
@@ -261,7 +261,7 @@ class SnmpClient
      */
     protected function dispatcher() : ClientProtocolHandler
     {
-        if (!$this->handler) {
+        if ($this->handler === null) {
             $this->handler = $this->options['_protocol_handler'] ?? new ClientProtocolHandler($this->options);
         }
 

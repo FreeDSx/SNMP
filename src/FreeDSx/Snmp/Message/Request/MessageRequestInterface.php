@@ -20,9 +20,6 @@ use FreeDSx\Socket\PduInterface;
  */
 interface MessageRequestInterface extends PduInterface
 {
-    /**
-     * @return int
-     */
     public function getVersion() : int;
 
     /**

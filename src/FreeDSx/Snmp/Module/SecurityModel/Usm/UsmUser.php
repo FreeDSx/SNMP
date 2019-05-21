@@ -115,11 +115,7 @@ class UsmUser
         return $this->privPassword;
     }
 
-    /**
-     * @param mixed $privPassword
-     * @return UsmUser
-     */
-    public function setPrivPassword(?string $privPassword)
+    public function setPrivPassword(?string $privPassword) : self
     {
         $this->privPassword = $privPassword;
 

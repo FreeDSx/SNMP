@@ -21,7 +21,7 @@ use FreeDSx\Snmp\Response\ResponseInterface;
 trait MessageResponseTrait
 {
     /**
-     * @return Pdu|ResponseInterface
+     * @return ResponseInterface
      */
     public function getResponse() : ResponseInterface
     {

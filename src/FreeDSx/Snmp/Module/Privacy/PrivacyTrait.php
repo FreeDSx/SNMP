@@ -46,7 +46,7 @@ trait PrivacyTrait
     /**
      * {@inheritdoc}
      */
-    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : AbstractMessageV3
+    public function decryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $privPwd) : void
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -90,14 +90,12 @@ trait PrivacyTrait
             throw new SnmpEncryptionException('Failed to assemble decrypted PDU.', $e->getCode(), $e);
         }
         $this->setPduDataInMessage($message, null, $pdu);
-
-        return $message;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function encryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $password) : AbstractMessageV3
+    public function encryptData($message, AuthenticationModuleInterface $authMod, string $password) : void
     {
         /** @var  UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -139,8 +137,6 @@ trait PrivacyTrait
             ));
         }
         $this->setPduDataInMessage($message, $encryptedPdu, null, true);
-
-        return $message;
     }
 
     /**

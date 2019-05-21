@@ -30,10 +30,6 @@ trait DESPrivacyTrait
         $this->localBoot = ($localBoot === null) ? \random_int(0, self::$maxSalt) : $localBoot;
     }
 
-    /**
-     * @param $preIV
-     * @param $salt
-     */
     protected function generateIV(string $preIV, string $salt) : string
     {
         $iv = '';
@@ -53,8 +49,9 @@ trait DESPrivacyTrait
     {
         $pduLength = \strlen($scopedPdu);
 
-        if (($mod = $pduLength % 8)) {
-            $scopedPdu .= \str_repeat("\x00", (8 - $mod));
+        $mod = $pduLength % 8;
+        if ($mod !== 0) {
+            $scopedPdu .= \str_repeat("\x00", 8 - $mod);
         }
 
         return $scopedPdu;
@@ -65,7 +62,7 @@ trait DESPrivacyTrait
      */
     protected function validateEncryptedPdu(string $encryptedPdu) : string
     {
-        if (\strlen($encryptedPdu) % 8) {
+        if (\strlen($encryptedPdu) % 8 !== 0) {
             throw new SnmpEncryptionException('The encrypted PDU must be a multiple of 8 octets, but it is not');
         }
 

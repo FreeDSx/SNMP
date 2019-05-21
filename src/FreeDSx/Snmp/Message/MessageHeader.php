@@ -128,7 +128,7 @@ class MessageHeader implements ProtocolElementInterface
             return $this->flags === $flag;
         }
 
-        return ($this->flags !== 0 && $this->flags & $flag);
+        return ($this->flags !== 0 && ($this->flags & $flag) !== 0);
     }
 
     /**

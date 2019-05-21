@@ -223,7 +223,7 @@ class TrapProtocolHandlerSpec extends ObjectBehavior
         $encoder->decode(Argument::any())->willReturn($trapV3);
         $trapListener->getUsmUser(Argument::any(), '192.168.1.1', 'user1')->shouldBeCalled()->willReturn(new UsmUser('user1'));
 
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->willReturn($this->v3MessageWithTrap);
+        // TODO I don't get it
 
         $this->handle('192.168.1.1:12345', 'foo', []);
     }
@@ -242,7 +242,7 @@ class TrapProtocolHandlerSpec extends ObjectBehavior
         $encoder->decode(Argument::any())->willReturn($trapV3);
         $trapListener->getUsmUser(Argument::any(), '192.168.1.1', 'user1')->shouldBeCalled()->willReturn(new UsmUser('user1'));
 
-        $securityModule->handleIncomingMessage(Argument::any(), Argument::any())->willReturn($this->v3MessageWithTrap);
+        // TODO I don't get it
 
         $this->handle('192.168.1.1:12345', 'foo', []);
     }
@@ -288,7 +288,7 @@ class TrapProtocolHandlerSpec extends ObjectBehavior
         );
 
         $options = ["timeout_connect" => 5, "timeout_read" => 10, "ssl_validate_cert" => true, "ssl_allow_self_signed" => null, "ssl_ca_cert" => null, "ssl_peer_name" => null, "whitelist" => null, "version" => null, "community" => null, "engine_id" => null, "blacklist" => null, "user" => "user1", "use_auth" => true, "use_priv" => true, "auth_mech" => "sha512", "auth_pwd" => "user1password", "priv_mech" => "aes128", "priv_pwd" => "user1privacy"];
-        $securityModule->handleIncomingMessage(Argument::any(), $options)->willReturn($this->v3MessageWithTrap);
+        // TODO I don't get it
 
         $this->handle('192.168.1.1:12345', 'foo', []);
     }

@@ -299,7 +299,7 @@ class EngineId
         if (!\ctype_xdigit($data)) {
             throw new UnexpectedValueException('The octets contains invalid values.');
         }
-        if (\strlen($data) % 2) {
+        if (\strlen($data) % 2 !== 0) {
             throw new UnexpectedValueException('The octets must be an even length.');
         }
 

@@ -27,15 +27,15 @@ use FreeDSx\Snmp\Response\ResponseInterface;
  */
 class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInterface
 {
+
     /**
      * @param MessageHeader $header
-     * @param ScopedPduResponse $scopedPdu
      * @param null|string $encryptedPdu
      * @param SecurityParametersInterface|null $securityParams
      */
-    public function __construct(MessageHeader $header, ?ScopedPduResponse $scopedPdu, $encryptedPdu = null, ?SecurityParametersInterface $securityParams = null)
+    public function __construct(MessageHeader $header, ?ScopedPduResponse $scopedPduResponse, $encryptedPdu = null, ?SecurityParametersInterface $securityParams = null)
     {
-        parent::__construct($header, $scopedPdu, $encryptedPdu, $securityParams);
+        parent::__construct($header, $scopedPduResponse, $encryptedPdu, $securityParams);
     }
 
     /**
@@ -54,17 +54,9 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
         return $this->scopedPdu;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getEncryptedPdu()
-    {
-        return $this->encryptedPdu;
-    }
-
     public static function fromAsn1(AbstractType $asn1)
     {
-        list($header, $securityParams, $pdu) = self::parseCommonElements($asn1);
+        [$header, $securityParams, $pdu] = self::parseCommonElements($asn1);
 
         $encryptedPdu = null;
         $scopedPdu = null;
@@ -74,8 +66,8 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
             $scopedPdu = ScopedPduResponse::fromAsn1($pdu);
         } else {
             throw new ProtocolException(sprintf(
-               'Expected either an octet string or sequence for scoped pdu data, got %s.',
-               get_class($pdu)
+                'Expected either an octet string or sequence for scoped pdu data, got %s.',
+                get_class($pdu)
             ));
         }
 

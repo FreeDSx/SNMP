@@ -132,7 +132,6 @@ class AuthenticationModule implements AuthenticationModuleInterface
      * authentication protocol.
      *
      * @param string $password
-     * @param $engineId
      * @return string
      */
     public function generateKey(string $password, EngineId $engineId)

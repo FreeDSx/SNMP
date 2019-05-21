@@ -115,12 +115,12 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function handleIncomingMessage(AbstractMessageV3 $message, array $options) : AbstractMessageV3
+    public function handleIncomingMessage(AbstractMessageV3 $message, array $options) : void
     {
         $securityParams = $message->getSecurityParameters();
         $header = $message->getMessageHeader();
 
-        if (!$securityParams) {
+        if ($securityParams === null) {
             throw new SecurityModelException('The received SNMP message is missing the security parameters.');
         }
 
@@ -149,7 +149,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         }
         if ($usePriv) {
             try {
-                $message = $this->privacyFactory->get($options['priv_mech'])->decryptData(
+                $this->privacyFactory->get($options['priv_mech'])->decryptData(
                     $message,
                     $this->authFactory->get($options['auth_mech']),
                     $options['priv_pwd']
@@ -159,11 +159,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             }
         }
 
-        if ($message instanceof MessageResponseInterface) {
+        if ($message instanceof MessageResponseV3) {
             $this->validateIncomingResponse($message, $options);
         }
-
-        return $message;
     }
 
     /**
@@ -195,7 +193,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if ($header->hasPrivacy()) {
             $password = $options['priv_pwd'] ?? '';
             try {
-                $message = $this->privacyFactory->get($options['priv_mech'])->encryptData(
+                $this->privacyFactory->get($options['priv_mech'])->encryptData(
                     $message,
                     $this->authFactory->get($options['auth_mech']),
                     $password
@@ -286,11 +284,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function getDiscoveryResponse(AbstractMessageV3 $messageV3, array $options) : MessageResponseInterface
+    public function getDiscoveryResponse(MessageRequestV3 $messageV3, array $options) : MessageResponseInterface
     {
         $flags = MessageHeader::FLAG_NO_AUTH_NO_PRIV;
         if ($messageV3->getMessageHeader()->hasAuthentication()) {
             $flags |= MessageHeader::FLAG_AUTH;
+        }
+
+        $securityParameters = $messageV3->getSecurityParameters();
+        if (! ($securityParameters instanceof UsmSecurityParameters)) {
+            throw new InvalidArgumentException();
         }
 
         return new MessageResponseV3(
@@ -310,7 +313,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                 $this->getAuthoritativeEngineId($options),
                 $this->localEngineTime->getEngineBoot(),
                 $this->localEngineTime->getEngineTime(),
-                $messageV3->getSecurityParameters()->getUsername()
+                $securityParameters->getUsername()
             )
         );
     }
@@ -318,7 +321,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function handleDiscoveryResponse(AbstractMessageV3 $message, MessageResponseInterface $discoveryResponse, array $options): AbstractMessageV3
+    public function handleDiscoveryResponse(AbstractMessageV3 $message, MessageResponseV3 $discoveryResponse, array $options): AbstractMessageV3
     {
         $usm = $discoveryResponse->getSecurityParameters();
         $response = $discoveryResponse->getResponse();
@@ -350,12 +353,11 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageResponseInterface $response
      * @param array $options
      * @throws RediscoveryNeededException
      * @throws SecurityModelException
      */
-    protected function validateIncomingResponse(MessageResponseInterface $response, array $options) : void
+    protected function validateIncomingResponse(MessageResponseV3 $response, array $options) : void
     {
         /** @var UsmSecurityParameters $secParams */
         $secParams = $response->getSecurityParameters();
@@ -403,17 +405,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageRequestInterface $message
      * @param array $options
      * @throws SecurityModelException
      */
-    protected function validateIncomingRequest(MessageRequestInterface $message, array $options) : void
+    protected function validateIncomingRequest(MessageResponseV3 $message, array $options) : void
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
         $engineId = $this->getAuthoritativeEngineId($options);
 
-        if ($message->getMessageHeaders()->hasPrivacy() && $message->getEncryptedPdu() === null) {
+        if ($message->getMessageHeader()->hasPrivacy() && $message->getEncryptedPdu() === null) {
             throw new SecurityModelException('The header has privacy marked but the encrypted PDU was not set.');
         }
         if ($this->isDiscoveryRequest($message) || $this->isTimeSynchronizationRequest($message, $options)) {
@@ -428,10 +429,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageRequestInterface $message
      * @return bool
      */
-    protected function isDiscoveryRequest(MessageRequestInterface $message) : bool
+    protected function isDiscoveryRequest(MessageRequestV3 $message) : bool
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -448,12 +448,11 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageRequestInterface $message
      * @param array $options
      * @return bool
      * @throws SecurityModelException
      */
-    protected function isTimeSynchronizationRequest(MessageRequestInterface $message, array $options) : bool
+    protected function isTimeSynchronizationRequest(MessageRequestV3 $message, array $options) : bool
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -462,7 +461,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         /** @var MessageHeader $header */
         $header = $message->getMessageHeader();
 
-        if (!($usm->getEngineId() && $usm->getEngineId()->toBinary() === $engineId->toBinary())) {
+        if ($usm->getEngineId() === null || $usm->getEngineId()->toBinary() !== $engineId->toBinary()) {
             return false;
         }
         if (!($request instanceof GetRequest && $request->getOids()->count() === 0)) {
@@ -513,9 +512,6 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         );
     }
 
-    /**
-     * @param $engineId
-     */
     protected function clearCachedEngine(EngineId $engineId) : void
     {
         foreach ($this->knownEngines as $i => $knownEngine) {
@@ -558,7 +554,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $host = $options['host'] ?? '';
         $engineId = $this->getEngineIdFromOptions($options);
 
-        if ($engineId) {
+        if ($engineId !== null) {
             return $engineId;
         }
 
@@ -726,12 +722,12 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function getAuthoritativeEngineId(array $options) : EngineId
     {
-        if ($this->engineId) {
+        if ($this->engineId !== null) {
             return $this->engineId;
         }
 
         $this->engineId = $this->getEngineIdFromOptions($options);
-        if (!$this->engineId) {
+        if ($this->engineId === null) {
             $this->generateIPv4EngineId();
         }
 

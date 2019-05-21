@@ -43,7 +43,7 @@ class TrapSink
     ];
 
     /**
-     * @var TrapServerRunner
+     * @var TrapServerRunner|null
      */
     protected $server;
 
@@ -111,9 +111,9 @@ class TrapSink
      */
     protected function server() : ServerRunnerInterface
     {
-        if (!$this->server) {
+        if ($this->server === null) {
             $this->server = new TrapServerRunner(
-                 new TrapProtocolHandler($this->listener, $this->options),
+                new TrapProtocolHandler($this->listener, $this->options),
                 $this->options
              );
         }

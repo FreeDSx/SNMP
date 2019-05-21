@@ -29,20 +29,19 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
 {
     /**
      * @param MessageHeader $header
-     * @param ScopedPduRequest $scopedPdu
+     * @param ScopedPduRequest $scopedPduRequest
      * @param null|string $encryptedPdu
      * @param SecurityParametersInterface|null $securityParams
      */
-    public function __construct(MessageHeader $header, ?ScopedPduRequest $scopedPdu, $encryptedPdu = null, ?SecurityParametersInterface $securityParams = null)
+    public function __construct(MessageHeader $header, ?ScopedPduRequest $scopedPduRequest, $encryptedPdu = null, ?SecurityParametersInterface $securityParams = null)
     {
-        parent::__construct($header, $scopedPdu, $encryptedPdu, $securityParams);
+        parent::__construct($header, $scopedPduRequest, $encryptedPdu, $securityParams);
     }
 
     /**
-     * @param SecurityParametersInterface|null $securityParams
-     * @return MessageRequestV3
+     * @return static
      */
-    public function setSecurityParameters(?SecurityParametersInterface $securityParams)
+    public function setSecurityParameters(?SecurityParametersInterface $securityParams) : self
     {
         $this->securityParams = $securityParams;
 
@@ -86,19 +85,15 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
         return $this;
     }
 
-    /**
-     * @return ScopedPduRequest
-     */
     public function getScopedPdu() : ?ScopedPduRequest
     {
         return $this->scopedPdu;
     }
 
     /**
-     * @param ScopedPduRequest $request
-     * @return $this
+     * @return static
      */
-    public function setScopedPdu(?ScopedPduRequest $request)
+    public function setScopedPdu(?ScopedPduRequest $request) : self
     {
         $this->scopedPdu = $request;
 
@@ -110,7 +105,7 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
      */
     public static function fromAsn1(AbstractType $asn1)
     {
-        list($header, $securityParams, $pdu) = self::parseCommonElements($asn1);
+        [$header, $securityParams, $pdu] = self::parseCommonElements($asn1);
 
         $encryptedPdu = null;
         $scopedPdu = null;

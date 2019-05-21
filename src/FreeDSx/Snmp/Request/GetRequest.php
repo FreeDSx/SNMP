@@ -43,7 +43,7 @@ class GetRequest extends Pdu implements RequestInterface
      */
     public static function fromAsn1(AbstractType $type)
     {
-        list($id, $errorStatus, $errorIndex, $oidList) = parent::getBaseElements($type);
+        [$id, $errorStatus, $errorIndex, $oidList] = parent::getBaseElements($type);
 
         $getRequest = new self($oidList);
         $getRequest->id = $id;

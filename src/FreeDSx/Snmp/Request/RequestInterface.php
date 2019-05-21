@@ -19,6 +19,8 @@ use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
  */
 interface RequestInterface extends ProtocolElementInterface
 {
+    public function getId() : int;
+
     /**
      * @return int
      */

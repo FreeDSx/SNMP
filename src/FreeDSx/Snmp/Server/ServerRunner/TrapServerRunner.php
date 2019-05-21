@@ -31,7 +31,6 @@ class TrapServerRunner implements ServerRunnerInterface
     protected $handler;
 
     /**
-     * @param TrapProtocolHandler|null $handler
      * @param array $options
      */
     public function __construct(TrapProtocolHandler $handler, array $options = [])
