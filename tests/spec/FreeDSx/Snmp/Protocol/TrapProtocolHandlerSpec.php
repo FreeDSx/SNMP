@@ -166,6 +166,7 @@ class TrapProtocolHandlerSpec extends ObjectBehavior
         $encoder->encode(Argument::any())->willReturn('foo');
 
         $socket->write(Argument::any())->shouldBeCalled();
+        $socket->close()->shouldBeCalled();
         $this->handle('127.0.0.1:12345', 'foobar', []);
     }
 
