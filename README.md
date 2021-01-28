@@ -1,4 +1,4 @@
-# FreeDSx SNMP [![Build Status](https://travis-ci.org/FreeDSx/SNMP.svg?branch=master)](https://travis-ci.org/FreeDSx/SNMP) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/freedsx/snmp?branch=master&svg=true)](https://ci.appveyor.com/project/ChadSikorra/snmp)
+# FreeDSx SNMP ![](https://github.com/FreeDSx/SNMP/workflows/Build/badge.svg)
 FreeDSx SNMP is a pure PHP SNMP library. It has no requirement on the core PHP SNMP extension. It implements SNMP
 client functionality described in [RFC 3412](https://tools.ietf.org/html/rfc3412) / [RFC 3416](https://tools.ietf.org/html/rfc3416) / [RFC 3414](https://tools.ietf.org/html/rfc3414).
 It also includes functionality described in various other RFCs, such as SHA2 authentication ([RFC 7860](https://tools.ietf.org/html/rfc7860)) and strong encryption
