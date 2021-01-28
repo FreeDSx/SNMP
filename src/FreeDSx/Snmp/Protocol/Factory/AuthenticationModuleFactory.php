@@ -22,7 +22,7 @@ use FreeDSx\Snmp\Module\Authentication\AuthenticationModule;
 class AuthenticationModuleFactory
 {
     /**
-     * @var AuthenticationModuleInterface[]
+     * @var array<string, class-string>
      */
     protected $modules;
 

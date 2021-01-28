@@ -1,0 +1,68 @@
+name: Build
+on: [push, pull_request]
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    name: Static Analysis
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.1'
+          tools: composer:v2
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Install Composer Dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+
+      - name: Cache Dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Run Static Analysis
+        run: composer analyse
+
+  unit-tests:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      fail-fast: false
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest]
+        php-versions: ['7.1', '7.2', '7.3', '7.4', '8.0']
+    name: Tests for PHP ${{ matrix.php-versions }} on ${{ matrix.operating-system }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Run Tests
+        run: composer test-spec

@@ -18,10 +18,9 @@
     "freedsx/socket": "^0.3.0"
   },
   "require-dev": {
-    "phpspec/phpspec": "^5.0",
     "friendsofphp/php-cs-fixer": "^2.0.0",
-    "phpstan/phpstan": "^0.11.5",
-    "phpstan/phpstan-strict-rules": "^0.11.0"
+    "phpspec/phpspec": "^5.1|^6.1",
+    "phpstan/phpstan": "^0.12.70"
   },
   "suggest": {
     "ext-openssl": "For SNMP privacy encryption support.",
@@ -32,5 +31,17 @@
   },
   "config": {
     "sort-packages": true
+  },
+  "scripts": {
+    "cs-fix": [
+      "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
+      "php-cs-fixer fix src/ --rules=@PSR2"
+    ],
+    "analyse": [
+      "phpstan analyse"
+    ],
+    "test-spec": [
+      "phpspec run --format=pretty --no-interaction"
+    ]
   }
 }
