@@ -154,7 +154,7 @@ trait PrivacyTrait
      * @param null|string $salt
      * @return array
      */
-    abstract protected function toKeySaltIV($cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null) : array;
+    abstract protected function toKeySaltIV(string $cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, $salt = null) : array;
 
     abstract protected function validateEncodedPdu(string $scopedPdu) : string ;
 
