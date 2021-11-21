@@ -243,7 +243,22 @@ class UserSecurityModelModuleSpec extends ObjectBehavior
         $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
 
         $engineId = EngineId::fromText('foobar123');
-        $this->handleOutgoingMessage($this->request, array_merge($this->options, ['engine_id' => $engineId]))->getSecurityParameters()->getEngineId()->shouldBeEqualTo($engineId);
+        $this->handleOutgoingMessage($this->request, array_merge($this->options, ['engine_id' => $engineId]))
+            ->getSecurityParameters()
+            ->getEngineId()
+            ->shouldBeEqualTo($engineId);
+    }
+
+    function it_should_set_the_context_engine_id_on_an_outgoing_message()
+    {
+        $this->request->getMessageHeader()->setFlags(MessageHeader::FLAG_NO_AUTH_NO_PRIV);
+        $this->request->getScopedPdu()->setRequest(new TrapV2Request(new TimeTicksValue(1), new OidValue('1.2.3')));
+
+        $engineId = EngineId::fromText('foobar123');
+        $this->handleOutgoingMessage($this->request, array_merge($this->options, ['engine_id' => $engineId]))
+            ->getScopedPdu()
+            ->getContextEngineId()
+            ->shouldBeEqualTo($engineId);
     }
 
     function it_should_not_require_discovery_when_the_engine_and_time_is_known_and_valid()

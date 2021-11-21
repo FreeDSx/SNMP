@@ -698,7 +698,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
         $contextEngineIdProperty = $scopedPduObject->getProperty('contextEngineId');
         $contextEngineIdProperty->setAccessible(true);
-        $contextEngineIdProperty->setValue($message, $secParams->getEngineId());
+        $contextEngineIdProperty->setValue($message->getScopedPdu(), $secParams->getEngineId());
     }
 
     /**
