@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4.1 (2021-11-25)
+------------------
+* Fix a bug with v3 authentication with certain devices (missing contextEngineId).
+* PHPStan introduced for static analysis (@simPod).
+
 0.4.0 (2019-03-11)
 ------------------
 * Update the ASN.1 / Socket versions for performance / memory improvements.
