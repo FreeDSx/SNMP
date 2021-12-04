@@ -15,6 +15,7 @@ use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
+use Traversable;
 
 /**
  * Represents a VarBindList.
@@ -130,9 +131,9 @@ class OidList implements \IteratorAggregate, \Countable, ProtocolElementInterfac
     }
 
     /**
-     * @return \ArrayIterator|\Traversable
+     * @return Traversable
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         return new \ArrayIterator($this->oids);
     }
@@ -140,7 +141,7 @@ class OidList implements \IteratorAggregate, \Countable, ProtocolElementInterfac
     /**
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return \count($this->oids);
     }
