@@ -127,6 +127,18 @@ class ClientProtocolHandler
     }
 
     /**
+     * Closes the transport connection associated with the client, if any.
+     *
+     * @return void
+     */
+    public function close(): void
+    {
+        if ($this->socket) {
+            $this->socket->close();
+        }
+    }
+
+    /**
      * @param MessageRequestInterface $message
      * @return MessageResponseInterface|null
      * @throws ConnectionException

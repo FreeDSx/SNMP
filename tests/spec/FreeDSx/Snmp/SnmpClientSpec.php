@@ -169,6 +169,14 @@ class SnmpClientSpec extends ObjectBehavior
         $this->getValue('1.2.3')->shouldBeEqualTo('1');
     }
 
+    function it_should_close_the_client_connection_if_close_is_called($handler)
+    {
+        /** @var ClientProtocolHandler $handler */
+        $handler->close()->shouldBeCalled();
+
+        $this->close();
+    }
+
     function it_should_get_an_SnmpWalk_helper_when_calling_walk()
     {
         $this->walk()->shouldReturnAnInstanceOf(SnmpWalk::class);

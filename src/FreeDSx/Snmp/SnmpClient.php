@@ -234,6 +234,16 @@ class SnmpClient
     }
 
     /**
+     * Closes the transport connection stream associated with this client.
+     *
+     * @return void
+     */
+    public function close(): void
+    {
+        $this->dispatcher()->close();
+    }
+
+    /**
      * Get the client options.
      *
      * @return array
