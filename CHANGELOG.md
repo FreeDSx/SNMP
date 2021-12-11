@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.4.2 (2021-12-11)
+------------------
+* Support PHP 8.0 / 8.1.
+* Add a method to close the underlying socket connection on the client.
+
 0.4.1 (2021-11-25)
 ------------------
 * Fix a bug with v3 authentication with certain devices (missing contextEngineId).
