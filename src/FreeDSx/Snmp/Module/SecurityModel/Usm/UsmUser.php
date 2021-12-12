@@ -110,13 +110,13 @@ class UsmUser
     /**
      * @return string|null
      */
-    public function getPrivPassword()
+    public function getPrivPassword(): ?string
     {
         return $this->privPassword;
     }
 
     /**
-     * @param mixed $privPassword
+     * @param string|null $privPassword
      * @return UsmUser
      */
     public function setPrivPassword(?string $privPassword)

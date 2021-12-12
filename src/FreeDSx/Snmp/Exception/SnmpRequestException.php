@@ -50,7 +50,7 @@ class SnmpRequestException extends \Exception
     protected $snmpMessage;
 
     /**
-     * @param MessageResponseInterface $response
+     * @param MessageResponseInterface|null $response
      * @param null|string $message
      * @param \Throwable|null $previous
      */

@@ -16,9 +16,9 @@ use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
 use FreeDSx\Snmp\Message\Security\SecurityParametersInterface;
-use FreeDSx\Snmp\Response\ResponseInterface;
 
 /**
  * Represents a SNMPv3 Message Response.
@@ -29,19 +29,27 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
 {
     /**
      * @param MessageHeader $header
-     * @param ScopedPduResponse $scopedPdu
+     * @param ScopedPduResponse|null $scopedPdu
      * @param null|string $encryptedPdu
      * @param SecurityParametersInterface|null $securityParams
      */
-    public function __construct(MessageHeader $header, ?ScopedPduResponse $scopedPdu, $encryptedPdu = null, ?SecurityParametersInterface $securityParams = null)
-    {
-        parent::__construct($header, $scopedPdu, $encryptedPdu, $securityParams);
+    public function __construct(
+        MessageHeader $header,
+        ?ScopedPduResponse $scopedPdu,
+        $encryptedPdu = null,
+        ?SecurityParametersInterface $securityParams = null
+    ) {
+        parent::__construct(
+            $header,
+            $scopedPdu,
+            $encryptedPdu, $securityParams
+        );
     }
 
     /**
-     * @return ResponseInterface
+     * @return Pdu
      */
-    public function getResponse() : ResponseInterface
+    public function getResponse(): Pdu
     {
         return $this->scopedPdu->getResponse();
     }

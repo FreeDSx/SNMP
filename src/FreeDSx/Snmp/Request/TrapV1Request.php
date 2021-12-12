@@ -149,7 +149,7 @@ class TrapV1Request implements RequestInterface
     }
 
     /**
-     * @return string
+     * @return IpAddressValue
      */
     public function getIpAddress() : IpAddressValue
     {

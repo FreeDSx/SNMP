@@ -12,9 +12,9 @@ namespace FreeDSx\Snmp\Protocol\Factory;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Response\Response;
 use FreeDSx\Snmp\Response\ReportResponse;
-use FreeDSx\Snmp\Response\ResponseInterface;
 
 /**
  * Maps the PDU type to the response class.
@@ -33,10 +33,10 @@ class ResponseFactory
 
     /**
      * @param AbstractType $type
-     * @return ResponseInterface
+     * @return Pdu
      * @throws ProtocolException
      */
-    public static function get(AbstractType $type) : ResponseInterface
+    public static function get(AbstractType $type) : Pdu
     {
         if (!isset(self::$map[$type->getTagNumber()])) {
             throw new ProtocolException(sprintf(

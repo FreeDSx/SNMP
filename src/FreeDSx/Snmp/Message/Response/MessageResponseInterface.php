@@ -10,8 +10,7 @@
 
 namespace FreeDSx\Snmp\Message\Response;
 
-use FreeDSx\Snmp\Response\Response;
-use FreeDSx\Snmp\Response\ResponseInterface;
+use FreeDSx\Snmp\Message\Pdu;
 
 /**
  * Interface for an SNMP message used in a response.
@@ -26,7 +25,7 @@ interface MessageResponseInterface
     public function getVersion() : int;
 
     /**
-     * @return ResponseInterface|Response
+     * @return Pdu
      */
-    public function getResponse() : ResponseInterface;
+    public function getResponse() : Pdu;
 }

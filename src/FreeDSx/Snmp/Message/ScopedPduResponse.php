@@ -12,7 +12,6 @@ namespace FreeDSx\Snmp\Message;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Protocol\Factory\ResponseFactory;
-use FreeDSx\Snmp\Response\ResponseInterface;
 
 /**
  * Represents a Scoped PDU response.
@@ -22,19 +21,22 @@ use FreeDSx\Snmp\Response\ResponseInterface;
 class ScopedPduResponse extends ScopedPdu
 {
     /**
-     * @param ResponseInterface $response
+     * @param Pdu $response
      * @param null|EngineId $contextEngineId
      * @param string $contextName
      */
-    public function __construct(ResponseInterface $response, ?EngineId $contextEngineId = null, string $contextName = '')
-    {
+    public function __construct(
+        Pdu $response,
+        ?EngineId $contextEngineId = null,
+        string $contextName = ''
+    ) {
         parent::__construct($response, $contextEngineId, $contextName);
     }
 
     /**
-     * @return Pdu|ResponseInterface
+     * @return Pdu
      */
-    public function getResponse() : ResponseInterface
+    public function getResponse() : Pdu
     {
         return $this->pdu;
     }

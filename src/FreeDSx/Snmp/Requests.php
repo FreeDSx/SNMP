@@ -92,12 +92,25 @@ class Requests
      * @param mixed ...$oids
      * @return TrapV1Request
      */
-    public static function trapV1(string $enterprise, $ipAddress, int $genericType, int $specificType, int $sysUpTime, ...$oids) : TrapV1Request
-    {
+    public static function trapV1(
+        string $enterprise,
+        $ipAddress,
+        int $genericType,
+        int $specificType,
+        $sysUpTime,
+        ...$oids
+    ) : TrapV1Request {
         $ipAddress = ($ipAddress instanceof IpAddressValue) ? $ipAddress : OidValues::ipAddress($ipAddress);
         $sysUpTime = ($sysUpTime instanceof TimeTicksValue) ? $sysUpTime : OidValues::timeticks($sysUpTime);
 
-        return new TrapV1Request($enterprise, $ipAddress, $genericType, $specificType, $sysUpTime, self::toOidList($oids));
+        return new TrapV1Request(
+            $enterprise,
+            $ipAddress,
+            $genericType,
+            $specificType,
+            $sysUpTime,
+            self::toOidList($oids)
+        );
     }
 
     /**

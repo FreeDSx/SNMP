@@ -14,6 +14,7 @@ use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Message\MessageHeader;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\Response\MessageResponse;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
 use FreeDSx\Snmp\Message\Response\MessageResponseV1;
@@ -21,7 +22,6 @@ use FreeDSx\Snmp\Message\Response\MessageResponseV2;
 use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
 use FreeDSx\Snmp\Response\Response;
-use FreeDSx\Snmp\Response\ResponseInterface;
 use FreeDSx\Socket\PduInterface;
 use PhpSpec\ObjectBehavior;
 
@@ -36,7 +36,7 @@ class MessageResponseSpec extends ObjectBehavior
     function let()
     {
         $this->factoryV1 = new class implements MessageResponseInterface {
-            public function getResponse(): ResponseInterface{}
+            public function getResponse(): Pdu{}
             public function getVersion(): int{}
             public function toAsn1(): AbstractType{}
             public static function fromAsn1(AbstractType $asn1)
@@ -45,7 +45,7 @@ class MessageResponseSpec extends ObjectBehavior
             }
         };
         $this->factoryV2 = new class implements MessageResponseInterface {
-            public function getResponse(): ResponseInterface{}
+            public function getResponse(): Pdu{}
             public function getVersion(): int{}
             public function toAsn1(): AbstractType{}
             public static function fromAsn1(AbstractType $asn1)
@@ -54,7 +54,7 @@ class MessageResponseSpec extends ObjectBehavior
             }
         };
         $this->factoryV3 = new class implements MessageResponseInterface {
-            public function getResponse(): ResponseInterface{}
+            public function getResponse(): Pdu{}
             public function getVersion(): int{}
             public function toAsn1(): AbstractType{}
             public static function fromAsn1(AbstractType $asn1)

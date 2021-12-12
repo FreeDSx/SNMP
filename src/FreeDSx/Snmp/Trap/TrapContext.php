@@ -10,8 +10,6 @@
 
 namespace FreeDSx\Snmp\Trap;
 
-use FreeDSx\Snmp\Message\AbstractMessage;
-use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Request\InformRequest;
 use FreeDSx\Snmp\Request\RequestInterface;
@@ -53,7 +51,7 @@ class TrapContext
     }
 
     /**
-     * @return MessageRequestInterface|AbstractMessage|AbstractMessageV3
+     * @return MessageRequestInterface
      */
     public function getMessage() : MessageRequestInterface
     {

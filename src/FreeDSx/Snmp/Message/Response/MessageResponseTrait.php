@@ -11,7 +11,6 @@
 namespace FreeDSx\Snmp\Message\Response;
 
 use FreeDSx\Snmp\Message\Pdu;
-use FreeDSx\Snmp\Response\ResponseInterface;
 
 /**
  * Used to implement the message response interface.
@@ -21,9 +20,9 @@ use FreeDSx\Snmp\Response\ResponseInterface;
 trait MessageResponseTrait
 {
     /**
-     * @return Pdu|ResponseInterface
+     * @return Pdu
      */
-    public function getResponse() : ResponseInterface
+    public function getResponse() : Pdu
     {
         return $this->pdu;
     }

@@ -10,6 +10,7 @@
 
 namespace FreeDSx\Snmp\Protocol;
 
+use FreeDSx\Asn1\Exception\EncoderException;
 use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Exception\InvalidArgumentException;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
@@ -142,7 +143,7 @@ class ClientProtocolHandler
      * @param MessageRequestInterface $message
      * @return MessageResponseInterface|null
      * @throws ConnectionException
-     * @throws \FreeDSx\Asn1\Exception\EncoderException
+     * @throws EncoderException
      */
     protected function sendRequestGetResponse(MessageRequestInterface $message) : ?MessageResponseInterface
     {
@@ -171,7 +172,7 @@ class ClientProtocolHandler
      * @return MessageResponseInterface|null
      * @throws ConnectionException
      * @throws SnmpRequestException
-     * @throws \FreeDSx\Asn1\Exception\EncoderException
+     * @throws EncoderException
      * @throws \FreeDSx\Snmp\Exception\ProtocolException
      * @throws SecurityModelException
      */
@@ -209,14 +210,17 @@ class ClientProtocolHandler
 
     /**
      * @param MessageRequestV3 $message
-     * @param $securityModule
+     * @param SecurityModelModuleInterface $securityModule
      * @param array $options
      * @throws ConnectionException
+     * @throws EncoderException
      * @throws SnmpRequestException
-     * @throws \FreeDSx\Asn1\Exception\EncoderException
      */
-    protected function performDiscovery(MessageRequestV3 $message, SecurityModelModuleInterface $securityModule, array $options) : void
-    {
+    protected function performDiscovery(
+        MessageRequestV3 $message,
+        SecurityModelModuleInterface $securityModule,
+        array $options
+    ) : void {
         $discovery = $securityModule->getDiscoveryRequest($message, $options);
         $id = $this->generateId();
         $this->setPduId($discovery->getRequest(), $id);
