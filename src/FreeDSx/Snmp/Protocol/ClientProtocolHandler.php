@@ -13,11 +13,13 @@ namespace FreeDSx\Snmp\Protocol;
 use FreeDSx\Asn1\Exception\EncoderException;
 use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Exception\InvalidArgumentException;
+use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Exception\RediscoveryNeededException;
 use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\EngineId;
+use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
 use FreeDSx\Snmp\Message\MessageHeader;
@@ -169,15 +171,18 @@ class ClientProtocolHandler
      * @param MessageRequestV3 $message
      * @param array $options
      * @param bool $forcedDiscovery
-     * @return MessageResponseInterface|null
+     * @return MessageResponseV3|null
      * @throws ConnectionException
      * @throws SnmpRequestException
      * @throws EncoderException
      * @throws \FreeDSx\Snmp\Exception\ProtocolException
      * @throws SecurityModelException
      */
-    protected function sendV3Message(MessageRequestV3 $message, array $options, bool $forcedDiscovery = false) : ?MessageResponseInterface
-    {
+    protected function sendV3Message(
+        MessageRequestV3 $message,
+        array $options,
+        bool $forcedDiscovery = false
+    ): ?MessageResponseV3 {
         $response = null;
         $header = $message->getMessageHeader();
         $securityModule = $this->securityModelFactory->get($header->getSecurityModel());
@@ -195,6 +200,12 @@ class ClientProtocolHandler
             if ($response) {
                 $response = $securityModule->handleIncomingMessage($response, $options);
                 $this->validateResponse($response, $id);
+            }
+            if (!$response instanceof MessageResponseV3) {
+                throw new ProtocolException(sprintf(
+                    'Expected a SNMPv3 response, but got: v%d',
+                    $response->getVersion()
+                ));
             }
 
             return $response;

@@ -10,9 +10,9 @@
 
 namespace FreeDSx\Snmp\Trap;
 
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Request\InformRequest;
-use FreeDSx\Snmp\Request\RequestInterface;
 use FreeDSx\Snmp\Request\TrapV1Request;
 use FreeDSx\Snmp\Request\TrapV2Request;
 
@@ -69,9 +69,9 @@ class TrapContext
     }
 
     /**
-     * @return InformRequest|TrapV1Request|TrapV2Request
+     * @return Pdu|InformRequest|TrapV1Request|TrapV2Request
      */
-    public function getTrap() : RequestInterface
+    public function getTrap(): Pdu
     {
         return $this->message->getRequest();
     }
