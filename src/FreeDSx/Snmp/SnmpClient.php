@@ -60,9 +60,9 @@ class SnmpClient
     protected $socket;
 
     /**
-     * @var ClientProtocolHandler
+     * @var ClientProtocolHandler|null
      */
-    protected $handler;
+    protected $handler = null;
 
     /**
      * @param array $options
