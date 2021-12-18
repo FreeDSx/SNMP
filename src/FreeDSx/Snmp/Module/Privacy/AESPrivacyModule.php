@@ -67,11 +67,15 @@ class AESPrivacyModule implements PrivacyModuleInterface
      * @param int|null $localBoot
      * @throws \Exception
      */
-    public function __construct(string $algorithm, ?int $localBoot = null)
-    {
+    public function __construct(
+        string $algorithm,
+        ?int $localBoot = null
+    ) {
         $this->algorithm = $algorithm;
         $this->has64BitSupport = \is_int(9223372036854775807);
         if ($localBoot === null) {
+            // Have to ignore this...it's arch specific, and phpstan will not understand that.
+            // @phpstan-ignore-next-line
             if ($this->has64BitSupport) {
                 self::$maxSalt = 9223372036854775807;
                 $this->localBoot = \random_int(0, self::$maxSalt);

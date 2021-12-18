@@ -2,7 +2,7 @@ parameters:
     checkMissingIterableValueType: false
     treatPhpDocTypesAsCertain: false
     checkGenericClassInNonGenericObjectType: false
-    level: 3
+    level: 4
     paths:
         - %currentWorkingDirectory%/src
     ignoreErrors:

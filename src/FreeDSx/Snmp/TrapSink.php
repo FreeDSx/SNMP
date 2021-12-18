@@ -43,7 +43,7 @@ class TrapSink
     ];
 
     /**
-     * @var TrapServerRunner
+     * @var TrapServerRunner|null
      */
     protected $server;
 
