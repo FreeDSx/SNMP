@@ -79,9 +79,9 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected $authFactory;
 
     /**
-     * @var EngineId
+     * @var EngineId|null
      */
-    protected $engineId;
+    protected $engineId = null;
 
     /**
      * @var TimeSync
@@ -104,8 +104,12 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      * @param array $engineTimes
      * @param array $knownEngines
      */
-    public function __construct(?PrivacyModuleFactory $privacy = null, ?AuthenticationModuleFactory $auth = null, array $engineTimes = [], array $knownEngines = [])
-    {
+    public function __construct(
+        ?PrivacyModuleFactory $privacy = null,
+        ?AuthenticationModuleFactory $auth = null,
+        array $engineTimes = [],
+        array $knownEngines = []
+    ) {
         $this->privacyFactory = $privacy ?: new PrivacyModuleFactory();
         $this->authFactory = $auth ?: new AuthenticationModuleFactory();
         $this->engineTime = $engineTimes;
@@ -765,7 +769,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
 
         $this->engineId = $this->getEngineIdFromOptions($options);
         if (!$this->engineId) {
-            $this->generateIPv4EngineId();
+            $this->engineId = $this->generateIPv4EngineId();
         }
 
         return $this->engineId;
