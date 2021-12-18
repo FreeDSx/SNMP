@@ -90,10 +90,14 @@ class Pdu implements ProtocolElementInterface
      * @param int $id
      * @param int $errorStatus
      * @param int $errorIndex
-     * @param OidList $oids
+     * @param OidList|null $oids
      */
-    public function __construct(int $id, int $errorStatus = 0, int $errorIndex = 0, ?OidList $oids = null)
-    {
+    public function __construct(
+        int $id,
+        int $errorStatus = 0,
+        int $errorIndex = 0,
+        ?OidList $oids = null
+    ) {
         $this->id = $id;
         $this->errorStatus = $errorStatus;
         $this->errorIndex = $errorIndex;

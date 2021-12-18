@@ -10,7 +10,7 @@
 
 namespace FreeDSx\Snmp\Message\Request;
 
-use FreeDSx\Snmp\Request\RequestInterface;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Socket\PduInterface;
 
 /**
@@ -26,13 +26,13 @@ interface MessageRequestInterface extends PduInterface
     public function getVersion() : int;
 
     /**
-     * @return RequestInterface
+     * @return Pdu
      */
-    public function getRequest() : RequestInterface;
+    public function getRequest() : Pdu;
 
     /**
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @return $this
      */
-    public function setRequest(RequestInterface $request);
+    public function setRequest(Pdu $request);
 }

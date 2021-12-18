@@ -12,8 +12,8 @@ namespace FreeDSx\Snmp\Message\Request;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Message\AbstractMessage;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Protocol\Factory\RequestFactory;
-use FreeDSx\Snmp\Request\RequestInterface;
 
 /**
  * Represents a SNMPv1 Message Request.
@@ -28,10 +28,12 @@ class MessageRequestV1 extends AbstractMessage implements MessageRequestInterfac
 
     /**
      * @param string $community
-     * @param RequestInterface $request
+     * @param Pdu $request
      */
-    public function __construct(string $community, RequestInterface $request)
-    {
+    public function __construct(
+        string $community,
+        Pdu $request
+    ) {
         $this->pdu = $request;
         parent::__construct($community);
     }

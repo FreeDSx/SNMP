@@ -131,11 +131,9 @@ class AuthenticationModule implements AuthenticationModuleInterface
      * being replaced by the SHA-2 hash function H used in the HMAC-SHA-2
      * authentication protocol.
      *
-     * @param string $password
-     * @param $engineId
-     * @return string
+     * @inheritDoc
      */
-    public function generateKey(string $password, EngineId $engineId)
+    public function generateKey(string $password, EngineId $engineId): string
     {
         # RFC 7860, Section 9.3, first bullet point:
         #     forming a string of length 1,048,576 octets by repeating the value

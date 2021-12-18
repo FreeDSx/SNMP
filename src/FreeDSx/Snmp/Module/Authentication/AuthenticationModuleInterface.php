@@ -29,10 +29,12 @@ interface AuthenticationModuleInterface
      * @param AbstractMessageV3 $message
      * @param string $password
      * @throws SnmpAuthenticationException
-     * @return mixed
+     * @return AbstractMessageV3
      */
-    public function authenticateIncomingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3;
-
+    public function authenticateIncomingMsg(
+        AbstractMessageV3 $message,
+        string $password
+    ): AbstractMessageV3;
 
     /**
      * Authenticate an outgoing message according to an algorithm.
@@ -40,16 +42,22 @@ interface AuthenticationModuleInterface
      * @param AbstractMessageV3 $message
      * @param string $password
      * @throws SnmpAuthenticationException
-     * @return mixed
+     * @return AbstractMessageV3
      */
-    public function authenticateOutgoingMsg(AbstractMessageV3 $message, string $password) : AbstractMessageV3;
+    public function authenticateOutgoingMsg(
+        AbstractMessageV3 $message,
+        string $password
+    ): AbstractMessageV3;
 
     /**
      * @param string $password
      * @param EngineId $engineId
      * @return string
      */
-    public function generateKey(string $password, EngineId $engineId);
+    public function generateKey(
+        string $password,
+        EngineId $engineId
+    ): string;
 
     public function hash(string $value) : string;
 

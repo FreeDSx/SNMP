@@ -28,6 +28,11 @@ use FreeDSx\Snmp\Message\Security\SecurityParametersInterface;
 class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInterface
 {
     /**
+     * @var ScopedPduResponse|null
+     */
+    protected $scopedPdu;
+
+    /**
      * @param MessageHeader $header
      * @param ScopedPduResponse|null $scopedPdu
      * @param null|string $encryptedPdu
@@ -55,7 +60,7 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
     }
 
     /**
-     * @return ScopedPduResponse
+     * @return ScopedPduResponse|null
      */
     public function getScopedPdu() : ?ScopedPduResponse
     {

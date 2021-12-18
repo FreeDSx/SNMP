@@ -15,6 +15,7 @@ use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
+use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 
 /**
  * Represents the methods needed to handle a security model.
@@ -50,7 +51,7 @@ interface SecurityModelModuleInterface
      *
      * @param AbstractMessageV3 $messageV3
      * @param array $options
-     * @return MessageRequestInterface|null
+     * @return MessageRequestInterface
      */
     public function getDiscoveryRequest(AbstractMessageV3 $messageV3, array $options) : MessageRequestInterface;
 
@@ -85,11 +86,11 @@ interface SecurityModelModuleInterface
      * When the discovery response is returned it will be passed here for any specific module processing.
      *
      * @param AbstractMessageV3 $message
-     * @param MessageResponseInterface $discoveryResponse
+     * @param MessageResponseV3 $discoveryResponse
      * @param array $options
      * @return AbstractMessageV3
      */
-    public function handleDiscoveryResponse(AbstractMessageV3 $message, MessageResponseInterface $discoveryResponse, array $options) : AbstractMessageV3;
+    public function handleDiscoveryResponse(AbstractMessageV3 $message, MessageResponseV3 $discoveryResponse, array $options) : AbstractMessageV3;
 
     /**
      * The security model that the module supports.

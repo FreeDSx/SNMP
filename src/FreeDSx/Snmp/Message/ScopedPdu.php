@@ -66,7 +66,7 @@ abstract class ScopedPdu implements ProtocolElementInterface
     }
 
     /**
-     * @return string
+     * @return EngineId|null
      */
     public function getContextEngineId() : ?EngineId
     {

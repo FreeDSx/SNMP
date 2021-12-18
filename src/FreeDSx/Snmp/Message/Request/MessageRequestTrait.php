@@ -11,7 +11,6 @@
 namespace FreeDSx\Snmp\Message\Request;
 
 use FreeDSx\Snmp\Message\Pdu;
-use FreeDSx\Snmp\Request\RequestInterface;
 
 /**
  * Exposes the request PDU.
@@ -21,18 +20,18 @@ use FreeDSx\Snmp\Request\RequestInterface;
 trait MessageRequestTrait
 {
     /**
-     * @return Pdu|RequestInterface
+     * @return Pdu
      */
-    public function getRequest() : RequestInterface
+    public function getRequest(): Pdu
     {
         return $this->pdu;
     }
 
     /**
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @return $this
      */
-    public function setRequest(RequestInterface $request)
+    public function setRequest(Pdu $request)
     {
         $this->pdu = $request;
 

@@ -292,6 +292,19 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if ($messageV3->getMessageHeader()->hasAuthentication()) {
             $flags |= MessageHeader::FLAG_AUTH;
         }
+        if (!$messageV3 instanceof MessageRequestV3) {
+            throw new SecurityModelException(sprintf(
+                'Expected a message request of type: %s',
+                MessageRequestV3::class
+            ));
+        }
+        $usm = $messageV3->getSecurityParameters();
+        if (!$usm instanceof UsmSecurityParameters) {
+            throw new SecurityModelException(sprintf(
+                'Expected an instance of: %s',
+                UsmSecurityParameters::class
+            ));
+        }
 
         return new MessageResponseV3(
             new MessageHeader($messageV3->getMessageHeader()->getId(), $flags),
@@ -310,7 +323,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                 $this->getAuthoritativeEngineId($options),
                 $this->localEngineTime->getEngineBoot(),
                 $this->localEngineTime->getEngineTime(),
-                $messageV3->getSecurityParameters()->getUsername()
+                $usm->getUsername()
             )
         );
     }
@@ -318,8 +331,11 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     /**
      * {@inheritdoc}
      */
-    public function handleDiscoveryResponse(AbstractMessageV3 $message, MessageResponseInterface $discoveryResponse, array $options): AbstractMessageV3
-    {
+    public function handleDiscoveryResponse(
+        AbstractMessageV3 $message,
+        MessageResponseV3 $discoveryResponse,
+        array $options
+    ): AbstractMessageV3 {
         $usm = $discoveryResponse->getSecurityParameters();
         $response = $discoveryResponse->getResponse();
         $host = $options['host'] ?? '';
@@ -350,13 +366,15 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageResponseInterface $response
+     * @param MessageResponseV3 $response
      * @param array $options
      * @throws RediscoveryNeededException
      * @throws SecurityModelException
      */
-    protected function validateIncomingResponse(MessageResponseInterface $response, array $options) : void
-    {
+    protected function validateIncomingResponse(
+        MessageResponseV3 $response,
+        array $options
+    ) : void {
         /** @var UsmSecurityParameters $secParams */
         $secParams = $response->getSecurityParameters();
         $knownEngine = $this->getEngineIdForHost($options['host']);
@@ -403,17 +421,19 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageRequestInterface $message
+     * @param MessageRequestV3 $message
      * @param array $options
      * @throws SecurityModelException
      */
-    protected function validateIncomingRequest(MessageRequestInterface $message, array $options) : void
-    {
+    protected function validateIncomingRequest(
+        MessageRequestV3 $message,
+        array $options
+    ): void {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
         $engineId = $this->getAuthoritativeEngineId($options);
 
-        if ($message->getMessageHeaders()->hasPrivacy() && $message->getEncryptedPdu() === null) {
+        if ($message->getMessageHeader()->hasPrivacy() && $message->getEncryptedPdu() === null) {
             throw new SecurityModelException('The header has privacy marked but the encrypted PDU was not set.');
         }
         if ($this->isDiscoveryRequest($message) || $this->isTimeSynchronizationRequest($message, $options)) {
@@ -428,10 +448,10 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageRequestInterface $message
+     * @param MessageRequestV3 $message
      * @return bool
      */
-    protected function isDiscoveryRequest(MessageRequestInterface $message) : bool
+    protected function isDiscoveryRequest(MessageRequestV3 $message) : bool
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
@@ -448,13 +468,15 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param MessageRequestInterface $message
+     * @param MessageRequestV3 $message
      * @param array $options
      * @return bool
      * @throws SecurityModelException
      */
-    protected function isTimeSynchronizationRequest(MessageRequestInterface $message, array $options) : bool
-    {
+    protected function isTimeSynchronizationRequest(
+        MessageRequestV3 $message,
+        array $options
+    ): bool {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
         $request = $message->getRequest();
@@ -514,7 +536,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     }
 
     /**
-     * @param $engineId
+     * @param EngineId $engineId
      */
     protected function clearCachedEngine(EngineId $engineId) : void
     {
@@ -683,8 +705,19 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      * @param AbstractMessageV3 $message
      * @param UsmSecurityParameters $secParams
      */
-    protected function setupOutgoingMessage(AbstractMessageV3 $message, UsmSecurityParameters $secParams) : void
-    {
+    protected function setupOutgoingMessage(
+        AbstractMessageV3 $message,
+        UsmSecurityParameters $secParams
+    ): void {
+        if (!($message instanceof MessageResponseV3 || $message instanceof MessageRequestV3)) {
+            throw new SecurityModelException(sprintf(
+                'The message must be one of: %s',
+                implode(
+                    ', ',
+                    [MessageRequestV3::class, MessageResponseV3::class]
+                )
+            ));
+        }
         $msgObject = new \ReflectionObject($message);
         $scopedPduObject = new \ReflectionObject($message->getScopedPdu());
 

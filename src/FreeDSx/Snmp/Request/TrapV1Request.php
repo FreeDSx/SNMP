@@ -16,6 +16,7 @@ use FreeDSx\Asn1\Type\IntegerType;
 use FreeDSx\Asn1\Type\OidType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\OidList;
 use FreeDSx\Snmp\Value\IpAddressValue;
 use FreeDSx\Snmp\Value\TimeTicksValue;
@@ -61,7 +62,7 @@ use FreeDSx\Snmp\Protocol\SnmpEncoder;
  *
  * @author Chad Sikorra <Chad.Sikorra@gmail.com>
  */
-class TrapV1Request implements RequestInterface
+class TrapV1Request extends Pdu implements RequestInterface
 {
     use RequestTrait;
 
@@ -107,11 +108,6 @@ class TrapV1Request implements RequestInterface
     protected $sysUpTime;
 
     /**
-     * @var OidList
-     */
-    protected $oids;
-
-    /**
      * @param string $enterprise
      * @param IpAddressValue $ipAddress
      * @param int $genericType
@@ -119,14 +115,25 @@ class TrapV1Request implements RequestInterface
      * @param TimeTicksValue $sysUpTime
      * @param OidList $oids
      */
-    public function __construct(string $enterprise, IpAddressValue $ipAddress, int $genericType, int $specificType, TimeTicksValue $sysUpTime, OidList $oids)
-    {
+    public function __construct(
+        string $enterprise,
+        IpAddressValue $ipAddress,
+        int $genericType,
+        int $specificType,
+        TimeTicksValue $sysUpTime,
+        OidList $oids
+    ) {
+        parent::__construct(
+            self::TAG,
+            0,
+            0,
+            $oids
+        );
         $this->enterprise = $enterprise;
         $this->ipAddress = $ipAddress;
         $this->genericType = $genericType;
         $this->specificType = $specificType;
         $this->sysUpTime = $sysUpTime;
-        $this->oids = $oids;
     }
 
     /**
@@ -241,14 +248,6 @@ class TrapV1Request implements RequestInterface
         $this->sysUpTime = $sysUpTime;
 
         return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPduTag(): int
-    {
-        return self::TAG;
     }
 
     /**

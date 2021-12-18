@@ -31,8 +31,9 @@ trait DESPrivacyTrait
     }
 
     /**
-     * @param $preIV
-     * @param $salt
+     * @param string $preIV
+     * @param string $salt
+     * @return string
      */
     protected function generateIV(string $preIV, string $salt) : string
     {

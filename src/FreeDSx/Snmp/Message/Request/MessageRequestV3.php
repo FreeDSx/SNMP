@@ -16,9 +16,9 @@ use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
 use FreeDSx\Snmp\Message\Security\SecurityParametersInterface;
-use FreeDSx\Snmp\Request\RequestInterface;
 
 /**
  * Represents a SNMPv3 Message Request.
@@ -28,14 +28,28 @@ use FreeDSx\Snmp\Request\RequestInterface;
 class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterface
 {
     /**
+     * @var null|ScopedPduRequest
+     */
+    protected $scopedPdu;
+
+    /**
      * @param MessageHeader $header
-     * @param ScopedPduRequest $scopedPdu
+     * @param ScopedPduRequest|null $scopedPdu
      * @param null|string $encryptedPdu
      * @param SecurityParametersInterface|null $securityParams
      */
-    public function __construct(MessageHeader $header, ?ScopedPduRequest $scopedPdu, $encryptedPdu = null, ?SecurityParametersInterface $securityParams = null)
-    {
-        parent::__construct($header, $scopedPdu, $encryptedPdu, $securityParams);
+    public function __construct(
+        MessageHeader $header,
+        ?ScopedPduRequest $scopedPdu,
+        $encryptedPdu = null,
+        ?SecurityParametersInterface $securityParams = null
+    ) {
+        parent::__construct(
+            $header,
+            $scopedPdu,
+            $encryptedPdu,
+            $securityParams
+        );
     }
 
     /**
@@ -58,18 +72,18 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
     }
 
     /**
-     * @return RequestInterface
+     * @inheritDoc
      */
-    public function getRequest(): RequestInterface
+    public function getRequest(): Pdu
     {
         return $this->scopedPdu->getRequest();
     }
 
     /**
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @return $this|MessageRequestInterface
      */
-    public function setRequest(RequestInterface $request)
+    public function setRequest(Pdu $request)
     {
         $this->scopedPdu->setRequest($request);
 
@@ -87,7 +101,7 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
     }
 
     /**
-     * @return ScopedPduRequest
+     * @return ScopedPduRequest|null
      */
     public function getScopedPdu() : ?ScopedPduRequest
     {
@@ -95,7 +109,7 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
     }
 
     /**
-     * @param ScopedPduRequest $request
+     * @param ScopedPduRequest|null $request
      * @return $this
      */
     public function setScopedPdu(?ScopedPduRequest $request)

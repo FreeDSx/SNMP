@@ -14,6 +14,8 @@ use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
+use FreeDSx\Snmp\Message\Request\MessageRequestV3;
+use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Message\ScopedPdu;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
 use FreeDSx\Snmp\Message\ScopedPduResponse;
@@ -97,8 +99,20 @@ trait PrivacyTrait
     /**
      * {@inheritdoc}
      */
-    public function encryptData(AbstractMessageV3 $message, AuthenticationModuleInterface $authMod, string $password) : AbstractMessageV3
-    {
+    public function encryptData(
+        AbstractMessageV3 $message,
+        AuthenticationModuleInterface $authMod,
+        string $password
+    ): AbstractMessageV3 {
+        if (!($message instanceof MessageResponseV3 || $message instanceof MessageRequestV3)) {
+            throw new SnmpEncryptionException(sprintf(
+                'The message must be one of: %s',
+                implode(
+                    ', ',
+                    [MessageRequestV3::class, MessageResponseV3::class]
+                )
+            ));
+        }
         /** @var  UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
 
@@ -129,7 +143,9 @@ trait PrivacyTrait
         # 3) The scopedPDU is encrypted (as described in section 8.1.1.2)
         #    and the encrypted data is serialized according to the rules in
         #    [RFC3417] as an OCTET STRING.
-        $scopedPdu = $this->validateEncodedPdu((new SnmpEncoder())->encode($message->getScopedPdu()->toAsn1()));
+        $scopedPdu = $this->validateEncodedPdu((new SnmpEncoder())->encode(
+            $message->getScopedPdu()->toAsn1())
+        );
 
         $encryptedPdu = \openssl_encrypt($scopedPdu, $this->algoAlias(), $key, OPENSSL_RAW_DATA, $iv);
         if ($encryptedPdu === false) {

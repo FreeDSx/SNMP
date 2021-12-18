@@ -12,7 +12,6 @@ namespace FreeDSx\Snmp\Message;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Protocol\Factory\RequestFactory;
-use FreeDSx\Snmp\Request\RequestInterface;
 
 /**
  * Represents a Scoped PDU request.
@@ -22,13 +21,20 @@ use FreeDSx\Snmp\Request\RequestInterface;
 class ScopedPduRequest extends ScopedPdu
 {
     /**
+     * @param Pdu $request
      * @param null|EngineId $contextEngineId
      * @param string $contextName
-     * @param RequestInterface $request
      */
-    public function __construct(RequestInterface $request, ?EngineId $contextEngineId = null, string $contextName = '')
-    {
-        parent::__construct($request, $contextEngineId, $contextName);
+    public function __construct(
+        Pdu $request,
+        ?EngineId $contextEngineId = null,
+        string $contextName = ''
+    ) {
+        parent::__construct(
+            $request,
+            $contextEngineId,
+            $contextName
+        );
     }
 
     /**
@@ -56,16 +62,16 @@ class ScopedPduRequest extends ScopedPdu
     /**
      * @return Pdu
      */
-    public function getRequest() : RequestInterface
+    public function getRequest(): Pdu
     {
         return $this->pdu;
     }
 
     /**
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @return $this
      */
-    public function setRequest(RequestInterface $request)
+    public function setRequest(Pdu $request)
     {
         $this->pdu = $request;
 

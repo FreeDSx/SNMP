@@ -11,9 +11,10 @@
 namespace FreeDSx\Snmp\Protocol;
 
 use FreeDSx\Snmp\Message\AbstractMessage;
-use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\Request\MessageRequest;
 use FreeDSx\Snmp\Message\Request\MessageRequestInterface;
+use FreeDSx\Snmp\Message\Request\MessageRequestV1;
+use FreeDSx\Snmp\Message\Request\MessageRequestV2;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
 use FreeDSx\Snmp\Message\Response\MessageResponseV2;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
@@ -113,11 +114,17 @@ class TrapProtocolHandler
     /**
      * @param string $ip
      * @param int $port
-     * @param MessageRequestInterface $message
+     * @param AbstractMessage $message
      * @todo Configurable retry logic? Would hold up traps though if we are synchronous
      */
-    protected function sendResponse(string $ip, int $port, MessageRequestInterface $message) : void
-    {
+    protected function sendResponse(
+        string $ip,
+        int $port,
+        AbstractMessage $message
+    ): void {
+        if (!($message instanceof MessageRequestV1 || $message instanceof MessageRequestV2)) {
+            return;
+        }
         /** @var InformRequest $request */
         $request = $message->getRequest();
         $response = new Response(
@@ -174,7 +181,7 @@ class TrapProtocolHandler
         }
 
         # If we received an SNMP v1/v2 message, and it was defined to only accept a specific community...
-        if (($version === 0 || $version === 1) && $options['community'] !== null) {
+        if (($version === 0 || $version === 1) && $options['community'] !== null && $message instanceof AbstractMessage) {
             return $message->getCommunity() === $options['community'];
         }
 
@@ -183,7 +190,7 @@ class TrapProtocolHandler
 
     /**
      * @param mixed $data
-     * @return MessageRequestInterface|AbstractMessage|AbstractMessageV3|null
+     * @return MessageRequestInterface
      */
     protected function getMessage($data) : ?MessageRequestInterface
     {
@@ -200,8 +207,11 @@ class TrapProtocolHandler
      * @param array $options
      * @return null|MessageRequestV3
      */
-    protected function handleV3Trap(MessageRequestV3 $message, string $ipAddress, array $options) : ?MessageRequestV3
-    {
+    protected function handleV3Trap(
+        MessageRequestV3 $message,
+        string $ipAddress,
+        array $options
+    ) : ?MessageRequestV3 {
         $header = $message->getMessageHeader();
         $secParams = $message->getSecurityParameters();
 
@@ -218,6 +228,9 @@ class TrapProtocolHandler
             $options = $this->mergeOptionsFromUser($usmUser, $options);
             $message = $securityModule->handleIncomingMessage($message, $options);
 
+            if (!$message instanceof MessageRequestV3) {
+                return null;
+            }
             # @todo Currently unsupported. Lots of work needed to support an inform request in v3.
             if (!$message->getScopedPdu() || $message->getScopedPdu()->getRequest() instanceof InformRequest) {
                 return null;

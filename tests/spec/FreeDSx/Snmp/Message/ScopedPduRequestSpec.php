@@ -60,7 +60,7 @@ class ScopedPduRequestSpec extends ObjectBehavior
         $this->getRequest()->shouldBeEqualTo($request);
     }
 
-    function it_should_set_the_request_pdu(RequestInterface $newRequest)
+    function it_should_set_the_request_pdu(Pdu $newRequest)
     {
         $this->setRequest($newRequest);
 
