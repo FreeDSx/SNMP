@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp;
 
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Asn1\Type\IncompleteType;
 use FreeDSx\Asn1\Type\NullType;
 use FreeDSx\Asn1\Type\OidType;
 use FreeDSx\Asn1\Type\SequenceType;
@@ -210,8 +211,11 @@ class Oid implements ProtocolElementInterface
         $varBindValue = $varBind->getChild(1);
         if ($varBindValue instanceof NullType) {
             $varBindValue = null;
-        } elseif ($varBindValue->getTagClass() === AbstractType::TAG_CLASS_CONTEXT_SPECIFIC) {
-            $varBindValue = (new SnmpEncoder())->complete($varBindValue, AbstractType::TAG_TYPE_NULL);
+        } elseif ($varBindValue->getTagClass() === AbstractType::TAG_CLASS_CONTEXT_SPECIFIC && $varBindValue instanceof IncompleteType) {
+            $varBindValue = (new SnmpEncoder())->complete(
+                $varBindValue,
+                AbstractType::TAG_TYPE_NULL
+            );
             switch ($varBindValue->getTagNumber()) {
                 case self::STATUS_NO_SUCH_OBJECT:
                     $status = self::STATUS_NO_SUCH_OBJECT;

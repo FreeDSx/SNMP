@@ -163,8 +163,11 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
             }
         }
 
-        if ($message instanceof MessageResponseInterface) {
-            $this->validateIncomingResponse($message, $options);
+        if ($message instanceof MessageResponseV3) {
+            $this->validateIncomingResponse(
+                $message,
+                $options
+            );
         }
 
         return $message;
@@ -280,11 +283,12 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     public function isDiscoveryResponseNeeded(AbstractMessageV3 $messageV3, array $options) : bool
     {
-        if (!$messageV3 instanceof MessageRequestInterface) {
+        if (!$messageV3 instanceof MessageRequestV3) {
             return false;
         }
 
-        return ($this->isDiscoveryRequest($messageV3) || $this->isTimeSynchronizationRequest($messageV3, $options));
+        return $this->isDiscoveryRequest($messageV3)
+            || $this->isTimeSynchronizationRequest($messageV3, $options);
     }
 
     /**

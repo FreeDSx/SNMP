@@ -114,13 +114,13 @@ class TrapProtocolHandler
     /**
      * @param string $ip
      * @param int $port
-     * @param AbstractMessage $message
+     * @param MessageRequestInterface $message
      * @todo Configurable retry logic? Would hold up traps though if we are synchronous
      */
     protected function sendResponse(
         string $ip,
         int $port,
-        AbstractMessage $message
+        MessageRequestInterface $message
     ): void {
         if (!($message instanceof MessageRequestV1 || $message instanceof MessageRequestV2)) {
             return;

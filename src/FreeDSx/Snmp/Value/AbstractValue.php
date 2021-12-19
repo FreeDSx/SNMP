@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Value;
 
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Asn1\Type\IncompleteType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Protocol\ProtocolElementInterface;
 use FreeDSx\Snmp\Protocol\SnmpEncoder;
@@ -78,6 +79,12 @@ abstract class AbstractValue implements ProtocolElementInterface
                 static::ASN1_TAG,
                 static::class,
                 $type->getTagNumber()
+            ));
+        }
+        if (!$type instanceof IncompleteType) {
+            throw new ProtocolException(sprintf(
+                'Expected an IncompleteType. Got %s.',
+                get_class($type)
             ));
         }
 

@@ -12,9 +12,9 @@ namespace FreeDSx\Snmp;
 
 use FreeDSx\Snmp\Exception\ConnectionException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
 use FreeDSx\Snmp\Protocol\ClientProtocolHandler;
-use FreeDSx\Snmp\Request\RequestInterface;
 use FreeDSx\Snmp\Value\TimeTicksValue;
 use FreeDSx\Socket\Socket;
 
@@ -222,15 +222,20 @@ class SnmpClient
      * Send a generic SNMP request and get the SNMP response back. Note that some requests do not generate a response.
      * In this case it will return null.
      *
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @param array $options
      * @return MessageResponseInterface
      * @throws ConnectionException
      * @throws Exception\SnmpRequestException
      */
-    public function send(RequestInterface $request, array $options = []) : ?MessageResponseInterface
-    {
-        return $this->dispatcher()->handle($request, array_merge($this->options, $options));
+    public function send(
+        Pdu $request,
+        array $options = []
+    ): ?MessageResponseInterface {
+        return $this->dispatcher()->handle(
+            $request,
+            array_merge($this->options, $options)
+        );
     }
 
     /**

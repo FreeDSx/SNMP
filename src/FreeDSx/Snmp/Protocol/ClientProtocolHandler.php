@@ -19,6 +19,7 @@ use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SecurityModelException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\EngineId;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\Response\MessageResponseV3;
 use FreeDSx\Snmp\Module\SecurityModel\SecurityModelModuleInterface;
 use FreeDSx\Snmp\Protocol\Factory\SecurityModelModuleFactory;
@@ -29,7 +30,6 @@ use FreeDSx\Snmp\Message\Request\MessageRequestV2;
 use FreeDSx\Snmp\Message\Request\MessageRequestV3;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
 use FreeDSx\Snmp\Message\ScopedPduRequest;
-use FreeDSx\Snmp\Request\RequestInterface;
 use FreeDSx\Snmp\Request\TrapV1Request;
 use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Response\ReportResponse;
@@ -98,14 +98,16 @@ class ClientProtocolHandler
     /**
      * Handles client protocol logic for an SNMP request to get a potential response.
      *
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @param array $options
      * @return MessageResponseInterface
      * @throws ConnectionException
      * @throws \Exception
      */
-    public function handle(RequestInterface $request, array $options) : ?MessageResponseInterface
-    {
+    public function handle(
+        Pdu $request,
+        array $options
+    ): ?MessageResponseInterface {
         $options = \array_merge($this->options, $options);
         $message = $this->getMessageRequest($request, $options);
 
@@ -195,11 +197,16 @@ class ClientProtocolHandler
             $id = $this->generateId();
             $this->setPduId($message->getRequest(), $id);
             $message = $securityModule->handleOutgoingMessage($message, $options);
+            if (!$message instanceof MessageRequestV3) {
+                throw new ProtocolException(sprintf(
+                    'Expected an SNMPv3 message request. Got v%d',
+                    $message->getVersion()
+                ));
+            }
             $response = $this->sendRequestGetResponse($message);
 
-            if ($response) {
+            if ($response instanceof MessageResponseV3) {
                 $response = $securityModule->handleIncomingMessage($response, $options);
-                $this->validateResponse($response, $id);
             }
             if (!$response instanceof MessageResponseV3) {
                 throw new ProtocolException(sprintf(
@@ -207,6 +214,7 @@ class ClientProtocolHandler
                     $response->getVersion()
                 ));
             }
+            $this->validateResponse($response, $id);
 
             return $response;
         } catch (RediscoveryNeededException $e) {
@@ -236,17 +244,23 @@ class ClientProtocolHandler
         $id = $this->generateId();
         $this->setPduId($discovery->getRequest(), $id);
         $response = $this->sendRequestGetResponse($discovery);
+        if (!$response instanceof MessageResponseV3) {
+            throw new ProtocolException(sprintf(
+                'Expected an SNMPv3 response. Received v%d.',
+                $response->getVersion()
+            ));
+        }
         $this->validateResponse($response, $id, false);
         $securityModule->handleDiscoveryResponse($message, $response, $options);
     }
 
     /**
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @param array $options
      * @return MessageRequestInterface
      * @throws \Exception
      */
-    protected function getMessageRequest(RequestInterface $request, array $options) : MessageRequestInterface
+    protected function getMessageRequest(Pdu $request, array $options) : MessageRequestInterface
     {
         if ($options['version'] === 1) {
             return new MessageRequestV1($options['community'], $request);
@@ -268,7 +282,7 @@ class ClientProtocolHandler
      * of the PDU (essentially the request / response objects). This made it awkward to work with when separating the
      * logic of the ID generation /message creation. Maybe a better way to handle this in general?
      */
-    protected function setPduId(RequestInterface $request, int $id) : void
+    protected function setPduId(Pdu $request, int $id) : void
     {
         # The Trap v1 PDU has no request ID associated with it.
         if ($request instanceof  TrapV1Request) {
@@ -281,13 +295,15 @@ class ClientProtocolHandler
     }
 
     /**
-     * @param RequestInterface $request
+     * @param Pdu $request
      * @param array $options
      * @return MessageHeader
      * @throws \Exception
      */
-    protected function generateMessageHeader(RequestInterface $request, array $options) : MessageHeader
-    {
+    protected function generateMessageHeader(
+        Pdu $request,
+        array $options
+    ): MessageHeader {
         $header = new MessageHeader($this->generateId(0));
 
         $useAuth = $options['use_auth'];

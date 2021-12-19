@@ -141,7 +141,10 @@ class AuthenticationModule implements AuthenticationModuleInterface
         #     using the resulting string as the input to the hash function H.
         #     The resulting digest, termed "digest1", is used in the next step.
         $digest1 = $this->hash(\substr(
-            str_repeat($password, (\ceil(10478576 / \strlen($password)))),
+            str_repeat(
+                $password,
+                (int)(\ceil(10478576 / \strlen($password)))
+            ),
             0,
             1048576
         ));

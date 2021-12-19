@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Message;
 
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Asn1\Type\IncompleteType;
 use FreeDSx\Asn1\Type\IntegerType;
 use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Oid;
@@ -192,7 +193,16 @@ class Pdu implements ProtocolElementInterface
      */
     protected static function getBaseElements(AbstractType $type) : array
     {
-        $type = (new SnmpEncoder())->complete($type, AbstractType::TAG_TYPE_SEQUENCE);
+        if (!$type instanceof IncompleteType) {
+            throw new ProtocolException(sprintf(
+                'Expected an IncompleteType. Got %s.',
+                get_class($type)
+            ));
+        }
+        $type = (new SnmpEncoder())->complete(
+            $type,
+            AbstractType::TAG_TYPE_SEQUENCE
+        );
         if (\count($type->getChildren()) !== 4) {
             throw new ProtocolException('The PDU must be a sequence with 4 elements.');
         }

@@ -290,6 +290,8 @@ class EngineId
     protected static function encodeOctets($data)
     {
         if (\strpos($data, self::$octetDelim) !== false) {
+            // PhpStan does not understand that this is actually non-empty string (it has a space)
+            // @phpstan-ignore-next-line
             $data = \explode(self::$octetDelim, $data);
             foreach ($data as $i => $piece) {
                 $data[$i] = \str_pad($piece, 2, '0', STR_PAD_LEFT);
@@ -397,7 +399,12 @@ class EngineId
         $pieces = \explode(':', $data);
 
         foreach ($pieces as $i => $piece) {
-            $pieces[$i] = \str_pad($piece, '2', '0', STR_PAD_LEFT);
+            $pieces[$i] = \str_pad(
+                $piece,
+                2,
+                '0',
+                STR_PAD_LEFT
+            );
         }
 
         return \hex2bin(\implode('', $pieces));

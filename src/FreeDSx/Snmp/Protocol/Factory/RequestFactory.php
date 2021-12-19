@@ -12,11 +12,11 @@ namespace FreeDSx\Snmp\Protocol\Factory;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Request\GetBulkRequest;
 use FreeDSx\Snmp\Request\GetNextRequest;
 use FreeDSx\Snmp\Request\GetRequest;
 use FreeDSx\Snmp\Request\InformRequest;
-use FreeDSx\Snmp\Request\RequestInterface;
 use FreeDSx\Snmp\Request\SetRequest;
 use FreeDSx\Snmp\Request\TrapV1Request;
 use FreeDSx\Snmp\Request\TrapV2Request;
@@ -43,10 +43,10 @@ class RequestFactory
 
     /**
      * @param AbstractType $type
-     * @return RequestInterface
+     * @return Pdu
      * @throws ProtocolException
      */
-    public static function get(AbstractType $type) : RequestInterface
+    public static function get(AbstractType $type) : Pdu
     {
         if (!isset(self::$map[$type->getTagNumber()])) {
             throw new ProtocolException(sprintf(
@@ -55,6 +55,9 @@ class RequestFactory
             ));
         }
 
-        return \call_user_func(self::$map[$type->getTagNumber()].'::fromAsn1', $type);
+        return \call_user_func(
+            self::$map[$type->getTagNumber()].'::fromAsn1',
+            $type
+        );
     }
 }

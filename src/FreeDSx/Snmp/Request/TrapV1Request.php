@@ -12,6 +12,7 @@ namespace FreeDSx\Snmp\Request;
 
 use FreeDSx\Asn1\Asn1;
 use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Asn1\Type\IncompleteType;
 use FreeDSx\Asn1\Type\IntegerType;
 use FreeDSx\Asn1\Type\OidType;
 use FreeDSx\Asn1\Type\SequenceType;
@@ -270,9 +271,18 @@ class TrapV1Request extends Pdu implements RequestInterface
      */
     public static function fromAsn1(AbstractType $trapPdu)
     {
-        /** @var SequenceType $trapPdu */
-        $trapPdu = (new SnmpEncoder())->complete($trapPdu, AbstractType::TAG_TYPE_SEQUENCE);
+        if (!$trapPdu instanceof IncompleteType) {
+            throw new ProtocolException(sprintf(
+                'Expected an IncompleteType. Got %s.',
+                get_class($trapPdu)
+            ));
+        }
+        $trapPdu = (new SnmpEncoder())->complete(
+            $trapPdu,
+            AbstractType::TAG_TYPE_SEQUENCE
+        );
 
+        /** @var SequenceType $trapPdu */
         $enterprise = $trapPdu->getChild(0);
         $ipAddress = $trapPdu->getChild(1);
         $genericType = $trapPdu->getChild(2);
