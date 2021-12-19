@@ -302,7 +302,7 @@ class EngineId
             $data = (array)\explode(self::$octetDelim, $data);
             foreach ($data as $i => $piece) {
                 $data[$i] = \str_pad(
-                    $piece,
+                    (string)$piece,
                     2,
                     '0',
                     STR_PAD_LEFT
