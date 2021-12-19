@@ -11,6 +11,7 @@
 namespace FreeDSx\Snmp;
 
 use FreeDSx\Snmp\Exception\ConnectionException;
+use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Message\Response\MessageResponseInterface;
@@ -82,9 +83,11 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function getBulk(int $maxRepetitions, int $nonRepeaters, ...$oids) : OidList
+    public function getBulk(int $maxRepetitions, int $nonRepeaters, ...$oids): OidList
     {
-        return $this->send(Requests::getBulk($maxRepetitions, $nonRepeaters, ...$oids))->getResponse()->getOids();
+        return $this->sendAndReceive(Requests::getBulk($maxRepetitions, $nonRepeaters, ...$oids))
+            ->getResponse()
+            ->getOids();
     }
 
     /**
@@ -97,7 +100,9 @@ class SnmpClient
      */
     public function getNext(...$oids) : OidList
     {
-        return $this->send(Requests::getNext(...$oids))->getResponse()->getOids();
+        return $this->sendAndReceive(Requests::getNext(...$oids))
+            ->getResponse()
+            ->getOids();
     }
 
     /**
@@ -110,7 +115,9 @@ class SnmpClient
      */
     public function get(...$oids) : OidList
     {
-        return $this->send(Requests::get(...$oids))->getResponse()->getOids();
+        return $this->sendAndReceive(Requests::get(...$oids))
+            ->getResponse()
+            ->getOids();
     }
 
     /**
@@ -203,7 +210,7 @@ class SnmpClient
      */
     public function sendInform($sysUpTime, $trapOid, ...$oids) : MessageResponseInterface
     {
-        return $this->send(Requests::inform($sysUpTime, $trapOid, ...$oids));
+        return $this->sendAndReceive(Requests::inform($sysUpTime, $trapOid, ...$oids));
     }
 
     /**
@@ -213,7 +220,7 @@ class SnmpClient
      * @param null|string $endAt
      * @return SnmpWalk
      */
-    public function walk($startAt = null, $endAt = null) : SnmpWalk
+    public function walk(string $startAt = null, string $endAt = null) : SnmpWalk
     {
         return new SnmpWalk($this, $startAt, $endAt);
     }
@@ -236,6 +243,33 @@ class SnmpClient
             $request,
             array_merge($this->options, $options)
         );
+    }
+
+    /**
+     * Same as the send method, but guarantees a response will be returned. An exception will be thrown if no response
+     * is received.
+     *
+     * @param Pdu $request The request to send.
+     * @param array $options Any options for sending.
+     * @return MessageResponseInterface
+     * @throws ConnectionException
+     * @throws SnmpRequestException
+     * @throws RuntimeException
+     */
+    public function sendAndReceive(
+        Pdu $request,
+        array $options = []
+    ): MessageResponseInterface {
+        $response = $this->send(
+            $request,
+            $options
+        );
+
+        if ($response === null) {
+            throw new RuntimeException('Expected an SNMP response, but non was received.');
+        }
+
+        return $response;
     }
 
     /**

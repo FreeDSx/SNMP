@@ -299,9 +299,14 @@ class EngineId
         if (\strpos($data, self::$octetDelim) !== false) {
             // PhpStan does not understand that this is actually non-empty string (it has a space)
             // @phpstan-ignore-next-line
-            $data = \explode(self::$octetDelim, $data);
+            $data = (array)\explode(self::$octetDelim, $data);
             foreach ($data as $i => $piece) {
-                $data[$i] = \str_pad($piece, 2, '0', STR_PAD_LEFT);
+                $data[$i] = \str_pad(
+                    $piece,
+                    2,
+                    '0',
+                    STR_PAD_LEFT
+                );
             }
             $data = \implode('', $data);
         }

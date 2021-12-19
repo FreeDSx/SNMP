@@ -11,6 +11,7 @@
 namespace FreeDSx\Snmp;
 
 use FreeDSx\Snmp\Exception\EndOfWalkException;
+use FreeDSx\Snmp\Exception\RuntimeException;
 use function count;
 
 /**
@@ -87,7 +88,7 @@ class SnmpWalk
      * @throws Exception\SnmpRequestException
      * @throws EndOfWalkException
      */
-    public function next() : Oid
+    public function next(): Oid
     {
         if ($this->isComplete()) {
             throw new EndOfWalkException('There are no more OIDs left in the walk.');
@@ -98,6 +99,9 @@ class SnmpWalk
         $this->throwIfNoNextOids();
         $this->current = \array_shift($this->next);
         $this->count++;
+        if ($this->current === null) {
+            throw new RuntimeException('Expected another OID in the walk, but it was null.');
+        }
 
         return $this->current;
     }
