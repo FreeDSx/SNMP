@@ -62,8 +62,11 @@ class EngineId
      */
     protected $binary;
 
-    public function __construct(string $data, ?int $format, int $enterpriseId = self::ENTERPRISE_NUMBER)
-    {
+    public function __construct(
+        string $data,
+        ?int $format,
+        int $enterpriseId = self::ENTERPRISE_NUMBER
+    ) {
         $this->data = $data;
         $this->format = $format;
         $this->enterpriseId = $enterpriseId;
@@ -242,7 +245,11 @@ class EngineId
             $data = \substr($engineId, 4);
         }
 
-        return new self($data, $format, $enterpriseId);
+        return new self(
+            $data,
+            $format,
+            (int)$enterpriseId
+        );
     }
 
     /**
@@ -287,7 +294,7 @@ class EngineId
      * @param string $data
      * @return string
      */
-    protected static function encodeOctets($data)
+    protected static function encodeOctets(string $data): string
     {
         if (\strpos($data, self::$octetDelim) !== false) {
             // PhpStan does not understand that this is actually non-empty string (it has a space)
@@ -305,7 +312,7 @@ class EngineId
             throw new UnexpectedValueException('The octets must be an even length.');
         }
 
-        return \hex2bin($data);
+        return (string)\hex2bin($data);
     }
 
     protected static function parseIPv4(string $data) : string
@@ -407,6 +414,9 @@ class EngineId
             );
         }
 
-        return \hex2bin(\implode('', $pieces));
+        return (string)\hex2bin(\implode(
+            '',
+            $pieces
+        ));
     }
 }

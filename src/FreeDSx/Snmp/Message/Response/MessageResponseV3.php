@@ -47,7 +47,8 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
         parent::__construct(
             $header,
             $scopedPdu,
-            $encryptedPdu, $securityParams
+            $encryptedPdu,
+            $securityParams
         );
     }
 

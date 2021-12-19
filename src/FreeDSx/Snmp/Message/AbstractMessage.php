@@ -16,8 +16,6 @@ use FreeDSx\Asn1\Type\IntegerType;
 use FreeDSx\Asn1\Type\OctetStringType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
-use FreeDSx\Snmp\Request\RequestInterface;
-use FreeDSx\Snmp\Response\ResponseInterface;
 use FreeDSx\Socket\PduInterface;
 
 /**
@@ -49,7 +47,7 @@ abstract class AbstractMessage implements PduInterface
     protected $community;
 
     /**
-     * @var Pdu|RequestInterface|ResponseInterface
+     * @var Pdu
      */
     protected $pdu;
 

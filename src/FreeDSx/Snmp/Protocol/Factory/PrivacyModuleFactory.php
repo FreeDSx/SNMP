@@ -24,7 +24,7 @@ use FreeDSx\Snmp\Module\Privacy\PrivacyModuleInterface;
 class PrivacyModuleFactory
 {
     /**
-     * @var string[]
+     * @var array<string, class-string>
      */
     protected $modules;
 

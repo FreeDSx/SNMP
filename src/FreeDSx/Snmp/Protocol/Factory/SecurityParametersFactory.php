@@ -24,7 +24,7 @@ use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 class SecurityParametersFactory
 {
     /**
-     * @var array
+     * @var array<int, class-string>
      */
     protected static $map = [
         3 => UsmSecurityParameters::class,
@@ -45,15 +45,18 @@ class SecurityParametersFactory
             ));
         }
 
-        return \call_user_func(self::$map[$securityModel].'::fromAsn1', $type);
+        return \call_user_func(
+            self::$map[$securityModel] . '::fromAsn1',
+            $type
+        );
     }
 
     /**
-     * @param string $class
+     * @param class-string $class
      */
     public static function set(string $class) : void
     {
-        if (!\in_array(SecurityParametersInterface::class, class_implements($class), true)) {
+        if (!\in_array(SecurityParametersInterface::class, (array)class_implements($class), true)) {
             throw new InvalidArgumentException(sprintf(
                 'The security parameters "%s" must implement "%s", but it does not.',
                 $class,

@@ -29,7 +29,7 @@ use FreeDSx\Snmp\Request\TrapV2Request;
 class RequestFactory
 {
     /**
-     * @var array
+     * @var array<int, class-string>
      */
     protected static $map = [
         0 => GetRequest::class,

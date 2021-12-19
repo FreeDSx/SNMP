@@ -68,7 +68,7 @@ class IpAddressValue extends AbstractValue
         $ip = parent::fromAsn1($type);
 
         $value = @\unpack("Nip", $ip->value);
-        if (!isset($value['ip'])) {
+        if (!(is_array($value) && isset($value['ip']) && is_int($value['ip']))) {
             throw new ProtocolException('Unable to parse IP address value.');
         }
         $ip->value = \long2ip($value['ip']);

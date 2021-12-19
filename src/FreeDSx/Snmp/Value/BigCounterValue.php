@@ -28,7 +28,7 @@ class BigCounterValue extends AbstractValue
     protected const ASN1_CLASS = IntegerType::class;
 
     /**
-     * @param int $value
+     * @param int|string $value
      */
     public function __construct($value)
     {
@@ -45,7 +45,7 @@ class BigCounterValue extends AbstractValue
     }
 
     /**
-     * @param int $value
+     * @param int|string $value
      * @return BigCounterValue
      */
     public function setValue($value)

@@ -749,7 +749,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
     protected function generateIPv4EngineId() : EngineId
     {
         # This will have issues with IPv6. Anyway to support that? Seems like gethostbyname() should be fixed
-        $engineId = EngineId::fromIPv4($_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname()));
+        $engineId = EngineId::fromIPv4($_SERVER['SERVER_ADDR'] ?? gethostbyname((string)gethostname()));
 
         try {
             $engineId->toBinary();

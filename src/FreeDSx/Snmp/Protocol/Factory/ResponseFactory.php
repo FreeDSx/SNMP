@@ -24,7 +24,7 @@ use FreeDSx\Snmp\Response\ReportResponse;
 class ResponseFactory
 {
     /**
-     * @var array
+     * @var array<int, class-string>
      */
     protected static $map = [
         2 => Response::class,
@@ -45,6 +45,9 @@ class ResponseFactory
             ));
         }
 
-        return \call_user_func(self::$map[$type->getTagNumber()].'::fromAsn1', $type);
+        return \call_user_func(
+            self::$map[$type->getTagNumber()].'::fromAsn1',
+            $type
+        );
     }
 }

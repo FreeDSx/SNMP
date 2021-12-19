@@ -34,7 +34,7 @@ use FreeDSx\Snmp\Value\UnsignedIntegerValue;
 class OidValueFactory
 {
     /**
-     * @var array
+     * @var array<int, class-string>
      */
     protected static $appMap = [
         0 => IpAddressValue::class,
@@ -45,7 +45,9 @@ class OidValueFactory
         6 => BigCounterValue::class,
     ];
 
-    /** @var string[] */
+    /**
+     * @var array<class-string, class-string>
+     */
     protected static $simpleMap = [
         IntegerType::class => IntegerValue::class,
         OctetStringType::class => StringValue::class,

@@ -80,10 +80,25 @@ class TrapProtocolHandler
     {
         $options = \array_merge($this->options, $options);
 
-        $port = (int) \substr($ipAddress, \strrpos($ipAddress, ':'));
+        $portLoc = \strrpos($ipAddress, ':');
+        if (!is_int($portLoc)) {
+            return;
+        }
+        $port = (int) \substr(
+            $ipAddress,
+            $portLoc
+        );
+
         # IPv6 should be enclosed in brackets, though PHP doesn't represent it that way from a socket.
         # Adding the trim in case that changes at some point.
-        $ipAddress = \trim(\substr($ipAddress, 0, \strrpos($ipAddress, ':')), '[]');
+        $ipAddress = \trim(
+            \substr(
+                $ipAddress,
+                0,
+                $portLoc
+            ),
+            '[]'
+        );
 
         if (!$this->isIpAddressAllowed($ipAddress, $options)) {
             return;

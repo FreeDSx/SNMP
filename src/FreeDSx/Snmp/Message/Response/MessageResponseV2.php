@@ -12,8 +12,8 @@ namespace FreeDSx\Snmp\Message\Response;
 
 use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Snmp\Message\AbstractMessage;
+use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Protocol\Factory\ResponseFactory;
-use FreeDSx\Snmp\Response\ResponseInterface;
 
 /**
  * Represents a SNMPv2 Message Response.
@@ -28,9 +28,9 @@ class MessageResponseV2 extends AbstractMessage implements MessageResponseInterf
 
     /**
      * @param string $community
-     * @param ResponseInterface $response
+     * @param Pdu $response
      */
-    public function __construct(string $community, ResponseInterface $response)
+    public function __construct(string $community, Pdu $response)
     {
         $this->pdu = $response;
         parent::__construct($community);
