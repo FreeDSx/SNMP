@@ -7,3 +7,4 @@ parameters:
         - %currentWorkingDirectory%/src
     ignoreErrors:
         - '#Unsafe usage of new static\(\).#'
+    reportUnmatchedIgnoredErrors: false
