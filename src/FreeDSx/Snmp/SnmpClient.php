@@ -156,9 +156,9 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function set(...$oids)
+    public function set(...$oids): MessageResponseInterface
     {
-        return $this->send(Requests::set(...$oids));
+        return $this->sendAndReceive(Requests::set(...$oids));
     }
 
     /**
