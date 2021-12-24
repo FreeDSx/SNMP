@@ -10,6 +10,7 @@
 
 namespace FreeDSx\Snmp\Module\Privacy;
 
+use FreeDSx\Snmp\Exception\SnmpEncryptionException;
 use FreeDSx\Snmp\Message\Security\UsmSecurityParameters;
 use FreeDSx\Snmp\Module\Authentication\AuthenticationModuleInterface;
 
@@ -46,18 +47,36 @@ class DES3PrivacyModule implements PrivacyModuleInterface
      */
     protected function toKeySaltIV(string $cryptKey, UsmSecurityParameters $usm, AuthenticationModuleInterface $authMod, ?string $salt = null): array
     {
-        $cryptKey = $this->localizeReeder($authMod, $cryptKey, $usm->getEngineId(), 32);
+        $engineId = $usm->getEngineId();
+        if ($engineId === null) {
+            throw new SnmpEncryptionException('The engineId must be set.');
+        }
+
+        $cryptKey = $this->localizeReeder(
+            $authMod,
+            $cryptKey,
+            $engineId,
+            32
+        );
 
         # Section 5.1.1.1.1
         # The first 24 octets of the 32-octet secret (private privacy key) are
         # used as a 3DES-EDE key.  Since 3DES-EDE uses only 168 bits, the Least
         # Significant Bit in each octet is disregarded.
-        $key = \substr($cryptKey, 0, 24);
+        $key = \substr(
+            $cryptKey,
+            0,
+            24
+        );
 
         # Section 5.1.1.1.2
         # The last 8 octets of the 32-octet secret (private privacy key) are
         # used as pre-IV.
-        $preIV = \substr($cryptKey, 24, 8);
+        $preIV = \substr(
+            $cryptKey,
+            24,
+            8
+        );
 
         if ($salt === null) {
             # In order to ensure that the IV for two different packets encrypted by
@@ -74,7 +93,11 @@ class DES3PrivacyModule implements PrivacyModuleInterface
             # performed using the authentication algorithm directly, or by passing
             # the "salt" as input the the password-to-key algorithm.  The result of
             # the hash is truncated to 8 octets.
-            $salt = \substr($authMod->generateKey($salt, $usm->getEngineId()), 0, 8);
+            $salt = \substr(
+                $authMod->generateKey($salt, $engineId),
+                0,
+                8
+            );
         }
 
         return ['key' => $key, 'salt' => $salt, 'iv' => $this->generateIV($preIV, $salt)];

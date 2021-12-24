@@ -236,18 +236,31 @@ class TrapProtocolHandler
             if (!$secParams instanceof UsmSecurityParameters) {
                 return null;
             }
-            $usmUser = $this->listener->getUsmUser($secParams->getEngineId(), $ipAddress, $secParams->getUsername());
+
+            $engineId = $secParams->getEngineId();
+            if ($engineId === null) {
+                return null;
+            }
+
+            $usmUser = $this->listener->getUsmUser(
+                $engineId,
+                $ipAddress,
+                $secParams->getUsername()
+            );
             if ($usmUser === null || !$this->isUsmUserValid($usmUser)) {
                 return null;
             }
+
             $options = $this->mergeOptionsFromUser($usmUser, $options);
             $message = $securityModule->handleIncomingMessage($message, $options);
 
             if (!$message instanceof MessageRequestV3) {
                 return null;
             }
+
+            $scopedPdu = $message->getScopedPdu();
             # @todo Currently unsupported. Lots of work needed to support an inform request in v3.
-            if (!$message->getScopedPdu() || $message->getScopedPdu()->getRequest() instanceof InformRequest) {
+            if (!$scopedPdu || $scopedPdu->getRequest() instanceof InformRequest) {
                 return null;
             }
 

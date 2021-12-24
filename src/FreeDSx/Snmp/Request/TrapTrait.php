@@ -84,11 +84,11 @@ trait TrapTrait
             throw new ProtocolException('The trap is malformed. It must have at least 2 VarBind values.');
         }
         $sysUpTime = $oidList->index(1);
-        if (!($sysUpTime->getOid() === self::$oidSysUpTime && $sysUpTime->getValue() instanceof TimeTicksValue)) {
+        if (!($sysUpTime instanceof Oid && $sysUpTime->getOid() === self::$oidSysUpTime && $sysUpTime->getValue() instanceof TimeTicksValue)) {
             throw new ProtocolException('The trap is malformed. The first OID must be the sysUpTime.');
         }
         $trapOid = $oidList->index(2);
-        if (!($trapOid->getOid() === self::$oidTrap && $trapOid->getValue() instanceof OidValue)) {
+        if (!($trapOid instanceof Oid && $trapOid->getOid() === self::$oidTrap && $trapOid->getValue() instanceof OidValue)) {
             throw new ProtocolException('The trap is malformed. The second OID must be the trap OID.');
         }
         $trapRequest = new self(

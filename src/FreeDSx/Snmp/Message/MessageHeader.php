@@ -260,10 +260,10 @@ class MessageHeader implements ProtocolElementInterface
         if (!$id instanceof IntegerType) {
             throw new ProtocolException('The header ID must be an integer type.');
         }
-        if (!$maxSize instanceof IntegerType && $maxSize->getValue() >= 484) {
+        if ($maxSize === null || !$maxSize instanceof IntegerType && $maxSize->getValue() >= 484) {
             throw new ProtocolException('The maxSize must be an integer type greater than or equal to 484.');
         }
-        if (!$flags instanceof OctetStringType && strlen($flags->getValue()) === 1) {
+        if ($flags === null || !$flags instanceof OctetStringType && strlen($flags->getValue()) === 1) {
             throw new ProtocolException('The flags must be an octet string type with one byte.');
         }
         if (!$securityModel instanceof IntegerType) {

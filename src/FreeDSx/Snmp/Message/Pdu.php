@@ -220,6 +220,9 @@ class Pdu implements ProtocolElementInterface
         if (!$errorIndex instanceof IntegerType) {
             throw new ProtocolException('The PDU error index must be an integer.');
         }
+        if ($varBindList === null) {
+            throw new ProtocolException('The varBindList is not set.');
+        }
 
         return [
             $id->getValue(),

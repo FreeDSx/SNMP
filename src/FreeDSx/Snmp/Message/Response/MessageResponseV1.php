@@ -11,6 +11,7 @@
 namespace FreeDSx\Snmp\Message\Response;
 
 use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Message\AbstractMessage;
 use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Protocol\Factory\ResponseFactory;
@@ -41,14 +42,18 @@ class MessageResponseV1 extends AbstractMessage implements MessageResponseInterf
     /**
      * @param AbstractType $asn1
      * @return MessageResponseV1
-     * @throws \FreeDSx\Asn1\Exception\EncoderException
-     * @throws \FreeDSx\Snmp\Exception\ProtocolException
+     * @throws ProtocolException
      */
-    public static function fromAsn1(AbstractType $asn1)
+    public static function fromAsn1(AbstractType $asn1): MessageResponseV1
     {
+        $pdu = $asn1->getChild(2);
+        if ($pdu == null) {
+            throw new ProtocolException('The response is malformed.');
+        }
+
         return new static(
             static::parseCommunity($asn1),
-            ResponseFactory::get($asn1->getChild(2))
+            ResponseFactory::get($pdu)
         );
     }
 }

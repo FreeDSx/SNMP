@@ -56,15 +56,19 @@ trait PrivacyTrait
         # 1) If the privParameters field is not an 8-octet OCTET STRING, then
         #    an error indication (decryptionError) is returned to the calling
         #    module.
-        if (\strlen($usm->getPrivacyParams()) !== 8) {
+        if (\strlen((string)$usm->getPrivacyParams()) !== 8) {
             throw new SnmpEncryptionException(sprintf(
                 'The privParameters must be 8 octets long, but it is %s.',
-                \strlen($usm->getPrivacyParams())
+                \strlen((string)$usm->getPrivacyParams())
             ));
         }
 
+        if ($usm->getEngineId() === null) {
+            throw new SnmpEncryptionException('The engineId must not be null.');
+        }
+
         # 2) The "salt" is extracted from the privParameters field.
-        $salt = $usm->getPrivacyParams();
+        $salt = (string)$usm->getPrivacyParams();
 
         # 3) The secret cryptKey and the "salt" are then used to construct the
         #    DES decryption key and pre-IV (from which the IV is computed as
@@ -76,7 +80,7 @@ trait PrivacyTrait
         list('key' => $key, 'iv' => $iv) = $this->toKeySaltIV($cryptKey, $usm, $authMod, $salt);
 
         # 4) The encryptedPDU is then decrypted (as described in section 8.1.1.3).
-        $encryptedPdu = $this->validateEncryptedPdu($message->getEncryptedPdu());
+        $encryptedPdu = $this->validateEncryptedPdu((string)$message->getEncryptedPdu());
         $decryptedPdu = \openssl_decrypt($encryptedPdu, $this->algoAlias(), $key, OPENSSL_RAW_DATA|OPENSSL_ZERO_PADDING, $iv);
 
         # 5) If the encryptedPDU cannot be decrypted, then an error indication
@@ -121,14 +125,23 @@ trait PrivacyTrait
             throw new SnmpEncryptionException('The privacy password must be at least 8 characters long.');
         }
 
+        $engineId = $usm->getEngineId();
+        if ($engineId === null) {
+            throw new SnmpEncryptionException('The engineId must be set.');
+        }
+
         # 1) The secret cryptKey is used to construct the DES encryption key,
         #    the "salt" and the DES pre-IV (from which the IV is computed as
         #    described in section 8.1.1.1).
         $cryptKey = $authMod->generateKey(
             $password,
-            $usm->getEngineId()
+            $engineId
         );
-        list('key' => $key, 'salt' => $salt, 'iv' => $iv) = $this->toKeySaltIV($cryptKey, $usm, $authMod);
+        list('key' => $key, 'salt' => $salt, 'iv' => $iv) = $this->toKeySaltIV(
+            $cryptKey,
+            $usm,
+            $authMod
+        );
 
         # 2) The privParameters field is set to the serialization according to
         #    the rules in [RFC3417] of an OCTET STRING representing the "salt"
@@ -140,21 +153,37 @@ trait PrivacyTrait
         #    wrap when it reaches the maximum value.
         $this->localBoot = ($this->localBoot === self::$maxSalt) ? 0 : ($this->localBoot + 1);
 
+        $scopedPdu = $message->getScopedPdu();
+        if ($scopedPdu === null) {
+            throw new SnmpEncryptionException('The scopedPdu is missing.');
+        }
+
         # 3) The scopedPDU is encrypted (as described in section 8.1.1.2)
         #    and the encrypted data is serialized according to the rules in
         #    [RFC3417] as an OCTET STRING.
         $scopedPdu = $this->validateEncodedPdu((new SnmpEncoder())->encode(
-            $message->getScopedPdu()->toAsn1())
+            $scopedPdu->toAsn1())
         );
 
-        $encryptedPdu = \openssl_encrypt($scopedPdu, $this->algoAlias(), $key, OPENSSL_RAW_DATA, $iv);
+        $encryptedPdu = \openssl_encrypt(
+            $scopedPdu,
+            $this->algoAlias(),
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
         if ($encryptedPdu === false) {
             throw new SnmpEncryptionException(sprintf(
                 'Unable to encrypt the scopedPdu using %s',
                 $this->algorithm
             ));
         }
-        $this->setPduDataInMessage($message, $encryptedPdu, null, true);
+        $this->setPduDataInMessage(
+            $message,
+            $encryptedPdu,
+            null,
+            true
+        );
 
         return $message;
     }

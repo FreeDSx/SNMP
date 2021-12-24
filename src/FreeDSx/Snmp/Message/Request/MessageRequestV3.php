@@ -14,6 +14,7 @@ use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Asn1\Type\OctetStringType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Pdu;
@@ -56,7 +57,7 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
      * @param SecurityParametersInterface|null $securityParams
      * @return MessageRequestV3
      */
-    public function setSecurityParameters(?SecurityParametersInterface $securityParams)
+    public function setSecurityParameters(?SecurityParametersInterface $securityParams): self
     {
         $this->securityParams = $securityParams;
 
@@ -76,24 +77,31 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
      */
     public function getRequest(): Pdu
     {
+        if ($this->scopedPdu === null) {
+            throw new RuntimeException('The scopedPdu is not set.');
+        }
+
         return $this->scopedPdu->getRequest();
     }
 
     /**
      * @param Pdu $request
-     * @return $this|MessageRequestInterface
+     * @return $this
      */
-    public function setRequest(Pdu $request)
+    public function setRequest(Pdu $request): self
     {
+        if ($this->scopedPdu === null) {
+            throw new RuntimeException('The scopedPdu is not set.');
+        }
         $this->scopedPdu->setRequest($request);
 
         return $this;
     }
 
     /**
-     * @return static
+     * @return $this
      */
-    public function setEncryptedPdu(?string $encryptedPdu) : self
+    public function setEncryptedPdu(?string $encryptedPdu): self
     {
         $this->encryptedPdu = $encryptedPdu;
 
@@ -112,7 +120,7 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
      * @param ScopedPduRequest|null $request
      * @return $this
      */
-    public function setScopedPdu(?ScopedPduRequest $request)
+    public function setScopedPdu(?ScopedPduRequest $request): self
     {
         $this->scopedPdu = $request;
 
@@ -120,7 +128,20 @@ class MessageRequestV3 extends AbstractMessageV3 implements MessageRequestInterf
     }
 
     /**
+     * Retrieve the context name from the scopedPdu (if it is set).
+     *
+     * @return string
+     */
+    public function getContextName(): string
+    {
+        return $this->scopedPdu
+            ? $this->scopedPdu->getContextName()
+            : '';
+    }
+
+    /**
      * {@inheritdoc}
+     * @throws ProtocolException
      */
     public static function fromAsn1(AbstractType $asn1)
     {

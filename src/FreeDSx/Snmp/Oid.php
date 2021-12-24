@@ -179,7 +179,7 @@ class Oid implements ProtocolElementInterface
             $varBind->addChild(Asn1::null());
         } elseif ($this->status !== null) {
             $varBind->addChild(Asn1::context($this->status, Asn1::null()));
-        } else {
+        } elseif ($this->value !== null) {
             $varBind->addChild($this->value->toAsn1());
         }
 
@@ -211,7 +211,7 @@ class Oid implements ProtocolElementInterface
         $varBindValue = $varBind->getChild(1);
         if ($varBindValue instanceof NullType) {
             $varBindValue = null;
-        } elseif ($varBindValue->getTagClass() === AbstractType::TAG_CLASS_CONTEXT_SPECIFIC && $varBindValue instanceof IncompleteType) {
+        } elseif ($varBindValue instanceof IncompleteType && $varBindValue->getTagClass() === AbstractType::TAG_CLASS_CONTEXT_SPECIFIC) {
             $varBindValue = (new SnmpEncoder())->complete(
                 $varBindValue,
                 AbstractType::TAG_TYPE_NULL
@@ -233,7 +233,7 @@ class Oid implements ProtocolElementInterface
                     ));
             }
             $varBindValue = null;
-        } else {
+        } elseif ($varBindValue !== null) {
             $varBindValue = OidValueFactory::get($varBindValue);
         }
 

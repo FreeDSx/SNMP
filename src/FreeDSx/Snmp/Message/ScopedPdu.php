@@ -50,8 +50,11 @@ abstract class ScopedPdu implements ProtocolElementInterface
      * @param null|EngineId $contextEngineId
      * @param string $contextName
      */
-    public function __construct(Pdu $pdu, ?EngineId $contextEngineId = null, $contextName = '')
-    {
+    public function __construct(
+        Pdu $pdu,
+        ?EngineId $contextEngineId = null,
+        string $contextName = ''
+    ) {
         $this->pdu = $pdu;
         $this->contextEngineId = $contextEngineId;
         $this->contextName = $contextName;
@@ -104,13 +107,13 @@ abstract class ScopedPdu implements ProtocolElementInterface
         if (!$engineId instanceof OctetStringType) {
             throw new ProtocolException(sprintf(
                'Expected the engine id to be an octet string, got %s',
-               get_class($engineId)
+               is_object($engineId) ? get_class($engineId) : gettype($engineId)
             ));
         }
         if (!$contextName instanceof OctetStringType) {
             throw new ProtocolException(sprintf(
                 'Expected the context name to be an octet string, got %s',
-                get_class($contextName)
+                is_object($contextName) ? get_class($contextName) : gettype($contextName)
             ));
         }
         $engineId = ($engineId->getValue() === '') ? null : EngineId::fromBinary($engineId->getValue());

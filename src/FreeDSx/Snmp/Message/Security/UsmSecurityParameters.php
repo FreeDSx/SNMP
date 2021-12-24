@@ -249,13 +249,13 @@ class UsmSecurityParameters implements SecurityParametersInterface
             if (($i === 1 || $i === 2) && !$type instanceof IntegerType) {
                 throw new ProtocolException(sprintf(
                     'The USM is malformed. Expected an integer type, got %s.',
-                    get_class($type)
+                    $type ? get_class($type) : 'null'
                 ));
             }
             if (!($i === 1 || $i === 2) && !$type instanceof OctetStringType) {
                 throw new ProtocolException(sprintf(
                     'The USM is malformed. Expected an octet string type, got %s.',
-                    get_class($type)
+                    $type ? get_class($type) : 'null'
                 ));
             }
         }

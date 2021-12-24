@@ -211,7 +211,7 @@ class ClientProtocolHandler
             if (!$response instanceof MessageResponseV3) {
                 throw new ProtocolException(sprintf(
                     'Expected a SNMPv3 response, but got: v%d',
-                    $response->getVersion()
+                    $response instanceof MessageResponseInterface ? $response->getVersion() : 0
                 ));
             }
             $this->validateResponse($response, $id);
@@ -247,7 +247,7 @@ class ClientProtocolHandler
         if (!$response instanceof MessageResponseV3) {
             throw new ProtocolException(sprintf(
                 'Expected an SNMPv3 response. Received v%d.',
-                $response->getVersion()
+                $response instanceof MessageResponseInterface ? $response->getVersion() : 0
             ));
         }
         $this->validateResponse($response, $id, false);

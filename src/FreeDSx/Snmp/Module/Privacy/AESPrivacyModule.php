@@ -125,18 +125,39 @@ class AESPrivacyModule implements PrivacyModuleInterface
         $keySize = self::KEY_SIZE[$this->algoAlias()];
         $keyTooShort = (\strlen($cryptKey) < $keySize);
 
+        $engineId = $usm->getEngineId();
+        if ($engineId === null) {
+            throw new SnmpEncryptionException('The engineId must be set.');
+        }
+
         if ($keyTooShort && \substr($this->algorithm, -3) === 'blu') {
-            $cryptKey = $this->localizeBlumenthal($authMod, $cryptKey, $keySize);
+            $cryptKey = $this->localizeBlumenthal(
+                $authMod,
+                $cryptKey,
+                $keySize
+            );
         } elseif ($keyTooShort) {
-            $cryptKey = $this->localizeReeder($authMod, $cryptKey, $usm->getEngineId(), $keySize);
+            $cryptKey = $this->localizeReeder(
+                $authMod,
+                $cryptKey,
+                $engineId,
+                $keySize
+            );
         }
 
         # RFC 3826, Section 3.1.2.1 / RFC draft-blumenthal-aes-usm-04, Section 3.1.2.1
-        $key = \substr($cryptKey, 0, $keySize);
+        $key = \substr(
+            $cryptKey,
+            0,
+            $keySize
+        );
 
         # The 64bit int local boot is the salt
         if ($salt === null) {
-            $salt = $this->intToSaltBytes($this->localBoot, 56);
+            $salt = $this->intToSaltBytes(
+                $this->localBoot,
+                56
+            );
         }
 
         # The IV is concatenated as follows: the 32-bit snmpEngineBoots is
@@ -144,11 +165,21 @@ class AESPrivacyModule implements PrivacyModuleInterface
         # 32-bit snmpEngineTime is converted to the subsequent 4 octets (Most
         # Significant Byte first), and the 64-bit integer is then converted to
         # the last 8 octets (Most Significant Byte  first).
-        $iv = $this->intToSaltBytes($usm->getEngineBoots(), 24);
-        $iv .= $this->intToSaltBytes($usm->getEngineTime(), 24);
+        $iv = $this->intToSaltBytes(
+            $usm->getEngineBoots(),
+            24
+        );
+        $iv .= $this->intToSaltBytes(
+            $usm->getEngineTime(),
+            24
+        );
         $iv .= $salt;
 
-        return ['key' => $key, 'salt' => $salt, 'iv' => $iv];
+        return [
+            'key' => $key,
+            'salt' => $salt,
+            'iv' => $iv
+        ];
     }
 
     protected function validateEncodedPdu(string $scopedPdu) : string

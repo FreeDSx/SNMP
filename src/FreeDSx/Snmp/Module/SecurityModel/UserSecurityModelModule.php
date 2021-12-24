@@ -324,7 +324,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                     new OidList(Oid::fromCounter(self::USM_UNKNOWN_ENGINE_ID, 1))
                 ),
                 $this->getAuthoritativeEngineId($options),
-                $messageV3->getScopedPdu()->getContextName()
+                $messageV3->getContextName()
             ),
             null,
             new UsmSecurityParameters(
@@ -347,7 +347,15 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $usm = $discoveryResponse->getSecurityParameters();
         $response = $discoveryResponse->getResponse();
         $host = $options['host'] ?? '';
-        if (!($usm instanceof UsmSecurityParameters && $usm->getEngineId())) {
+        $engineId = ($usm instanceof UsmSecurityParameters) ? $usm->getEngineId() : null;
+
+        if (!$usm instanceof UsmSecurityParameters) {
+            throw new SecurityModelException(sprintf(
+                'Expected a USM security param, got: %s',
+                $usm ? get_class($usm) : 'null'
+            ));
+        }
+        if ($engineId === null) {
             throw new SecurityModelException('Failed to discover the engine id for USM.');
         }
         if (!$response instanceof ReportResponse) {
@@ -359,7 +367,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if (!$response->getOids()->has(self::USM_UNKNOWN_ENGINE_ID)) {
             throw new SecurityModelException('Expected an usmStatsUnknownEngineIDs OID, but none was received.');
         }
-        $this->knownEngines[$host] = $usm->getEngineId();
+        $this->knownEngines[$host] = $engineId;
         $this->updateCachedTime($usm);
 
         return $message;
@@ -383,11 +391,16 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         MessageResponseV3 $response,
         array $options
     ) : void {
-        /** @var UsmSecurityParameters $secParams */
+        /** @var UsmSecurityParameters|null $secParams */
         $secParams = $response->getSecurityParameters();
         $knownEngine = $this->getEngineIdForHost($options['host']);
+        $engineId = $secParams ? $secParams->getEngineId() : null;
 
-        if ($knownEngine === null || $secParams->getEngineId()->toBinary() !== $knownEngine->toBinary()) {
+        if ($engineId == null || $secParams === null) {
+            throw new SecurityModelException('The received engineId or security params is not set.');
+        }
+
+        if ($knownEngine === null || $engineId->toBinary() !== $knownEngine->toBinary()) {
             throw new SecurityModelException('The expected engine ID does not match the known engine ID for this host.');
         }
         # Section 3.2, Step 7.b.2
@@ -414,8 +427,8 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         foreach ($response->getResponse()->getOids() as $oid) {
             if (array_key_exists($oid->getOid(), self::ERROR_MAP_USM)) {
                 # This will force a re-sync for the next request if we have already cached time info..
-                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME, true) && $this->isEngineTimeCached($secParams->getEngineId())) {
-                    $this->clearCachedEngine($secParams->getEngineId());
+                if (in_array($oid->getOid(), self::ERROR_MAP_CLEAR_TIME, true) && $this->isEngineTimeCached($engineId)) {
+                    $this->clearCachedEngine($engineId);
                 }
                 throw new SecurityModelException(self::ERROR_MAP_USM[$oid->getOid()]);
             }
@@ -440,6 +453,7 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
         $engineId = $this->getAuthoritativeEngineId($options);
+        $receivedEngineId = $usm->getEngineId();
 
         if ($message->getMessageHeader()->hasPrivacy() && $message->getEncryptedPdu() === null) {
             throw new SecurityModelException('The header has privacy marked but the encrypted PDU was not set.');
@@ -450,7 +464,10 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         if ($this->isOutsideAuthoritativeTimeWindow($usm)) {
             throw new SecurityModelException('The received message is outside of the time window.');
         }
-        if ($usm->getEngineId()->toBinary() !== $engineId->toBinary()) {
+        if ($receivedEngineId === null) {
+            throw new SecurityModelException('The received engineId is not set.');
+        }
+        if ($receivedEngineId->toBinary() !== $engineId->toBinary()) {
             throw new SecurityModelException('The engineID is incorrect.');
         }
     }
@@ -491,8 +508,13 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $engineId = $this->getAuthoritativeEngineId($options);
         /** @var MessageHeader $header */
         $header = $message->getMessageHeader();
+        $receivedEngineId = $usm->getEngineId();
 
-        if (!($usm->getEngineId() && $usm->getEngineId()->toBinary() === $engineId->toBinary())) {
+        if ($receivedEngineId === null) {
+            throw new SecurityModelException('The received engineId is not set.');
+        }
+
+        if ($receivedEngineId->toBinary() !== $engineId->toBinary()) {
             return false;
         }
         if (!($request instanceof GetRequest && $request->getOids()->count() === 0)) {
@@ -537,7 +559,12 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function updateCachedTime(UsmSecurityParameters $secParams) : void
     {
-        $this->engineTime[$secParams->getEngineId()->toBinary()] = new TimeSync(
+        $engineId = $secParams->getEngineId();
+        if ($engineId === null) {
+            throw new SecurityModelException('The engineId is not set.');
+        }
+
+        $this->engineTime[$engineId->toBinary()] = new TimeSync(
             $secParams->getEngineBoots(),
             $secParams->getEngineTime()
         );
@@ -574,7 +601,8 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function isTrapRequest(AbstractMessageV3 $messageV3) : bool
     {
-        return ($messageV3 instanceof MessageRequestV3 && $messageV3->getRequest() instanceof TrapV2Request);
+        return $messageV3 instanceof MessageRequestV3
+            && $messageV3->getRequest() instanceof TrapV2Request;
     }
 
     /**
@@ -621,10 +649,15 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function isOutsideTimeWindow(UsmSecurityParameters $secParams) : bool
     {
-        if (!$this->isEngineTimeCached($secParams->getEngineId())) {
+        $engineId = $secParams->getEngineId();
+        if ($engineId === null) {
+            throw new SecurityModelException('The engineId is not set.');
+        }
+
+        if (!$this->isEngineTimeCached($engineId)) {
             return false;
         }
-        $timeSync = $this->getEngineTime($secParams->getEngineId());
+        $timeSync = $this->getEngineTime($engineId);
 
         # Section 3.2, Step 7.b.2
         #   the value of the msgAuthoritativeEngineBoots field is
@@ -684,10 +717,15 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
      */
     protected function shouldUpdateCachedTime(UsmSecurityParameters $secParams) : bool
     {
-        if (!$this->isEngineTimeCached($secParams->getEngineId())) {
+        $engineId = $secParams->getEngineId();
+        if ($engineId === null) {
+            throw new SecurityModelException('The engineId is not set.');
+        }
+
+        if (!$this->isEngineTimeCached($engineId)) {
             return true;
         }
-        $timeSync = $this->getEngineTime($secParams->getEngineId());
+        $timeSync = $this->getEngineTime($engineId);
 
         # Section 3.2, Step 7.b.1
         #    the extracted value of the msgAuthoritativeEngineBoots
@@ -726,8 +764,13 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
                 )
             ));
         }
+        $scopedPdu = $message->getScopedPdu();
+        if ($scopedPdu === null) {
+            throw new SecurityModelException('The scopedPdu must be set.');
+        }
+
         $msgObject = new \ReflectionObject($message);
-        $scopedPduObject = new \ReflectionObject($message->getScopedPdu());
+        $scopedPduObject = new \ReflectionObject($scopedPdu);
 
         $secParamsProperty = $msgObject->getProperty('securityParams');
         $secParamsProperty->setAccessible(true);

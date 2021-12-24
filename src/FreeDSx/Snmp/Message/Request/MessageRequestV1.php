@@ -11,6 +11,7 @@
 namespace FreeDSx\Snmp\Message\Request;
 
 use FreeDSx\Asn1\Type\AbstractType;
+use FreeDSx\Snmp\Exception\ProtocolException;
 use FreeDSx\Snmp\Message\AbstractMessage;
 use FreeDSx\Snmp\Message\Pdu;
 use FreeDSx\Snmp\Protocol\Factory\RequestFactory;
@@ -42,7 +43,7 @@ class MessageRequestV1 extends AbstractMessage implements MessageRequestInterfac
      * @param string $community
      * @return $this
      */
-    public function setCommunity(string $community)
+    public function setCommunity(string $community): self
     {
         $this->community = $community;
 
@@ -56,9 +57,14 @@ class MessageRequestV1 extends AbstractMessage implements MessageRequestInterfac
      */
     public static function fromAsn1(AbstractType $asn1)
     {
+        $pdu = $asn1->getChild(2);
+        if ($pdu === null) {
+            throw new ProtocolException('The request is malformed');
+        }
+
         return new static(
             static::parseCommunity($asn1),
-            RequestFactory::get($asn1->getChild(2))
+            RequestFactory::get($pdu)
         );
     }
 }

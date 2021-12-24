@@ -76,7 +76,9 @@ class AuthenticationModule implements AuthenticationModuleInterface
     {
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
-        $digest = $usm->getAuthParams();
+        $digest = (string)$usm->getAuthParams();
+        $engineId = $usm->getEngineId();
+
         if (\strlen($digest) !== self::N[$this->algorithm]) {
             throw new SnmpAuthenticationException(sprintf(
                 'Expected a digest of %s bytes, but it is %s.',
@@ -85,9 +87,20 @@ class AuthenticationModule implements AuthenticationModuleInterface
             ));
         }
 
+        if ($engineId === null) {
+            throw new SnmpAuthenticationException('The engineId must be set.');
+        }
+
         # As in an outgoing message, replace the digest with zero octets.
-        $usm->setAuthParams(\str_repeat("\x00", self::N[$this->algorithm]));
-        $hmac = $this->generateHMAC($message, $password, $usm->getEngineId());
+        $usm->setAuthParams(\str_repeat(
+            "\x00",
+            self::N[$this->algorithm])
+        );
+        $hmac = $this->generateHMAC(
+            $message,
+            $password,
+            $engineId
+        );
         if ($hmac !== $digest) {
             throw new SnmpAuthenticationException('The received message contains the wrong digest.');
         }
@@ -106,6 +119,11 @@ class AuthenticationModule implements AuthenticationModuleInterface
         }
         /** @var UsmSecurityParameters $usm */
         $usm = $message->getSecurityParameters();
+        $engineId = $usm->getEngineId();
+
+        if ($engineId === null) {
+            throw new SnmpAuthenticationException('The engineId must be set.');
+        }
 
         # RFC 7860, Section 4.2.1. Step 1:
         #     The msgAuthenticationParameters field is set to the serialization
@@ -115,7 +133,11 @@ class AuthenticationModule implements AuthenticationModuleInterface
         # RFC 7860, Section 4.2.1. Step 4:
         #     The msgAuthenticationParameters field is replaced with the MAC
         #     obtained in the previous step.
-        $usm->setAuthParams($this->generateHMAC($message, $password, $usm->getEngineId()));
+        $usm->setAuthParams($this->generateHMAC(
+            $message,
+            $password,
+            $engineId
+        ));
 
         return $message;
     }

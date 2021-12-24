@@ -293,20 +293,29 @@ class TrapV1Request extends Pdu implements RequestInterface
         if (!$enterprise instanceof OidType) {
             throw new ProtocolException(sprintf(
                'The enterprise must be an Oid Type, got %s.',
-               get_class($enterprise)
+               is_object($enterprise) ? get_class($enterprise) : gettype($enterprise)
             ));
         }
         if (!$genericType instanceof IntegerType) {
             throw new ProtocolException(sprintf(
                 'The generic trap type must be an Integer Type, got %s.',
-                get_class($genericType)
+                is_object($genericType) ? get_class($genericType) : gettype($genericType)
             ));
         }
         if (!$specificType instanceof IntegerType) {
             throw new ProtocolException(sprintf(
                 'The specific trap type must be an Integer Type, got %s.',
-                get_class($specificType)
+                is_object($specificType) ? get_class($specificType) : gettype($specificType)
             ));
+        }
+        if (!$ipAddress instanceof AbstractType) {
+            throw new ProtocolException('The ip address is malformed.');
+        }
+        if (!$sysUpTime instanceof AbstractType) {
+            throw new ProtocolException('The sysUptime is malformed.');
+        }
+        if (!$varBindList instanceof AbstractType) {
+            throw new ProtocolException('The varBindList is malformed.');
         }
 
         return new self(

@@ -14,6 +14,7 @@ use FreeDSx\Asn1\Type\AbstractType;
 use FreeDSx\Asn1\Type\OctetStringType;
 use FreeDSx\Asn1\Type\SequenceType;
 use FreeDSx\Snmp\Exception\ProtocolException;
+use FreeDSx\Snmp\Exception\RuntimeException;
 use FreeDSx\Snmp\Message\AbstractMessageV3;
 use FreeDSx\Snmp\Message\MessageHeader;
 use FreeDSx\Snmp\Message\Pdu;
@@ -57,6 +58,10 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
      */
     public function getResponse(): Pdu
     {
+        if ($this->scopedPdu === null) {
+            throw new RuntimeException('The scopedPdu is not set.');
+        }
+
         return $this->scopedPdu->getResponse();
     }
 
@@ -71,12 +76,16 @@ class MessageResponseV3 extends AbstractMessageV3 implements MessageResponseInte
     /**
      * @return null|string
      */
-    public function getEncryptedPdu()
+    public function getEncryptedPdu(): ?string
     {
         return $this->encryptedPdu;
     }
 
-    public static function fromAsn1(AbstractType $asn1)
+    /**
+     * @inheritDoc
+     * @throws ProtocolException
+     */
+    public static function fromAsn1(AbstractType $asn1): MessageResponseV3
     {
         list($header, $securityParams, $pdu) = self::parseCommonElements($asn1);
 

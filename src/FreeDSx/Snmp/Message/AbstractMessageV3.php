@@ -170,16 +170,21 @@ abstract class AbstractMessageV3 implements PduInterface
             throw new ProtocolException(sprintf(
                 'Expected SNMP version %s, got %s.',
                 static::VERSION,
-                $version->getValue()
+                $version ? $version->getValue() : 0
             ));
         }
-        $header = MessageHeader::fromAsn1($type->getChild(1));
+
+        $header = $type->getChild(1);
+        if ($header === null) {
+            throw new ProtocolException('The SNMP header is missing');
+        }
+        $header = MessageHeader::fromAsn1($header);
 
         $securityParams = $type->getChild(2);
         if (!$securityParams instanceof OctetStringType) {
             throw new ProtocolException(sprintf(
                 'The security parameters must be an octet string, got %s',
-                get_class($securityParams)
+                $securityParams ? get_class($securityParams) : 'null'
             ));
         }
         $securityParamsValue = '';

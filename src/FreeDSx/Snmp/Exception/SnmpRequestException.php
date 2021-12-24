@@ -91,12 +91,13 @@ class SnmpRequestException extends \Exception
     protected function generateMessage(MessageResponseInterface $response) : string
     {
         if (isset(self::ERROR_MAP[$response->getResponse()->getErrorStatus()])) {
-            $oid = '';
             $errorIndex = $response->getResponse()->getErrorIndex();
-            if ($errorIndex !== 0) {
-                $oid = $response->getResponse()->getOids()->index($errorIndex)->getOid();
-            }
-            $message = sprintf(self::ERROR_MAP[$response->getResponse()->getErrorStatus()], $oid);
+            $oidAtIndex = $errorIndex !== 0 ? $response->getResponse()->getOids()->index($errorIndex) : null;
+            $oid = $oidAtIndex ? $oidAtIndex->getOid() : '';
+            $message = sprintf(
+                self::ERROR_MAP[$response->getResponse()->getErrorStatus()],
+                $oid
+            );
         } else {
             $message = 'An error was encountered during the SNMP request.';
         }

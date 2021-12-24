@@ -99,14 +99,14 @@ abstract class AbstractMessage implements PduInterface
             throw new ProtocolException(sprintf(
                 'Expected SNMP version %s, got %s.',
                 static::VERSION,
-                $version->getValue()
+                is_null($version) ? 0 : $version->getValue()
             ));
         }
         $community = $asn1->getChild(1);
         if (!$community instanceof OctetStringType) {
             throw new ProtocolException(sprintf(
                 'Expected an octet string type for the community, got %s.',
-                get_class($community)
+                $community ? get_class($community) : 'null'
             ));
         }
 
