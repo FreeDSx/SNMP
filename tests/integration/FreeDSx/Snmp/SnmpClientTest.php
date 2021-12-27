@@ -2,6 +2,7 @@
 
 namespace integration\FreeDSx\Snmp;
 
+use FreeDSx\Snmp\Exception\SnmpRequestException;
 use FreeDSx\Snmp\Oid;
 use FreeDSx\Snmp\SnmpClient;
 
@@ -15,7 +16,7 @@ class SnmpClientTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->subject = $this->makeReadOnlyClient();
+        $this->subject = $this->makeClient();
     }
 
     public function testGetReturnsOidListWithValue(): void
@@ -51,6 +52,33 @@ class SnmpClientTest extends TestCase
         $this->assertStringContainsStringIgnoringCase(
             'Linux',
             $oid->getValue()
+        );
+    }
+
+    /**
+     * In theory, the test below should work. When SNMPv2-MIB::snmpSetSerialNo is used, it should just increment.
+     * Perhaps something wrong with the config, or it is specific to the use in docker? Needs investigation.
+     *
+     * For now this just tests that the "set" was attempted, and we expect a message back that it was rejected.
+     */
+    public function testItCanModifyAnOidValueWithSet(): void
+    {
+        $this->subject = $this->makeClient(['community' => getenv('SNMP_COMMUNITY_RW')]);
+        $value = $this->subject->getValue('1.3.6.1.6.3.1.1.6.1.0');
+
+        $message = '';
+        try {
+            $this->subject->set(Oid::fromInteger(
+                '1.3.6.1.6.3.1.1.6.1.0',
+                (int)$value
+            ));
+        } catch (SnmpRequestException $e) {
+            $message = $e->getMessage();
+        }
+
+        $this->assertStringContainsString(
+            '(WrongLength)',
+            $message
         );
     }
 }
