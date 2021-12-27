@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
-    public function makeReadOnlyClient(array $options = []): SnmpClient
+    public function makeClient(array $options = []): SnmpClient
     {
         return new SnmpClient(array_merge(
             $this->defaultOptions(),

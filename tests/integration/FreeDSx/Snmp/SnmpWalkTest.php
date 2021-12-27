@@ -15,7 +15,7 @@ class SnmpWalkTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->client = $this->makeReadOnlyClient();
+        $this->client = $this->makeClient();
     }
 
     public function testItWalksAllOids()
