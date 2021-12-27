@@ -53,7 +53,13 @@ jobs:
       - name: Start SNMP Container
         if: ${{ matrix.operating-system == 'ubuntu-latest' }}
         run: |
-          docker run --name snmpd -d -p 10161:161/udp polinux/snmpd
+          docker run \
+              --name snmpd \
+              -d \
+              -p 10161:161/udp \
+              -v "$(pwd)/tests/resources/snmpd.conf":/etc/snmpd/snmpd.custom.conf \
+              polinux/snmpd \
+              -c /etc/snmpd/snmpd.custom.conf
 
       - name: Get Composer Cache Directory
         id: composer-cache
