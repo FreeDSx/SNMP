@@ -81,4 +81,39 @@ class SnmpClientTest extends TestCase
             $message
         );
     }
+
+    public function testGetNextReturnsTheNextOid(): void
+    {
+        $oid = $this->subject->getNext('1.3.6.1.2.1.1.1.0')->first();
+
+        $this->assertNotNull($oid);
+        $this->assertEquals(
+            '1.3.6.1.2.1.1.2.0',
+            $oid->getOid()
+        );
+    }
+
+    public function testGetBulkReturnsAllExpected(): void
+    {
+        $oids = $this->subject->getBulk(
+            9,
+            0,
+            '1.3.6.1.2.1.1.1'
+        );
+        $first = $oids->first();
+        $last = $oids->last();
+
+        $this->assertCount(
+            9,
+            $oids
+        );
+        $this->assertEquals(
+            '1.3.6.1.2.1.1.1.0',
+            $first->getOid()
+        );
+        $this->assertEquals(
+            '1.3.6.1.2.1.1.9.1.2.2',
+            $last->getOid()
+        );
+    }
 }
