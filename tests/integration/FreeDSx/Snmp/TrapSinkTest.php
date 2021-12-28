@@ -113,7 +113,7 @@ class TrapSinkTest extends TestCase
 
         throw new Exception(sprintf(
             'The expected output was not received after %d seconds.',
-            $maxWait
+            $i
         ));
     }
 }
