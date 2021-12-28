@@ -83,8 +83,11 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function getBulk(int $maxRepetitions, int $nonRepeaters, ...$oids): OidList
-    {
+    public function getBulk(
+        int $maxRepetitions,
+        int $nonRepeaters,
+        ...$oids
+    ): OidList {
         return $this->sendAndReceive(Requests::getBulk($maxRepetitions, $nonRepeaters, ...$oids))
             ->getResponse()
             ->getOids();
@@ -98,7 +101,7 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function getNext(...$oids) : OidList
+    public function getNext(...$oids): OidList
     {
         return $this->sendAndReceive(Requests::getNext(...$oids))
             ->getResponse()
@@ -113,7 +116,7 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function get(...$oids) : OidList
+    public function get(...$oids): OidList
     {
         return $this->sendAndReceive(Requests::get(...$oids))
             ->getResponse()
@@ -128,7 +131,7 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function getOid($oid) : ?Oid
+    public function getOid($oid): ?Oid
     {
         return $this->get($oid)->first();
     }
@@ -141,7 +144,7 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function getValue($oid) : ?string
+    public function getValue($oid): ?string
     {
         $oid = $this->getOid($oid);
 
@@ -171,9 +174,16 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function sendTrap($sysUpTime, $trapOid, ...$oids)
-    {
-        $this->send(Requests::trap($sysUpTime, $trapOid, ...$oids));
+    public function sendTrap(
+        $sysUpTime,
+        $trapOid,
+        ...$oids
+    ): self {
+        $this->send(Requests::trap(
+            $sysUpTime,
+            $trapOid,
+            ...$oids
+        ));
 
         return $this;
     }
@@ -191,9 +201,22 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function sendTrapV1(string $enterprise, string $address, int $genericType, int $specificType, int $sysUpTime, ...$oids)
-    {
-        $this->send(Requests::trapV1($enterprise, $address, $genericType, $specificType, $sysUpTime, ...$oids));
+    public function sendTrapV1(
+        string $enterprise,
+        string $address,
+        int $genericType,
+        int $specificType,
+        int $sysUpTime,
+        ...$oids
+    ): self {
+        $this->send(Requests::trapV1(
+            $enterprise,
+            $address,
+            $genericType,
+            $specificType,
+            $sysUpTime,
+            ...$oids
+        ));
 
         return $this;
     }
@@ -208,9 +231,16 @@ class SnmpClient
      * @throws ConnectionException
      * @throws SnmpRequestException
      */
-    public function sendInform($sysUpTime, $trapOid, ...$oids) : MessageResponseInterface
-    {
-        return $this->sendAndReceive(Requests::inform($sysUpTime, $trapOid, ...$oids));
+    public function sendInform(
+        $sysUpTime,
+        $trapOid,
+        ...$oids
+    ): MessageResponseInterface {
+        return $this->sendAndReceive(Requests::inform(
+            $sysUpTime,
+            $trapOid,
+            ...$oids
+        ));
     }
 
     /**
@@ -220,9 +250,15 @@ class SnmpClient
      * @param null|string $endAt
      * @return SnmpWalk
      */
-    public function walk(string $startAt = null, string $endAt = null) : SnmpWalk
-    {
-        return new SnmpWalk($this, $startAt, $endAt);
+    public function walk(
+        string $startAt = null,
+        string $endAt = null
+    ): SnmpWalk {
+        return new SnmpWalk(
+            $this,
+            $startAt,
+            $endAt
+        );
     }
 
     /**
@@ -287,7 +323,7 @@ class SnmpClient
      *
      * @return array
      */
-    public function getOptions() : array
+    public function getOptions(): array
     {
         return $this->options;
     }
@@ -298,7 +334,7 @@ class SnmpClient
      * @param array $options
      * @return $this
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): self
     {
         $this->options = $options;
 
@@ -308,7 +344,7 @@ class SnmpClient
     /**
      * @return ClientProtocolHandler
      */
-    protected function dispatcher() : ClientProtocolHandler
+    protected function dispatcher(): ClientProtocolHandler
     {
         if (!$this->handler) {
             $this->handler = $this->options['_protocol_handler'] ?? new ClientProtocolHandler($this->options);
