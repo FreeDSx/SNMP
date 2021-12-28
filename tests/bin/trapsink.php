@@ -40,5 +40,10 @@ $listener = new class implements TrapListenerInterface {
 
 echo "server starting...";
 
-$sink = new TrapSink($listener);
+$sink = new TrapSink(
+    $listener,
+    [
+        'port' => 10162,
+    ]
+);
 $sink->listen();

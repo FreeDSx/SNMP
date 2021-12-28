@@ -22,7 +22,7 @@ class TrapSinkTest extends TestCase
     {
         parent::setUp();
         $this->client = $this->makeClient([
-            'port' => 162,
+            'port' => 10162,
         ]);
         $this->subject = new Process([
             'php',
@@ -65,7 +65,7 @@ class TrapSinkTest extends TestCase
     {
         $this->client = $this->makeClient([
             'version' => 1,
-            'port' => 162,
+            'port' => 10162,
         ]);
         $this->client->sendTrapV1(
             '1.2.3',
