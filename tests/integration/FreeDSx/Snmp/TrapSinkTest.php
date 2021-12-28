@@ -90,6 +90,31 @@ class TrapSinkTest extends TestCase
         );
     }
 
+    public function testTheTrapSinkReceivesInformsAndSendsResponse(): void
+    {
+        $this->markTestSkipped('Informs are not getting messages back here. Needs more investigation.');
+
+        $response = $this->client->sendInform(
+            123,
+            '1.2.3.4.5.6'
+        );
+        $message = $this->waitForServerOutput('---received---');
+
+        $this->assertNotNull($response);
+        $this->assertStringContainsString(
+            'Trap: 1.2.3.4.5.6',
+            $message
+        );
+        $this->assertStringContainsString(
+            'Version: 2',
+            $message
+        );
+        $this->assertStringContainsString(
+            'IP: 127.0.0.1',
+            $message
+        );
+    }
+
     private function waitForServerOutput(string $marker): string
     {
         $maxWait = 10;

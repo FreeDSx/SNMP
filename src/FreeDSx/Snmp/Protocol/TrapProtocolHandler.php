@@ -130,7 +130,11 @@ class TrapProtocolHandler
         $this->listener->receive($context);
 
         if ($message->getRequest() instanceof InformRequest) {
-            $this->sendResponse($ipAddress, $port, $message);
+            $this->sendResponse(
+                $ipAddress,
+                $port,
+                $message
+            );
         }
     }
 
