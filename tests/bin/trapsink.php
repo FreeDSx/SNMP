@@ -2,6 +2,8 @@
 
 use FreeDSx\Snmp\Message\EngineId;
 use FreeDSx\Snmp\Module\SecurityModel\Usm\UsmUser;
+use FreeDSx\Snmp\Request\TrapV1Request;
+use FreeDSx\Snmp\Request\TrapV2Request;
 use FreeDSx\Snmp\Trap\TrapContext;
 use FreeDSx\Snmp\Trap\TrapListenerInterface;
 use FreeDSx\Snmp\TrapSink;
@@ -28,7 +30,11 @@ $listener = new class implements TrapListenerInterface {
         $version = $context->getVersion();
         $ip = $context->getIpAddress();
 
-        echo "---received---, IP: $ip, Version: $version, Trap: {$trap->getTrapOid()->getValue()}";
+        if ($trap instanceof TrapV2Request) {
+            echo "---received---, IP: $ip, Version: $version, Trap: {$trap->getTrapOid()->getValue()}";
+        } elseif ($trap instanceof TrapV1Request) {
+            echo "---received---, IP: $ip, Version: $version, Trap: {$trap->getEnterprise()}";
+        }
     }
 };
 

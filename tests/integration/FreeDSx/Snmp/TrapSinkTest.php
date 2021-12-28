@@ -39,7 +39,7 @@ class TrapSinkTest extends TestCase
         $this->subject->stop();
     }
 
-    public function testTheTrapSinkWorks(): void
+    public function testTheTrapSinkReceivesV2Traps(): void
     {
         $this->client->sendTrap(
             123,
@@ -53,6 +53,35 @@ class TrapSinkTest extends TestCase
         );
         $this->assertStringContainsString(
             'Version: 2',
+            $message
+        );
+        $this->assertStringContainsString(
+            'IP: 127.0.0.1',
+            $message
+        );
+    }
+
+    public function testTheTrapSinkReceivesV1Traps(): void
+    {
+        $this->client = $this->makeClient([
+            'version' => 1,
+            'port' => 162,
+        ]);
+        $this->client->sendTrapV1(
+            '1.2.3',
+            '127.0.0.1',
+            1,
+            1,
+            1
+        );
+        $message = $this->waitForServerOutput('---received---');
+
+        $this->assertStringContainsString(
+            'Trap: 1.2.3',
+            $message
+        );
+        $this->assertStringContainsString(
+            'Version: 1',
             $message
         );
         $this->assertStringContainsString(
