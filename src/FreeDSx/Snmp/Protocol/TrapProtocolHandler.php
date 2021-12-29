@@ -62,8 +62,13 @@ class TrapProtocolHandler
      * @param Socket|null $socket
      * @param SecurityModelModuleFactory|null $securityModelFactory
      */
-    public function __construct(TrapListenerInterface $listener, array $options, ?SnmpEncoder $encoder = null, ?Socket $socket = null, ?SecurityModelModuleFactory $securityModelFactory = null)
-    {
+    public function __construct(
+        TrapListenerInterface $listener,
+        array $options,
+        ?SnmpEncoder $encoder = null,
+        ?Socket $socket = null,
+        ?SecurityModelModuleFactory $securityModelFactory = null
+    ) {
         $this->listener = $listener;
         $this->options = $options + self::DEFAULT_OPTIONS;
         $this->encoder = $encoder;
@@ -76,8 +81,11 @@ class TrapProtocolHandler
      * @param string $data
      * @param array $options
      */
-    public function handle(string $ipAddress, $data, array $options) : void
-    {
+    public function handle(
+        string $ipAddress,
+        string $data,
+        array $options
+    ): void {
         $options = \array_merge($this->options, $options);
 
         $portLoc = \strrpos($ipAddress, ':');
@@ -86,7 +94,7 @@ class TrapProtocolHandler
         }
         $port = (int) \substr(
             $ipAddress,
-            $portLoc
+            $portLoc + 1
         );
 
         # IPv6 should be enclosed in brackets, though PHP doesn't represent it that way from a socket.
@@ -122,7 +130,11 @@ class TrapProtocolHandler
         $this->listener->receive($context);
 
         if ($message->getRequest() instanceof InformRequest) {
-            $this->sendResponse($ipAddress, $port, $message);
+            $this->sendResponse(
+                $ipAddress,
+                $port,
+                $message
+            );
         }
     }
 
@@ -151,7 +163,9 @@ class TrapProtocolHandler
         $informResponse = new MessageResponseV2($message->getCommunity(), $response);
 
         try {
-            $this->socket(['host' => $ip, 'port' => $port])->write($this->encoder()->encode($informResponse->toAsn1()));
+            $this->socket(['host' => $ip, 'port' => $port])->write(
+                $this->encoder()->encode($informResponse->toAsn1())
+            );
             $this->socket()->close();
             $this->socket = null;
         } catch (\Exception $e) {
