@@ -90,9 +90,17 @@ class TrapSinkTest extends TestCase
         );
     }
 
+    /**
+     * Informs from docker will not work. This is because when the trapsink responds, it realizes that the message came
+     * from the same host (ie. 127.0.0.1) and tries to send it back the same way. ie. docker tries to send the inform
+     * response to itself.
+     *
+     * The way to get it back to the host would be to use the special "host.docker.internal" DNS entry within the
+     * container. But we cannot make these assumptions and cannot modify the address to send back to in the listener.
+     */
     public function testTheTrapSinkReceivesInformsAndSendsResponse(): void
     {
-        $this->markTestSkipped('Informs are not getting messages back here. Needs more investigation.');
+        $this->markTestSkipped('Informs are not getting messages back here. See above for the detailed issue.');
 
         $response = $this->client->sendInform(
             123,
