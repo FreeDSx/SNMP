@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.5.0 (2022-01-29)
+------------------
+* Many static analysis fixes. The PhpStan level is now set to max.
+* Integration tests added for the client and the trap sink.
+* Fix potential issues with inform requests where the port is not properly interpreted.
+
 0.4.2 (2021-12-11)
 ------------------
 * Support PHP 8.0 / 8.1.
