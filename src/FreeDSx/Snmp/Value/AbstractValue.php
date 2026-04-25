@@ -28,6 +28,9 @@ abstract class AbstractValue implements ProtocolElementInterface
 
     protected const ASN1_TAG = null;
 
+    /**
+     * @var class-string<AbstractType>
+     */
     protected const ASN1_CLASS = null;
 
     /**
