@@ -251,8 +251,8 @@ class SnmpClient
      * @return SnmpWalk
      */
     public function walk(
-        string $startAt = null,
-        string $endAt = null
+        ?string $startAt = null,
+        ?string $endAt = null
     ): SnmpWalk {
         return new SnmpWalk(
             $this,
