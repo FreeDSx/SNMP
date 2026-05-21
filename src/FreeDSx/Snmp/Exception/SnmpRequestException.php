@@ -54,7 +54,7 @@ class SnmpRequestException extends \Exception
      * @param null|string $message
      * @param \Throwable|null $previous
      */
-    public function __construct(?MessageResponseInterface $response, ?string $message = null, \Throwable $previous = null)
+    public function __construct(?MessageResponseInterface $response, ?string $message = null, ?\Throwable $previous = null)
     {
         $this->snmpMessage = $response;
         $errorCode = $response ? $response->getResponse()->getErrorStatus() : 0;
