@@ -291,12 +291,16 @@ trait PrivacyTrait
 
         if (!$encOnly) {
             $pduProperty = $requestObject->getProperty('scopedPdu');
-            $pduProperty->setAccessible(true);
+            if (\PHP_VERSION_ID < 80100) {
+                $pduProperty->setAccessible(true);
+            }
             $pduProperty->setValue($message, $pdu);
         }
 
         $encryptedProperty = $requestObject->getProperty('encryptedPdu');
-        $encryptedProperty->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $encryptedProperty->setAccessible(true);
+        }
         $encryptedProperty->setValue($message, $encryptedData);
     }
 }

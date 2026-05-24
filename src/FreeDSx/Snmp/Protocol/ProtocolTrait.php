@@ -123,7 +123,9 @@ trait ProtocolTrait
         }
         $requestObject = new \ReflectionObject($pdu);
         $idProperty = $requestObject->getProperty('id');
-        $idProperty->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $idProperty->setAccessible(true);
+        }
         $idProperty->setValue($pdu, $id);
     }
 
