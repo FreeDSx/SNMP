@@ -85,7 +85,7 @@ abstract class AbstractMessageV3 implements PduInterface
     public function __construct(
         MessageHeader $header,
         ?ScopedPdu $scopedPdu,
-        string $encryptedPdu = null,
+        ?string $encryptedPdu = null,
         ?SecurityParametersInterface $securityParams = null
     ) {
         $this->header = $header;
