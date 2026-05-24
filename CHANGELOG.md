@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+0.5.3 (2026-05-24)
+------------------
+* Support up to PHP 8.5.
+
 0.5.1 (2026-04-25)
 ------------------
 * Lock FreeDSx dependencies to avoid conflicts with a 1.0 release.
