@@ -773,15 +773,21 @@ class UserSecurityModelModule implements SecurityModelModuleInterface
         $scopedPduObject = new \ReflectionObject($scopedPdu);
 
         $secParamsProperty = $msgObject->getProperty('securityParams');
-        $secParamsProperty->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $secParamsProperty->setAccessible(true);
+        }
         $secParamsProperty->setValue($message, $secParams);
 
         $encryptedProperty = $msgObject->getProperty('encryptedPdu');
-        $encryptedProperty->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $encryptedProperty->setAccessible(true);
+        }
         $encryptedProperty->setValue($message, null);
 
         $contextEngineIdProperty = $scopedPduObject->getProperty('contextEngineId');
-        $contextEngineIdProperty->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $contextEngineIdProperty->setAccessible(true);
+        }
         $contextEngineIdProperty->setValue($message->getScopedPdu(), $secParams->getEngineId());
     }
 

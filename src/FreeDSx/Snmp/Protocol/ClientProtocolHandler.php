@@ -290,7 +290,9 @@ class ClientProtocolHandler
         }
         $requestObject = new \ReflectionObject($request);
         $idProperty = $requestObject->getProperty('id');
-        $idProperty->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $idProperty->setAccessible(true);
+        }
         $idProperty->setValue($request, $id);
     }
 
